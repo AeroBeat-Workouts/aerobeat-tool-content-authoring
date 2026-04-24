@@ -6,6 +6,10 @@ export_presets.cfg
 # Imported translations (automatically generated from CSV files)
 *.translation
 
+# Godot generated script UIDs / local test output
+*.uid
+.testbed/tmp/
+
 # Mono-specific ignores
 .mono/
 data_*/

@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  gut-tests:
-    name: Restore testbed and run GUT
+  headless-validation:
+    name: Restore testbed, import project, and run headless workflow tests
     runs-on: ubuntu-latest
 
     steps:
@@ -41,9 +41,5 @@ jobs:
       - name: 🧭 Import testbed project
         run: godot --headless --path .testbed --import
 
-      - name: 🧪 Run GUT tests
-        run: |
-          godot --headless --path .testbed --script addons/gut/gut_cmdln.gd \
-            -gdir=res://tests \
-            -ginclude_subdirs \
-            -gexit
+      - name: 🧪 Run headless workflow tests
+        run: godot --headless --path .testbed --script ../tests/run_tool_tests.gd
