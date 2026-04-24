@@ -1,37 +1,31 @@
-## Base template for a Tool Manager.
-##
-## This class serves as the main entry point for the tool service.
-## It is intended to be used as an Autoload (Singleton) or a static helper.
 class_name AeroToolManager
 extends Node
 
-#region SIGNALS
-## Emitted when the tool has finished initializing.
+const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
+const BuildContentPackageService = preload("../services/packaging/build_content_package_service.gd")
+const ContentAuthoringPlugin = preload("../editor/plugins/content_authoring_plugin.gd")
+
 signal initialized
-#endregion
 
-#region ENUMS & CONSTANTS
-const VERSION: String = "0.0.1"
-#endregion
+const VERSION: String = "0.1.0"
 
-#region EXPORTS
 @export var is_active: bool = true
-#endregion
 
-#region PRIVATE VARIABLES
 var _is_initialized: bool = false
-#endregion
+var _service_registry: Dictionary = {}
 
-#region LIFECYCLE
 func _ready() -> void:
 	_initialize()
 
 func _initialize() -> void:
 	if _is_initialized:
 		return
-	
-	# TODO: Add initialization logic here
+	_service_registry = ContentAuthoringPlugin.build_service_registry()
 	_is_initialized = true
 	initialized.emit()
-	print("AeroToolManager initialized.")
-#endregion
+
+func get_validate_package_service() -> ValidatePackageService:
+	return _service_registry.get("validate_package") as ValidatePackageService
+
+func get_build_content_package_service() -> BuildContentPackageService:
+	return _service_registry.get("build_content_package") as BuildContentPackageService

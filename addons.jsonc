@@ -1,7 +1,7 @@
 {
   "$schema": "https://chickensoft.games/schemas/addons.schema.json",
   "addons": {
-    // Tool-lane dependencies used by the hidden workbench and tests.
+    // Day-one published dependency boundary for the authoring tool package.
     "aerobeat-content-core": {
       "url": "git@github.com:AeroBeat-Workouts/aerobeat-content-core.git",
       "checkout": "main",
@@ -11,12 +11,6 @@
       "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-core.git",
       "checkout": "main",
       "subfolder": "/"
-    },
-    // GUT remains available for future repo-local test expansion in the workbench.
-    "gut": {
-      "url": "git@github.com:bitwes/Gut.git",
-      "checkout": "main",
-      "subfolder": "/addons/gut"
     }
   }
 }

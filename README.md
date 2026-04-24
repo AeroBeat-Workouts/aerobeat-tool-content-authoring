@@ -14,34 +14,65 @@ This repo sits on top of the approved lane-based architecture:
 
 If a behavior belongs to canonical schema ownership, it should live in `aerobeat-content-core`. If it belongs to gameplay runtime logic or presentation, it should live in `aerobeat-feature-core` or a concrete `aerobeat-feature-*` repo instead.
 
-## Architectural position
+## Headless-first architecture
 
-This repo is intentionally a **workflow product**, not a schema repo and not a gameplay repo.
+This repo now follows the intended day-one split:
 
-It should make the following split explicit:
+- `services/` is the **canonical workflow layer**.
+- `cli/` is a **thin headless surface** that delegates to shared services.
+- `editor/` is **optional scaffolding only**, and it also delegates to shared services instead of duplicating logic.
+- `mappers/` convert normalized service reports into output-friendly or UI-friendly shapes.
+- `tests/` verify that the service layer is the authority and that both CLI and editor entrypoints depend on it.
 
-- **Depends on `aerobeat-content-core`** for durable content records, ids, manifests, registry/query interfaces, migration contracts, and shared validators.
-- **Depends on `aerobeat-tool-core`** for tool-common contracts, operation-state models, and shared tool-side interfaces.
-- **Does not own canonical content schemas** like `Song`, `Routine`, `Chart Variant`, or `Workout`.
-- **Does not own gameplay runtime logic** such as scoring, spawning, runtime interpretation, 2D lanes, 3D portals, or other feature-side visuals.
+The important rule is:
 
-## Shared-service rule
+> CLI/headless workflows and editor/interactive workflows must call the same service layer.
 
-The key rule for this repo is:
+### Current scaffolded workflow slices
 
-> Headless/CLI workflows and optional editor UX must share one service layer.
+The repo now includes a minimal but real first slice for:
 
-That means:
+- authoring service boundaries for routines, workouts, and chart variants
+- package validation aligned to the `aerobeat-content-core` fixture path shape
+- packaging/build workflow scaffolding
+- migration and import workflow scaffolding
+- inspection and formatting helpers for CLI use
+- an editor plugin scaffold that resolves shared services instead of implementing parallel logic
 
-- CLI/headless validation should call the same validation services used by any future editor action.
-- Non-interactive migration and packaging flows should call the same core workflow services used by interactive tooling.
-- Editor code should stay thin and orchestrate shared services instead of becoming a second validation or schema engine.
+## Repository shape
 
-In practice, the long-term structure for this repo should separate:
+```text
+aerobeat-tool-content-authoring/
+├── interfaces/
+├── services/
+│   ├── authoring/
+│   ├── validation/
+│   ├── migration/
+│   ├── packaging/
+│   ├── importers/
+│   └── registry/
+├── cli/
+│   ├── commands/
+│   └── formatters/
+├── editor/
+│   ├── plugins/
+│   ├── docks/
+│   ├── inspectors/
+│   └── view_models/
+├── mappers/
+├── tests/
+├── plugin.cfg
+└── addons.jsonc
+```
 
-- `services/` as the canonical workflow layer
-- `cli/` as a thin headless surface over those services
-- `editor/` as an optional interactive surface over the same services
+## Shared-service rule in practice
+
+Examples from the current scaffold:
+
+- `cli/commands/validate_command.gd` calls `services/validation/validate_package_service.gd`
+- `cli/commands/package_command.gd` calls `services/packaging/build_content_package_service.gd`
+- `editor/plugins/content_authoring_plugin.gd` exposes the same shared validation and packaging services for future editor UI
+- report formatting is kept in `cli/formatters/` and `mappers/`, not embedded inside the service layer
 
 ## What this repo should own
 
@@ -57,7 +88,7 @@ This repo is the correct home for workflow-oriented content tooling such as:
 
 ## What this repo should not own
 
-This repo should **not** become a grab bag for unrelated architecture concerns.
+This repo should **not** become a schema repo or a gameplay repo.
 
 Keep the following out of this repo:
 
@@ -67,23 +98,16 @@ Keep the following out of this repo:
 - mode-specific gameplay interpretation that belongs in `aerobeat-feature-*`
 - a replacement for `aerobeat-tool-core`
 
-## Current state
-
-This repository is currently scaffolded from the AeroBeat Tool template and is being aligned to the approved architecture.
-
-That means the repo identity is now specific, but the deeper implementation work still needs to land. The next iterations should build out the shared workflow service layer first, keep headless/CLI support first-class from day one, and add editor UX only as a thin layer over those same services.
-
 ## GodotEnv development flow
 
 This repo uses the AeroBeat GodotEnv package convention.
 
+- Canonical package dependency manifest: `addons.jsonc`
 - Canonical dev/test manifest: `.testbed/addons.jsonc`
 - Installed dev/test addons: `.testbed/addons/`
 - GodotEnv cache: `.testbed/.addons/`
 - Hidden workbench project: `.testbed/project.godot`
-- Repo-local unit tests: `.testbed/tests/`
-
-The repo root remains the package/published boundary for downstream consumers. Day-to-day development, debugging, and validation happen from the hidden `.testbed/` workbench using the pinned OpenClaw toolchain: Godot `4.6.2 stable standard`.
+- Root workflow tests: `tests/`
 
 ### Restore dev/test dependencies
 
@@ -110,20 +134,16 @@ From the repo root:
 godot --headless --path .testbed --import
 ```
 
-### Run unit tests
+### Run the headless workflow tests
 
 From the repo root:
 
 ```bash
-godot --headless --path .testbed --script addons/gut/gut_cmdln.gd \
-  -gdir=res://tests \
-  -ginclude_subdirs \
-  -gexit
+godot --headless --path .testbed --script ../tests/run_tool_tests.gd
 ```
 
 ## Validation notes
 
-- `.testbed/addons.jsonc` is the committed dev/test dependency contract.
-- This repo should depend on `aerobeat-tool-core` and `aerobeat-content-core`, not a legacy catch-all `aerobeat-core` package.
-- Repo-local tests should verify that CLI/headless and editor entrypoints use the same shared services as implementation fills in.
-- The current package shape is still consumed from the repo root (`subfolder: "/"`) for downstream installs.
+- The validation scaffold intentionally targets the `aerobeat-content-core` package fixture directory shape (`manifest.json`, `songs/`, `routines/`, `charts/`, `workouts/`).
+- The service layer currently performs lightweight structural validation suitable for the first scaffold slice.
+- As richer shared contracts land in `aerobeat-content-core` and `aerobeat-tool-core`, those services should tighten around those canonical DTOs rather than growing duplicate schema logic here.
