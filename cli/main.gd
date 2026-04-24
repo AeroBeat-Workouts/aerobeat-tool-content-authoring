@@ -6,6 +6,7 @@ const MigrateCommand = preload("commands/migrate_command.gd")
 const PackageCommand = preload("commands/package_command.gd")
 const ImportCommand = preload("commands/import_command.gd")
 const InspectCommand = preload("commands/inspect_command.gd")
+const AuthorCommand = preload("commands/author_command.gd")
 
 var _commands: Dictionary = {
 	"validate": ValidateCommand.new(),
@@ -13,6 +14,7 @@ var _commands: Dictionary = {
 	"package": PackageCommand.new(),
 	"import": ImportCommand.new(),
 	"inspect": InspectCommand.new(),
+	"author": AuthorCommand.new(),
 }
 
 func run_cli(args: Array) -> Dictionary:
@@ -21,7 +23,7 @@ func run_cli(args: Array) -> Dictionary:
 			"ok": false,
 			"exitCode": 2,
 			"data": {"error": "Expected a command."},
-			"output": "Expected one of: validate, migrate, package, import, inspect.",
+			"output": "Expected one of: validate, migrate, package, import, inspect, author.",
 		}
 	var command_name: String = String(args[0])
 	var command: Variant = _commands.get(command_name)

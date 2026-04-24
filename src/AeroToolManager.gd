@@ -3,6 +3,7 @@ extends Node
 
 const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
 const BuildContentPackageService = preload("../services/packaging/build_content_package_service.gd")
+const ChartAuthoringService = preload("../services/authoring/chart_authoring_service.gd")
 const ContentAuthoringPlugin = preload("../editor/plugins/content_authoring_plugin.gd")
 
 signal initialized
@@ -29,3 +30,6 @@ func get_validate_package_service() -> ValidatePackageService:
 
 func get_build_content_package_service() -> BuildContentPackageService:
 	return _service_registry.get("build_content_package") as BuildContentPackageService
+
+func get_chart_authoring_service() -> ChartAuthoringService:
+	return _service_registry.get("chart_authoring") as ChartAuthoringService
