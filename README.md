@@ -8,7 +8,7 @@ It exists to give humans, CI, and other automation a shared place to **author, i
 
 This repo sits on top of the approved lane-based architecture:
 
-- `aerobeat-content-core` owns canonical content contracts such as `Song`, `Routine`, `Chart Variant`, `Workout`, shared chart-envelope contracts, manifests, ids, and shared structural validation rules.
+- `aerobeat-content-core` owns canonical content contracts such as `Song`, `Routine`, `Chart`, `Workout`, shared chart-envelope contracts, manifests, ids, and shared structural validation rules.
 - `aerobeat-tool-core` owns shared tool-side DTOs, operation/result models, progress/report contracts, and other tooling-common interfaces.
 - `aerobeat-tool-content-authoring` owns the concrete workflows that operate on that content: authoring, validation orchestration, migration, packaging, import/export, and inspection.
 
@@ -32,7 +32,7 @@ The important rule is:
 
 The repo now includes a minimal but real first slice for:
 
-- authoring service boundaries for routines, workouts, and chart variants
+- authoring service boundaries for routines, workouts, and charts
 - package validation aligned to the `aerobeat-content-core` fixture path shape
 - packaging/build workflow scaffolding
 - migration and import workflow scaffolding
@@ -78,7 +78,7 @@ Examples from the current scaffold:
 
 This repo is the correct home for workflow-oriented content tooling such as:
 
-- authoring services for routines, workouts, and chart variants
+- authoring services for routines, workouts, and charts
 - validation orchestration for packages and charts
 - migration workflows for approved schema changes
 - package-building flows

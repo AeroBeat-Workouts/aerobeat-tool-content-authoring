@@ -9,7 +9,7 @@ func import_source(source_path: String, options: Dictionary = {}) -> Dictionary:
 		"sourcePath": source_path,
 		"recordKind": "chart",
 		"record": {
-			"schema": "aerobeat.content.chart_variant.v1",
+			"schema": "aerobeat.content.chart.v1",
 			"chartId": chart_id,
 			"routineId": String(options.get("routineId", parsed.get("routineId", ""))),
 			"songId": String(options.get("songId", parsed.get("songId", ""))),

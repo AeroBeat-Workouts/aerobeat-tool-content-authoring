@@ -1,7 +1,7 @@
-class_name ChartVariantAuthoringService
+class_name ChartAuthoringService
 extends "../../interfaces/authoring_service.gd"
 
-const DEFAULT_SCHEMA := "aerobeat.content.chart_variant.v1"
+const DEFAULT_SCHEMA := "aerobeat.content.chart.v1"
 
 func upsert_record(record_data: Dictionary) -> Dictionary:
 	var chart := {
