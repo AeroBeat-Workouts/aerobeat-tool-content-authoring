@@ -41,23 +41,22 @@ func ensure_chart_membership(package_dir: String, routine_id: String, chart_id: 
 	if routine.is_empty():
 		return _error("Routine file '%s' is missing or invalid JSON." % routine_path, {"routinePath": routine_path})
 
-	var normalized_result: Dictionary = upsert_record(routine)
-	var normalized_routine: Dictionary = normalized_result.get("record", {})
-	var charts: Array = normalized_routine.get("charts", []).duplicate(true)
+	var updated_routine: Dictionary = routine.duplicate(true)
+	var charts: Array = _normalize_chart_ids(updated_routine.get("charts", []))
 	var chart_added := false
 	if not charts.has(chart_id):
 		charts.append(chart_id)
 		chart_added = true
-	normalized_routine["charts"] = charts
+	updated_routine["charts"] = charts
 
-	var write_result: Dictionary = _write_json(routine_file_path, normalized_routine)
+	var write_result: Dictionary = _write_json(routine_file_path, updated_routine)
 	if not bool(write_result.get("ok", false)):
 		return write_result
 
 	return {
 		"ok": true,
 		"recordKind": "routine",
-		"record": normalized_routine,
+		"record": updated_routine,
 		"routinePath": routine_path,
 		"chartAdded": chart_added,
 	}

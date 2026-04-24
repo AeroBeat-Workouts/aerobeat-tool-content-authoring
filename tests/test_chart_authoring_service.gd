@@ -39,6 +39,7 @@ static func run() -> Dictionary:
 		and FileAccess.file_exists(chart_path) \
 		and manifest_has_chart \
 		and Array(routine.get("charts", [])).has("chart_demo_boxing_hard") \
+		and not routine.has("title") \
 		and String(chart.get("difficulty", "")) == "hard" \
 		and String(chart.get("interactionFamily", "")) == "gesture_2d" \
 		and bool(validation.get("valid", false))

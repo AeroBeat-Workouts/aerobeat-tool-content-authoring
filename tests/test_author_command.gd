@@ -41,6 +41,7 @@ static func run() -> Dictionary:
 		and int(result.get("exitCode", 1)) == 0 \
 		and FileAccess.file_exists(chart_path) \
 		and Array(routine.get("charts", [])).has("chart_demo_boxing_pro") \
+		and not routine.has("title") \
 		and bool(validation.get("valid", false))
 	return {
 		"name": "test_author_command",
