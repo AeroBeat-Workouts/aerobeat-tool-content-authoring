@@ -108,7 +108,15 @@ That includes:
    - not entitlement, trust, or signatures
    - those belong to future service/distribution layers
 
-5. **Silent repair of authored content**
+5. **Catalog persistence implementation**
+   - this repo may emit or validate package-derived data that downstream local or remote catalog systems consume
+   - it does not own the installed-library DB or the remote catalog DB as product surfaces
+   - if those systems exist, they should use the same shared browse core rather than divergent local-vs-remote schemas
+   - shared core browse tables should be `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+   - local-only install/runtime state belongs in `workout_local`
+   - remote-only distribution state belongs in `workout_remote`
+
+6. **Silent repair of authored content**
    - this repo may detect, suggest, preview, and apply requested changes
    - it must not quietly rewrite creator-authored meaning behind their back
 
@@ -150,11 +158,19 @@ Own:
 
 Own:
 
-- remote catalog metadata
+- remote catalog persistence and APIs built on the shared browse core
 - upload/review/publication flows
 - moderation state
 - signing/integrity/trust policy
 - remote leaderboard authority
+
+Implementation note for future authoring/distribution tooling:
+
+- local and remote catalog DBs should share the same browse-core tables: `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+- local installed-library concerns extend that core with `workout_local`
+- remote catalog/distribution concerns extend that core with `workout_remote`
+- remote preview and download metadata belong in `workout_remote`, using locked strategies `direct_url` or `api_resolve`
+- do not split the core into separate local-only versus remote-only copies of workout/song/tag/etc. tables
 
 ---
 
@@ -360,6 +376,18 @@ Only through explicit workflow actions:
 - human-readable validation/migration reports
 - optional refreshed local index artifacts when the chosen workflow explicitly asks for them
 
+### Catalog projection guardrails
+
+If this tool later emits local or remote catalog projections as a workflow artifact:
+
+- project both targets from the same shared browse core instead of maintaining divergent local-vs-remote schemas
+- the shared browse core is `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+- local-only state belongs in `workout_local`
+- remote-only distribution state belongs in `workout_remote`
+- `cover_art_path` is not a shared-core browse field in the current v1 proposal
+- remote preview metadata belongs in `workout_remote` via preview strategy/url fields, not in the shared core
+- remote download and preview strategies are locked to `direct_url` and `api_resolve`
+
 ### The tool validates
 
 1. **Package shape**
@@ -379,11 +407,15 @@ Only through explicit workflow actions:
    - disabled coaching uses a minimal coach config containing only `enabled: false`
    - enabled coaching requires a coach roster, warmup video, cooldown video, and exactly one overlay audio clip per workout entry
    - all coach-config file paths must resolve inside the package when required
+   - `default_coach_name` is not part of the v1 contract
    - legacy coach support fields such as `coach_avatar`, `coach_voice`, avatar ids, voice ids, or trigger graphs are not part of the v1 contract and should fail validation if surfaced as required authoring behavior
    - entry-selectable asset types are only `gloves`, `targets`, `obstacles`, `trails`
+   - `workout_assets` is not part of the current v1 proposal
    - each session entry has exactly one environment
    - at most one asset per asset type per entry
    - unknown asset types fail validation
+   - song genres are author-provided metadata chosen from a locked enum; validators must not invent genres
+   - workout difficulty values are locked to `easy`, `medium`, `hard`, `pro`
 
 4. **Submission cleanliness**
    - `cache/` is omitted/ignored for submission payloads
