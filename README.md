@@ -2,7 +2,11 @@
 
 `aerobeat-tool-content-authoring` is the first concrete **Tool-lane** repo for AeroBeat content authoring.
 
-It exists to give humans, CI, and other automation a shared place to **author, inspect, validate, migrate, package, and transform canonical AeroBeat content**. This repo owns those workflows; it does **not** own the durable meaning of the content itself.
+It exists to give humans, CI, and other automation a shared place to **author, inspect, validate, migrate, package, and transform canonical AeroBeat workout packages**. This repo owns those workflows; it does **not** own the durable meaning of the content itself.
+
+The current definition-phase source of truth for repo scope, day-one workflows, and the package/content-core contract lives in:
+
+- [`docs/content-authoring-tool-definition.md`](docs/content-authoring-tool-definition.md)
 
 ## Purpose
 
