@@ -1,7 +1,7 @@
 # AeroBeat Content Authoring Tool Definition
 
-**Date:** 2026-04-25  
-**Status:** Proposed definition  
+**Date:** 2026-04-25
+**Status:** Proposed definition
 **Repo:** `aerobeat-tool-content-authoring`
 
 ---
@@ -50,7 +50,7 @@ That includes:
 
 2. **Record authoring helpers**
    - create/add/update package records through explicit tool operations
-   - help creators add songs, routines, charts, environments, assets, and coach config entries
+   - help creators add songs, routines, charts, environments, assets, workout entries, and the single package-level coach config
    - keep package manifests and cross-file references coherent when the user chooses a tool-driven operation
 
 3. **Validation orchestration**
@@ -174,7 +174,7 @@ Minimum output:
 
 - `workout.yaml`
 - `songs/`, `routines/`, `charts/`, `coaches/`, `environments/`, `assets/`, `media/`
-- one coach config file
+- exactly one `coaches/coach-config.yaml`
 - starter metadata fields (`schemaId`, `schemaVersion`, `recordVersion`, `createdByTool`, timestamps)
 
 ### B. Inspect a package
@@ -203,10 +203,12 @@ Minimum checks:
 - YAML parses
 - ids are unique
 - references resolve
-- exactly one coach-config exists
+- exactly one `coaches/coach-config.yaml` exists per package
+- coaching is optional, but only as an all-or-nothing package setting
+- when coaching is disabled, the coach config is minimal and contains only `enabled: false`
+- when coaching is enabled, the coach config includes a required coach roster, required warmup video, required cooldown video, and per-entry overlay audio clips keyed by `entryId`
+- when coaching is enabled, every workout entry has exactly one overlay audio clip and every referenced file path exists
 - `assetSelections` only use allowed entry-selectable asset types
-- coach avatar/voice assets are referenced only through coach config
-- package-local media paths exist when required
 - `cache/` is ignored or flagged appropriately for export/submission
 
 ### D. Add or scaffold individual records
@@ -222,8 +224,8 @@ Day-one record actions:
 - add chart for a routine
 - add environment
 - add asset
-- add coach overlay / coach support asset references
-- add workout session entry referencing exact ids
+- add or toggle the package-level `coaches/coach-config.yaml`
+- add workout session entry referencing exact ids, including the matching coaching overlay clip when coaching is enabled
 
 Important limit:
 
@@ -363,17 +365,22 @@ Only through explicit workflow actions:
 1. **Package shape**
    - required files/folders
    - exactly one `workout.yaml`
-   - exactly one coach-config YAML under `coaches/`
+   - exactly one `coaches/coach-config.yaml` per package
 
 2. **Record coherence**
    - ids exist and are unique
    - `workout.yaml` references resolve to package records
    - chart -> routine -> song links are coherent
    - environment and asset ids resolve correctly
+   - if coaching is enabled, coach overlay clips are keyed by `entryId` and cover workout entries one-to-one
 
 3. **Locked v1 package rules**
+   - coaching is optional as an all-or-nothing package setting
+   - disabled coaching uses a minimal coach config containing only `enabled: false`
+   - enabled coaching requires a coach roster, warmup video, cooldown video, and exactly one overlay audio clip per workout entry
+   - all coach-config file paths must resolve inside the package when required
+   - legacy coach support fields such as `coach_avatar`, `coach_voice`, avatar ids, voice ids, or trigger graphs are not part of the v1 contract and should fail validation if surfaced as required authoring behavior
    - entry-selectable asset types are only `gloves`, `targets`, `obstacles`, `trails`
-   - `coach_avatar` and `coach_voice` are only used via coach config
    - each session entry has exactly one environment
    - at most one asset per asset type per entry
    - unknown asset types fail validation
@@ -389,7 +396,9 @@ Day one should scaffold:
 - package root and domain folders
 - package metadata boilerplate
 - starter `workout.yaml`
-- starter `coach-config.yaml`
+- starter `coaches/coach-config.yaml`
+- if coaching is disabled, scaffold only `enabled: false`
+- if coaching is enabled, scaffold the required coach roster, warmup video, cooldown video, and per-entry overlay audio placeholders keyed by `entryId`
 - starter song/routine/chart/environment/asset records
 - entry stubs wired to exact ids
 
