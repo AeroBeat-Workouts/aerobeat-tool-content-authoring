@@ -14,7 +14,7 @@ That definition also locks the downstream catalog stance for future tooling: loc
 
 This repo sits on top of the approved lane-based architecture:
 
-- `aerobeat-content-core` owns canonical content contracts such as `Song`, `Routine`, `Chart`, `Workout`, shared chart-envelope contracts, manifests, ids, and shared structural validation rules.
+- `aerobeat-content-core` owns canonical content contracts such as `Song`, `Chart`, `Set`, `Workout`, shared chart-envelope contracts, manifests, ids, and shared structural validation rules.
 - `aerobeat-tool-core` owns shared tool-side DTOs, operation/result models, progress/report contracts, and other tooling-common interfaces.
 - `aerobeat-tool-content-authoring` owns the concrete workflows that operate on that content: authoring, validation orchestration, migration, packaging, import/export, and inspection.
 
@@ -38,7 +38,7 @@ The important rule is:
 
 The repo now includes a minimal but real first slice for:
 
-- authoring service boundaries for routines, workouts, and charts
+- authoring service boundaries for songs, charts, sets, and workouts
 - package validation aligned to the `aerobeat-content-core` fixture path shape
 - packaging/build workflow scaffolding
 - migration and import workflow scaffolding
@@ -84,7 +84,7 @@ Examples from the current scaffold:
 
 This repo is the correct home for workflow-oriented content tooling such as:
 
-- authoring services for routines, workouts, and charts
+- authoring services for songs, charts, sets, and workouts
 - validation orchestration for packages and charts
 - migration workflows for approved schema changes
 - package-building flows
@@ -152,6 +152,6 @@ godot --headless --path .testbed --script ../tests/run_tool_tests.gd
 
 - The authoritative runnable validation path is the headless workflow runner at `tests/run_tool_tests.gd`, executed with `godot --headless --path .testbed --script ../tests/run_tool_tests.gd`.
 - `.testbed` is the hidden import/workbench project used to restore addons and provide a Godot project context for headless execution; it is not a separate authoritative test suite.
-- The validation scaffold should stay aligned to the approved package shape described in `docs/content-authoring-tool-definition.md` (`workout.yaml`, `songs/`, `routines/`, `charts/`, `coaches/`, `environments/`, `assets/`, `media/`).
+- The validation scaffold should stay aligned to the approved package shape described in `docs/content-authoring-tool-definition.md` (`workout.yaml`, `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`, `media/`).
 - The service layer currently performs lightweight structural validation suitable for the first scaffold slice.
 - As richer shared contracts land in `aerobeat-content-core` and `aerobeat-tool-core`, those services should tighten around those canonical DTOs rather than growing duplicate schema logic here.

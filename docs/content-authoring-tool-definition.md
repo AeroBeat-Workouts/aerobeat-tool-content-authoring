@@ -28,7 +28,7 @@ It is not the source of truth for content meaning. It is the source of truth for
 
 In plain terms:
 
-- `aerobeat-content-core` defines what a valid `Song`, `Routine`, `Chart`, `Workout`, `Coach Config`, `Environment`, and `Asset` record means.
+- `aerobeat-content-core` defines what a valid `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, `Environment`, and `Asset` record means.
 - `aerobeat-tool-content-authoring` defines how a creator or CI job can create, inspect, validate, scaffold, migrate, package, and normalize a workout package that uses those records.
 
 If `content-core` is the language, this repo is the authoring toolbox.
@@ -50,8 +50,8 @@ That includes:
 
 2. **Record authoring helpers**
    - create/add/update package records through explicit tool operations
-   - help creators add songs, routines, charts, environments, assets, workout entries, and the single package-level coach config
-   - keep package manifests and cross-file references coherent when the user chooses a tool-driven operation
+   - help creators add songs, charts, sets, environments, assets, workout entries, and the single package-level coach config
+   - keep package manifests and cross-file references coherent when the user chooses a tool-driven operation, with sets as the single song/chart linker
 
 3. **Validation orchestration**
    - run shared structural validation from `aerobeat-content-core`
@@ -85,7 +85,7 @@ That includes:
 ### This repo does not own
 
 1. **Canonical record/schema definitions**
-   - not `Song`, `Routine`, `Chart`, `Workout`, `Coach Config`, `Environment`, `Asset` field ownership
+   - not `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, `Environment`, `Asset` field ownership
    - not schema ids/versions
    - not the shared chart envelope contract
    - those live in `aerobeat-content-core`
@@ -189,7 +189,7 @@ Goal:
 Minimum output:
 
 - `workout.yaml`
-- `songs/`, `routines/`, `charts/`, `coaches/`, `environments/`, `assets/`, `media/`
+- `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`, `media/`
 - exactly one `coaches/coach-config.yaml`
 - starter metadata fields (`schemaId`, `schemaVersion`, `recordVersion`, `createdByTool`, timestamps)
 
@@ -236,8 +236,8 @@ Goal:
 Day-one record actions:
 
 - add song
-- add routine for a song/mode
-- add chart for a routine
+- add chart for a song/mode compatibility slice
+- add set that links one exact song and one exact chart
 - add environment
 - add asset
 - add or toggle the package-level `coaches/coach-config.yaml`
@@ -355,7 +355,7 @@ The demo package is not just docs wallpaper. It should act as the **teaching fix
 From package contents:
 
 - `workout.yaml`
-- all domain YAML files under `songs/`, `routines/`, `charts/`, `coaches/`, `environments/`, `assets/`
+- all domain YAML files under `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`
 - package-local media/resource paths when validating or exporting
 - optional `cache/` only for ignore/strip/report behavior, not as authored truth
 
@@ -398,7 +398,7 @@ If this tool later emits local or remote catalog projections as a workflow artif
 2. **Record coherence**
    - ids exist and are unique
    - `workout.yaml` references resolve to package records
-   - chart -> routine -> song links are coherent
+   - set -> chart -> song composition is coherent, with the set acting as the only linker
    - environment and asset ids resolve correctly
    - if coaching is enabled, coach overlay clips are keyed by `entryId` and cover workout entries one-to-one
 
@@ -431,7 +431,7 @@ Day one should scaffold:
 - starter `coaches/coach-config.yaml`
 - if coaching is disabled, scaffold only `enabled: false`
 - if coaching is enabled, scaffold the required coach roster, warmup video, cooldown video, and per-entry overlay audio placeholders keyed by `entryId`
-- starter song/routine/chart/environment/asset records
+- starter song/chart/set/environment/asset records
 - entry stubs wired to exact ids
 
 The scaffold should aim for **valid boring correctness**, not maximal convenience magic.
@@ -508,7 +508,7 @@ Examples only; naming can still change.
 - `aerobeat-content inspect package <path>`
 - `aerobeat-content validate package <path>`
 - `aerobeat-content add song <package-path> ...`
-- `aerobeat-content add routine <package-path> ...`
+- `aerobeat-content add set <package-path> ...`
 - `aerobeat-content add chart <package-path> ...`
 - `aerobeat-content add environment <package-path> ...`
 - `aerobeat-content add asset <package-path> ...`
