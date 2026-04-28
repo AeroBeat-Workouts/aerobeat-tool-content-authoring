@@ -65,6 +65,7 @@ func _normalize_chart(record_data: Dictionary) -> Dictionary:
 	chart["difficulty"] = _normalize_token(String(chart.get("difficulty", "medium")), "medium")
 	chart["interactionFamily"] = _normalize_token(String(chart.get("interactionFamily", "gesture_2d")), "gesture_2d")
 	chart["events"] = _duplicate_array(chart.get("events", []))
+	chart.erase("timing")
 	if chart.has("chartName"):
 		chart["chartName"] = String(chart.get("chartName", "")).strip_edges()
 	return chart

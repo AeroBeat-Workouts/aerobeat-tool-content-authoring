@@ -23,10 +23,6 @@ static func run() -> Dictionary:
 			{"beat": 2, "type": "cross_right"},
 			{"beat": 4, "type": "hook_left"},
 		],
-		"timing": {
-			"resolution": 16,
-			"beatOffset": 0,
-		},
 	}
 	var result: Dictionary = ChartAuthoringService.new().upsert_record(chart_input)
 	var validation: Dictionary = ValidatePackageService.new().validate_path(output_dir)
@@ -34,7 +30,9 @@ static func run() -> Dictionary:
 	var manifest: Dictionary = _load_json(output_dir.path_join("manifest.json"))
 	var routine: Dictionary = _load_json(output_dir.path_join("routines/song-demo-boxing.json"))
 	var chart: Dictionary = _load_json(chart_path)
+	var song: Dictionary = _load_json(output_dir.path_join("songs/song-demo.json"))
 	var manifest_has_chart := _manifest_has_path(manifest.get("charts", []), "charts/song-demo-boxing-hard.json")
+	var timing: Dictionary = song.get("timing", {})
 	var passed := bool(result.get("ok", false)) \
 		and FileAccess.file_exists(chart_path) \
 		and manifest_has_chart \
@@ -42,6 +40,8 @@ static func run() -> Dictionary:
 		and not routine.has("title") \
 		and String(chart.get("difficulty", "")) == "hard" \
 		and String(chart.get("interactionFamily", "")) == "gesture_2d" \
+		and not chart.has("timing") \
+		and int(timing.get("anchorMs", -1)) == 0 \
 		and bool(validation.get("valid", false))
 	return {
 		"name": "test_chart_authoring_service",
@@ -54,6 +54,7 @@ static func run() -> Dictionary:
 			"manifest": manifest,
 			"routine": routine,
 			"chart": chart,
+			"song": song,
 		},
 	}
 

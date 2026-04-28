@@ -5,11 +5,12 @@ const ValidateChartService = preload("validate_chart_service.gd")
 
 const REQUIRED_MANIFEST_FIELDS := ["schema", "packageId", "packageVersion"]
 const REQUIRED_RECORD_FIELDS := {
-	"song": ["schema", "songId", "songName"],
+	"song": ["schema", "songId", "songName", "timing"],
 	"routine": ["schema", "routineId", "songId", "mode", "charts"],
 	"chart": ["schema", "chartId", "routineId", "songId", "mode", "difficulty", "interactionFamily"],
 	"workout": ["schema", "workoutId", "workoutName", "steps"],
 }
+const SONG_TIMING_REQUIRED_FIELDS := ["anchorMs", "tempoSegments", "stopSegments", "timeSignatureSegments"]
 
 var _chart_validator: ValidateChartService = ValidateChartService.new()
 
@@ -64,8 +65,88 @@ func _validate_record_shapes(records: Array, kind: String) -> Array:
 			issues.append(_issue("duplicate_id", "Duplicate %s id '%s'." % [kind, record_id], path, {"kind": kind, "id": record_id}))
 		else:
 			seen_ids[record_id] = true
+		if kind == "song":
+			issues.append_array(_validate_song_timing(path, data))
 		if kind == "chart":
 			issues.append_array(_chart_validator.validate_chart_record(data, path))
+	return issues
+
+func _validate_song_timing(path: String, song: Dictionary) -> Array:
+	var issues: Array = []
+	if not song.has("timing"):
+		return issues
+	var timing_value: Variant = song.get("timing")
+	if not (timing_value is Dictionary):
+		issues.append(_issue("song_timing_invalid_type", "Song timing must be a dictionary.", path, {"field": "timing"}))
+		return issues
+	var timing: Dictionary = timing_value
+	if timing.has("bpm"):
+		issues.append(_issue("song_timing_bpm_shortcut_forbidden", "Song timing must use tempoSegments and must not include a timing.bpm shortcut.", path, {"field": "timing.bpm"}))
+	for field in SONG_TIMING_REQUIRED_FIELDS:
+		if not timing.has(field):
+			issues.append(_issue("song_timing_missing_field", "Song timing is missing required field '%s'." % field, path, {"field": "timing.%s" % field}))
+	if timing.has("anchorMs") and not _is_integer_number(timing.get("anchorMs")):
+		issues.append(_issue("song_timing_anchor_invalid_type", "Song timing anchorMs must be an integer millisecond value.", path, {"field": "timing.anchorMs"}))
+	issues.append_array(_validate_tempo_segments(path, timing))
+	issues.append_array(_validate_stop_segments(path, timing))
+	issues.append_array(_validate_time_signature_segments(path, timing))
+	return issues
+
+func _validate_tempo_segments(path: String, timing: Dictionary) -> Array:
+	var issues: Array = []
+	if not timing.has("tempoSegments"):
+		return issues
+	var segments_value: Variant = timing.get("tempoSegments")
+	if not (segments_value is Array):
+		issues.append(_issue("song_tempo_segments_invalid_type", "Song timing tempoSegments must be an array.", path, {"field": "timing.tempoSegments"}))
+		return issues
+	for index in range(segments_value.size()):
+		var segment_value: Variant = segments_value[index]
+		if not (segment_value is Dictionary):
+			issues.append(_issue("song_tempo_segment_invalid_type", "Song tempo segment entries must be dictionaries.", path, {"field": "timing.tempoSegments[%d]" % index, "index": index}))
+			continue
+		var segment: Dictionary = segment_value
+		for field in ["startBeat", "bpm"]:
+			if not segment.has(field):
+				issues.append(_issue("song_tempo_segment_missing_field", "Song tempo segment is missing required field '%s'." % field, path, {"field": "timing.tempoSegments[%d].%s" % [index, field], "index": index}))
+	return issues
+
+func _validate_stop_segments(path: String, timing: Dictionary) -> Array:
+	var issues: Array = []
+	if not timing.has("stopSegments"):
+		return issues
+	var segments_value: Variant = timing.get("stopSegments")
+	if not (segments_value is Array):
+		issues.append(_issue("song_stop_segments_invalid_type", "Song timing stopSegments must be an array.", path, {"field": "timing.stopSegments"}))
+		return issues
+	for index in range(segments_value.size()):
+		var segment_value: Variant = segments_value[index]
+		if not (segment_value is Dictionary):
+			issues.append(_issue("song_stop_segment_invalid_type", "Song stop segment entries must be dictionaries.", path, {"field": "timing.stopSegments[%d]" % index, "index": index}))
+			continue
+		var segment: Dictionary = segment_value
+		for field in ["startBeat", "durationMs"]:
+			if not segment.has(field):
+				issues.append(_issue("song_stop_segment_missing_field", "Song stop segment is missing required field '%s'." % field, path, {"field": "timing.stopSegments[%d].%s" % [index, field], "index": index}))
+	return issues
+
+func _validate_time_signature_segments(path: String, timing: Dictionary) -> Array:
+	var issues: Array = []
+	if not timing.has("timeSignatureSegments"):
+		return issues
+	var segments_value: Variant = timing.get("timeSignatureSegments")
+	if not (segments_value is Array):
+		issues.append(_issue("song_time_signature_segments_invalid_type", "Song timing timeSignatureSegments must be an array.", path, {"field": "timing.timeSignatureSegments"}))
+		return issues
+	for index in range(segments_value.size()):
+		var segment_value: Variant = segments_value[index]
+		if not (segment_value is Dictionary):
+			issues.append(_issue("song_time_signature_segment_invalid_type", "Song time-signature segment entries must be dictionaries.", path, {"field": "timing.timeSignatureSegments[%d]" % index, "index": index}))
+			continue
+		var segment: Dictionary = segment_value
+		for field in ["startBeat", "numerator", "denominator"]:
+			if not segment.has(field):
+				issues.append(_issue("song_time_signature_segment_missing_field", "Song time-signature segment is missing required field '%s'." % field, path, {"field": "timing.timeSignatureSegments[%d].%s" % [index, field], "index": index}))
 	return issues
 
 func _validate_references(record_sets: Dictionary) -> Array:
@@ -171,3 +252,6 @@ func _is_missing_value(value: Variant) -> bool:
 	if value is Array:
 		return value.is_empty()
 	return false
+
+func _is_integer_number(value: Variant) -> bool:
+	return value is int or (value is float and floor(value) == value)
