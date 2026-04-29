@@ -13,7 +13,7 @@ func import_source(source_path: String, options: Dictionary = {}) -> Dictionary:
 			"chartId": chart_id,
 			"routineId": String(options.get("routineId", parsed.get("routineId", ""))),
 			"songId": String(options.get("songId", parsed.get("songId", ""))),
-			"mode": String(options.get("mode", parsed.get("mode", "boxing"))),
+			"feature": String(options.get("feature", parsed.get("feature", "boxing"))),
 			"difficulty": String(options.get("difficulty", parsed.get("difficulty", "medium"))),
 			"interactionFamily": String(options.get("interactionFamily", parsed.get("interactionFamily", "gesture_2d"))),
 			"events": parsed.get("events", []),

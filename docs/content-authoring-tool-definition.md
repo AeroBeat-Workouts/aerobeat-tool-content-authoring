@@ -112,7 +112,7 @@ That includes:
    - this repo may emit or validate package-derived data that downstream local or remote catalog systems consume
    - it does not own the installed-library DB or the remote catalog DB as product surfaces
    - if those systems exist, they should use the same shared browse core rather than divergent local-vs-remote schemas
-   - shared core browse tables should be `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+   - shared core browse tables should be `workouts`, `tags`, `features`, `difficulties`, `songs`, `coaches`, `genres`
    - local-only install/runtime state belongs in `workout_local`
    - remote-only distribution state belongs in `workout_remote`
 
@@ -166,7 +166,7 @@ Own:
 
 Implementation note for future authoring/distribution tooling:
 
-- local and remote catalog DBs should share the same browse-core tables: `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+- local and remote catalog DBs should share the same browse-core tables: `workouts`, `tags`, `features`, `difficulties`, `songs`, `coaches`, `genres`
 - local installed-library concerns extend that core with `workout_local`
 - remote catalog/distribution concerns extend that core with `workout_remote`
 - remote preview and download metadata belong in `workout_remote`, using locked strategies `direct_url` or `api_resolve`
@@ -236,7 +236,7 @@ Goal:
 Day-one record actions:
 
 - add song
-- add chart for a song/mode compatibility slice
+- add chart for a song/feature compatibility slice
 - add set that links one exact song and one exact chart
 - add environment
 - add asset
@@ -381,7 +381,7 @@ Only through explicit workflow actions:
 If this tool later emits local or remote catalog projections as a workflow artifact:
 
 - project both targets from the same shared browse core instead of maintaining divergent local-vs-remote schemas
-- the shared browse core is `workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`
+- the shared browse core is `workouts`, `tags`, `features`, `difficulties`, `songs`, `coaches`, `genres`
 - local-only state belongs in `workout_local`
 - remote-only distribution state belongs in `workout_remote`
 - `cover_art_path` is not a shared-core browse field in the current v1 proposal

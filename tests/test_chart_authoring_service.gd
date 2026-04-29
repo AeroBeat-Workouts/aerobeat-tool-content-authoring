@@ -15,7 +15,7 @@ static func run() -> Dictionary:
 		"chartName": " Demo Boxing Hard ",
 		"songId": "song_demo",
 		"routineId": "routine_demo_boxing",
-		"mode": " Boxing ",
+		"feature": " Boxing ",
 		"difficulty": " Hard ",
 		"interactionFamily": " Gesture 2D ",
 		"events": [

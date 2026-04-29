@@ -9,7 +9,7 @@ func upsert_record(record_data: Dictionary) -> Dictionary:
 	routine["schema"] = String(routine.get("schema", DEFAULT_SCHEMA)).strip_edges()
 	routine["routineId"] = String(routine.get("routineId", "")).strip_edges()
 	routine["songId"] = String(routine.get("songId", "")).strip_edges()
-	routine["mode"] = _normalize_token(String(routine.get("mode", "boxing")), "boxing")
+	routine["feature"] = _normalize_token(String(routine.get("feature", "boxing")), "boxing")
 	routine["title"] = String(routine.get("title", routine.get("routineName", ""))).strip_edges()
 	routine["charts"] = _normalize_chart_ids(routine.get("charts", []))
 	return {

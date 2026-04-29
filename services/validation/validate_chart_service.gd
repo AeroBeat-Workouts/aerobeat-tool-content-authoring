@@ -1,17 +1,17 @@
 class_name ValidateChartService
 extends RefCounted
 
-const VALID_MODES := ["boxing", "dance", "step", "flow"]
+const VALID_FEATURES := ["boxing", "dance", "step", "flow"]
 const VALID_DIFFICULTIES := ["easy", "medium", "hard", "pro"]
 const VALID_INTERACTION_FAMILIES := ["gesture_2d", "tracked_6dof", "hybrid"]
 
 func validate_chart_record(chart_data: Dictionary, path: String = "") -> Array:
 	var issues: Array = []
-	for field in ["schema", "chartId", "routineId", "songId", "mode", "difficulty", "interactionFamily"]:
+	for field in ["schema", "chartId", "routineId", "songId", "feature", "difficulty", "interactionFamily"]:
 		if String(chart_data.get(field, "")).is_empty():
 			issues.append(_issue("required_field_missing", "%s is missing required field '%s'." % [path if not path.is_empty() else "chart", field], path, {"field": field}))
-	if not chart_data.get("mode", "") in VALID_MODES:
-		issues.append(_issue("invalid_mode", "Chart mode must be one of the canonical content modes.", path, {"mode": chart_data.get("mode", "")}))
+	if not chart_data.get("feature", "") in VALID_FEATURES:
+		issues.append(_issue("invalid_feature", "Chart feature must be one of the canonical content features.", path, {"feature": chart_data.get("feature", "")}))
 	if not chart_data.get("difficulty", "") in VALID_DIFFICULTIES:
 		issues.append(_issue("invalid_difficulty", "Chart difficulty must be one of easy/medium/hard/pro.", path, {"difficulty": chart_data.get("difficulty", "")}))
 	if not chart_data.get("interactionFamily", "") in VALID_INTERACTION_FAMILIES:

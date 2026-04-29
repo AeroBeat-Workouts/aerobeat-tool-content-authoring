@@ -6,8 +6,8 @@ const ValidateChartService = preload("validate_chart_service.gd")
 const REQUIRED_MANIFEST_FIELDS := ["schema", "packageId", "packageVersion"]
 const REQUIRED_RECORD_FIELDS := {
 	"song": ["schema", "songId", "songName", "timing"],
-	"routine": ["schema", "routineId", "songId", "mode", "charts"],
-	"chart": ["schema", "chartId", "routineId", "songId", "mode", "difficulty", "interactionFamily"],
+	"routine": ["schema", "routineId", "songId", "feature", "charts"],
+	"chart": ["schema", "chartId", "routineId", "songId", "feature", "difficulty", "interactionFamily"],
 	"workout": ["schema", "workoutId", "workoutName", "steps"],
 }
 const SONG_TIMING_REQUIRED_FIELDS := ["anchorMs", "tempoSegments", "stopSegments", "timeSignatureSegments"]

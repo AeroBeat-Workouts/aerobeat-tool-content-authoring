@@ -8,7 +8,7 @@ The current definition-phase source of truth for repo scope, day-one workflows, 
 
 - [`docs/content-authoring-tool-definition.md`](docs/content-authoring-tool-definition.md)
 
-That definition also locks the downstream catalog stance for future tooling: local and remote workout catalogs should project from one shared browse core (`workouts`, `tags`, `modes`, `difficulties`, `songs`, `coaches`, `genres`) with companion tables `workout_local` and `workout_remote`, rather than divergent local-vs-remote schemas.
+That definition also locks the downstream catalog stance for future tooling: local and remote workout catalogs should project from one shared browse core (`workouts`, `tags`, `features`, `difficulties`, `songs`, `coaches`, `genres`) with companion tables `workout_local` and `workout_remote`, rather than divergent local-vs-remote schemas.
 
 ## Purpose
 
