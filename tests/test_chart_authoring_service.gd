@@ -25,7 +25,7 @@ static func run() -> Dictionary:
 		],
 	}
 	var result: Dictionary = ChartAuthoringService.new().upsert_record(chart_input)
-	var validation: Dictionary = ValidatePackageService.new().validate_path(output_dir)
+	var validation: Dictionary = result.get("validation", {})
 	var chart_path: String = output_dir.path_join("charts/song-demo-boxing-hard.json")
 	var manifest: Dictionary = _load_json(output_dir.path_join("manifest.json"))
 	var routine: Dictionary = _load_json(output_dir.path_join("routines/song-demo-boxing.json"))

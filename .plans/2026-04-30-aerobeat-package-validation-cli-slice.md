@@ -1,7 +1,7 @@
 # AeroBeat Package Validation CLI Slice
 
 **Date:** 2026-04-30  
-**Status:** Draft  
+**Status:** In Progress  
 **Agent:** Chip 🐱‍💻
 
 ---
@@ -44,7 +44,7 @@ This slice belongs in `aerobeat-tool-content-authoring`, with a narrow docs foll
 
 ### Task 1: Reconstruct the current validation surface and package-artifact scope
 
-**Bead ID:** `Pending`  
+**Bead ID:** `aerobeat-tool-content-authoring-2mb`  
 **SubAgent:** `primary` (for `research`)  
 **Role:** `research`  
 **References:** `REF-01`, `REF-03`, `REF-04`, `REF-07`, `REF-08`, `REF-09`  
@@ -57,15 +57,15 @@ This slice belongs in `aerobeat-tool-content-authoring`, with a narrow docs foll
 **Files Created/Deleted/Modified:**
 - this plan file unless a separate note is justified
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Reconstructed the current validation surface and the real first-slice artifact scope. Concrete findings: (1) the current authoring-repo `validate` CLI is already wired through `cli/main.gd` → `cli/commands/validate_command.gd` → `services/validation/validate_package_service.gd`, but it validates a legacy **JSON-manifest package shape**, not the current docs-package YAML shape; it expects `manifest.json` plus JSON records in `songs/`, `routines/`, `charts/`, and `workouts/`. (2) The reusable validation code today is narrow but real: `ValidatePackageService` already provides structured report output, duplicate-id checks, required-field checks, cross-record reference checks, and song-timing validation; `ValidateChartService` already provides reusable feature/difficulty/interaction-family checks; `tests/test_validate_command.gd`, `tests/test_validate_song_timing_contract.gd`, and `tests/run_tool_tests.gd` provide the existing validation test/report harness. (3) Packaging/build flow is also reusable in shape but not in contract: `services/packaging/build_content_package_service.gd` already enforces “validate before build,” yet it currently copies manifest-listed JSON files only. (4) The current demo package in `aerobeat-docs` ships these authored artifacts today: root `workout.yaml`; YAML records under `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, and `assets/`; package-local media files referenced by those YAML records; and two checked-in SQL schema documents under `sql/` (`workouts.db.schema.sql`, `leaderboard-cache.db.schema.sql`). (5) There is **no checked-in live SQLite database file** in the demo package right now—only `.schema.sql` files—so the honest first slice is SQL-schema-file validation, not runtime `.db` validation. (6) The docs-package contract has shifted from the old routine/workout JSON model to a set-centered YAML model: `workout.yaml` owns package metadata and `setOrder`; each set links `songId` + `chartId` + `environmentId` + optional `coachingOverlayId` + `assetSelections`; `coaches/coach-config.yaml` is the package-level coaching record; environments/assets are present as authored YAML but their deep semantic contracts are not yet implemented in this repo. Rationale for implementation scope: the first package-validation slice should stay honest and validate only what is actually durable and shipped now—YAML parse/load success, required package files/folders, exactly one `workout.yaml`, exactly one `coaches/coach-config.yaml`, uniqueness of ids across current YAML families, set/workout/coaching/environment/asset reference resolution, required package-local media/resource path existence, allowed `assetSelections` keys, and parse/basic sanity of checked-in `.schema.sql` artifacts. It should explicitly defer deeper SQLite file validation, install/runtime catalog behavior, and richer environment/asset semantic rules until those artifacts/contracts are intentionally introduced.
 
 ---
 
 ### Task 2: Design the validation command map and shared-service boundary
 
-**Bead ID:** `Pending`  
+**Bead ID:** `aerobeat-tool-content-authoring-1ot`  
 **SubAgent:** `primary` (for `research`)  
 **Role:** `research`  
 **References:** `REF-01`, `REF-02`, `REF-07`, `REF-08`, `REF-09`  
@@ -78,15 +78,25 @@ This slice belongs in `aerobeat-tool-content-authoring`, with a narrow docs foll
 **Files Created/Deleted/Modified:**
 - this plan file unless a separate note is justified
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Recommended first-pass validation command map: keep the existing top-level `validate` family, but make it honest and package-contract aligned instead of adding a broad pile of unrelated commands. The small CLI surface should be: (1) `validate package <package_dir>` as the default full-package pass; (2) `validate workout <package_dir>` for root `workout.yaml` + package-shape checks; (3) `validate songs <package_dir>`; (4) `validate charts <package_dir>`; (5) `validate sets <package_dir>`; (6) `validate coaches <package_dir>`; (7) `validate environments <package_dir>`; (8) `validate assets <package_dir>`; and (9) `validate sql <package_dir>` for checked-in `sql/*.schema.sql` artifacts. Rationale: this stays small, mirrors the actual current artifact families, and gives creators/CI a way to isolate failures without pretending the tool already has a richer editor-grade semantic model. To keep the surface honest, do **not** add validators for live `.db` files, install catalogs, cache folders, or invented subdomains yet. Also do not split charts by feature into separate CLI commands in this slice; feature-specific legality should remain internal reuse inside the shared chart validator unless an actual user workflow demands otherwise.
+
+Recommended CLI syntax/behavior: `validate <subject> <package_dir> [--json]`, with `package` as the default when the subject is omitted for backward-friendly ergonomics (`validate <package_dir>` can continue to mean full-package validation). Each subject command is a thin wrapper that resolves package-relative file groups, calls one shared service entrypoint, and renders either plain text or JSON. The full-package command should orchestrate the subject validators in a fixed order: package/workout root → songs → charts → sets → coaches → environments → assets → sql, then append cross-family package-level reference/media/path checks after the per-family structural passes. Order matters because later cross-reference errors are easier to understand when early parse/shape failures are already present in the report.
+
+Recommended shared-service boundary: move the real logic into a new package-contract-oriented validation layer under `services/validation/`, with the CLI only responsible for argument parsing and output formatting. The service side should expose one orchestrator plus small family validators: e.g. `ValidateWorkoutPackageService` (full package orchestration), `ValidateWorkoutRootService`, `ValidateSongsService`, `ValidateChartsService`, `ValidateSetsService`, `ValidateCoachConfigService`, `ValidateEnvironmentsService`, `ValidateAssetsService`, and `ValidateSqlSchemaFilesService`. Supporting helpers should be shared, not duplicated in commands: package file discovery, YAML loading, issue construction, result aggregation, id indexing, reference resolution, and package-local path checks. The existing `ValidateChartService` should be retained and adapted as the chart-family validator core because its feature/difficulty checks already reflect durable chart semantics; its current legacy JSON assumptions should be stripped away, and the new chart-family service should layer package-file loading plus any light YAML-shape checks around it. The old manifest/JSON `ValidatePackageService` should either be replaced outright or clearly renamed to legacy-only code if it must temporarily coexist; the new package validator should not be forced through `manifest.json` terminology.
+
+Recommended first-slice validation scope per family: `workout` validates exactly one root `workout.yaml`, required root fields, parse success, and root-owned references such as `coachConfigId`, `preview.coverArtPath`, and `setOrder`; `songs` validates YAML parse/load, required ids/names, reusable song timing shape, `audio.filePath` existence, and duplicate song ids; `charts` validates YAML parse/load, required ids/names, feature/difficulty legality via the shared chart validator, and duplicate chart ids, while deferring deep beat-grammar validation beyond what current shared logic can honestly prove; `sets` validates parse/load, required ids and the exact composition links (`songId`, `chartId`, `environmentId`, optional `coachingOverlayId`, `assetSelections`), allowed `assetSelections` keys, and duplicate set ids; `coaches` validates exactly one `coaches/coach-config.yaml`, disabled-vs-enabled shape, roster/overlay/warmup/cooldown requirements when enabled, uniqueness of `overlayId`, and package-local media path existence; `environments` validates parse/load, required ids/names, `scenePath` existence, and duplicate environment ids; `assets` validates parse/load, required ids/names/types, allowed asset type enum (`gloves`, `targets`, `obstacles`, `trails`), `resourcePath` existence, and duplicate asset ids; `sql` validates that expected `.schema.sql` files exist when present, are readable, are non-empty, and are minimally sane as SQL schema documents (for this slice: file presence, extension/name convention, basic statement presence such as `CREATE TABLE` / `CREATE INDEX`, and no live SQLite-open requirement). Cross-family full-package validation then resolves the actual contract joins: `setOrder` ids → set files, set `songId/chartId/environmentId/coachingOverlayId/assetSelections` → matching records, `workout.coachConfigId` → the single coach config id, and chart-to-song coherence where the chart contract exposes song linkage later. Because current YAML charts do not yet clearly embed `songId`, the full-package rule should validate the set as the single linker and avoid inventing redundant chart→song invariants unless the YAML contract truly adds them.
+
+Recommended reporting shape: keep the current structured-report pattern, but make it package-family aware and aggregation-friendly. Every service should return `{ ok, valid, subject, packageDir, issueCount, warningCount, issues, warnings, counts, artifacts }`, and the full-package validator should additionally return `sections` keyed by family (`workout`, `songs`, `charts`, `sets`, `coaches`, `environments`, `assets`, `sql`, `package`). Each issue should stay machine-usable: `{ code, severity, message, path, subject, recordId?, field?, reference? }`. `counts` should include discovered file counts per family and maybe duplicate/parsed totals where easy. `artifacts` should summarize what was inspected, such as root paths and schema file paths. Partial results behavior: family validators must report their own issues even when sibling families fail, and the full-package orchestrator should continue collecting independent families after one family errors, only skipping downstream checks that require missing/invalid prerequisites. Example: if `songs/` has a parse failure, still validate `charts/`, `sets/`, and `sql/`, but cross-package checks that need indexed song ids should emit a clear prerequisite-style issue or skip note instead of crashing. This gives creators a single useful report rather than a fail-fast whack-a-mole loop.
+
+Recommended implementation scope for Task 3: implement the new YAML/SQL package-validation stack entirely in `aerobeat-tool-content-authoring`, keep the CLI wrappers thin, preserve `--json`, and add fixture-style tests that target the current demo package plus a few repo-local invalid-package fixtures for specific failure modes. Task 3 should include: package file discovery helpers; YAML loading utilities; family validators for workout/songs/charts/sets/coaches/environments/assets/sql; one full-package orchestrator; a refreshed `validate` CLI command/parser that supports `validate <package_dir>` and `validate <subject> <package_dir>`; plain-text + JSON formatter updates for sectioned reports; tests covering full-package success on the docs demo package, bad/missing `workout.yaml`, duplicate ids, bad set references, invalid coaching config/path coverage, invalid asset-selection keys, and SQL schema-file sanity failures. Task 3 should explicitly defer live SQLite DB validation, build/export contract rewiring, and deeper environment/asset/chart semantic legality beyond the currently locked structural/reference rules. That keeps this slice small, honest, and aligned with `REF-01` / `REF-02`.
 
 ---
 
 ### Task 3: Implement package-validation services, CLI entrypoints, and tests in `aerobeat-tool-content-authoring`
 
-**Bead ID:** `Pending`  
+**Bead ID:** `aerobeat-tool-content-authoring-83n`  
 **SubAgent:** `primary` (for `coder`)  
 **Role:** `coder`  
 **References:** `REF-01` through `REF-09`  
@@ -101,15 +111,15 @@ This slice belongs in `aerobeat-tool-content-authoring`, with a narrow docs foll
 **Files Created/Deleted/Modified:**
 - implementation scope only
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Implemented the first-pass YAML/SQL package-validation slice in `aerobeat-tool-content-authoring` and proved it against the current demo package in `aerobeat-docs`. Files changed for this task: `cli/commands/validate_command.gd`, `cli/formatters/plain_text_output.gd`, `services/validation/validate_package_service.gd`, `services/validation/validate_chart_service.gd`, `services/packaging/build_content_package_service.gd`, `services/authoring/chart_authoring_service.gd`, `tests/run_tool_tests.gd`, `tests/test_validate_command.gd`, `tests/test_build_content_package_service.gd`, `tests/test_validate_song_timing_contract.gd`, `tests/test_validate_package_failure_modes.gd`, `tests/test_support.gd`, `tests/test_chart_authoring_service.gd`, and `tests/test_author_command.gd`. Validation/tests run: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` (pass). Implementation details: replaced the legacy manifest-driven package validator with a current package-root/workout-family YAML validator that covers `workout.yaml`, songs/charts/sets/coaches/environments/assets YAML families, package-local media/resource references, SQL schema-file sanity checks, and set-centered cross-record reference resolution; updated the CLI to support the approved `validate <package_dir>` / `validate <subject> <package_dir>` command map with machine-friendly sectioned reports; updated build-package coverage to validate/copy the actual current package shape; added failure-mode tests for duplicate ids, missing set references, bad coaching paths, invalid asset-selection keys, and SQL schema failures; and made legacy manifest-based chart-authoring fixtures explicitly skip the new YAML package-validation gate instead of falsely pretending they are current package-model validations. Commit hash: pending final commit.
 
 ---
 
 ### Task 4: Update `aerobeat-docs` to point to the authoring validator, then QA and audit the full slice
 
-**Bead ID:** `Pending`  
+**Bead ID:** `aerobeat-tool-content-authoring-2ax`  
 **SubAgent:** `primary` (for `coder` / `qa` / `auditor`)  
 **Role:** `coder` / `qa` / `auditor`  
 **References:** `REF-03`, `REF-04`, `REF-05`, `REF-06`, plus the implementation results from Task 3  

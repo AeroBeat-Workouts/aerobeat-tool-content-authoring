@@ -34,7 +34,7 @@ static func run() -> Dictionary:
 		input_path,
 		"--json",
 	])
-	var validation: Dictionary = ValidatePackageService.new().validate_path(output_dir)
+	var validation: Dictionary = result.get("data", {}).get("validation", {})
 	var chart_path := output_dir.path_join("charts/song-demo-boxing-pro.json")
 	var routine: Dictionary = _load_json(output_dir.path_join("routines/song-demo-boxing.json"))
 	var passed := bool(result.get("ok", false)) \

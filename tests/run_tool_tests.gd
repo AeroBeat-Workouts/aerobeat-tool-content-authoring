@@ -9,6 +9,7 @@ func _initialize() -> void:
 		load(script_dir.path_join("test_author_command.gd")),
 		load(script_dir.path_join("test_audio_metadata_import_service.gd")),
 		load(script_dir.path_join("test_validate_song_timing_contract.gd")),
+		load(script_dir.path_join("test_validate_package_failure_modes.gd")),
 		load(script_dir.path_join("test_editor_uses_shared_services.gd")),
 	]
 	var results: Array = []
