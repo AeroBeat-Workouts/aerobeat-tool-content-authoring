@@ -34,7 +34,7 @@ const FAMILY_CONFIG := {
 		"dir": "environments",
 		"extension": ".yaml",
 		"idKey": "environmentId",
-		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "environmentId", "environmentName", "scenePath"],
+		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "environmentId", "environmentName", "type", "resourcePath"],
 	},
 	"assets": {
 		"dir": "assets",
@@ -45,6 +45,12 @@ const FAMILY_CONFIG := {
 }
 const VALID_ASSET_SELECTION_TYPES := ["gloves", "targets", "obstacles", "trails"]
 const VALID_ASSET_TYPES := ["gloves", "targets", "obstacles", "trails"]
+const VALID_ENVIRONMENT_TYPES := ["image_background", "video_background", "glb_environment"]
+const ENVIRONMENT_RESOURCE_EXTENSIONS := {
+	"image_background": [".png", ".jpg", ".jpeg", ".webp"],
+	"video_background": [".mp4", ".webm", ".ogv"],
+	"glb_environment": [".glb"],
+}
 const SONG_TIMING_REQUIRED_FIELDS := ["anchorMs", "tempoSegments", "stopSegments", "timeSignatureSegments"]
 const FORBIDDEN_SONG_COMPOSITION_LINK_FIELDS := ["chartId", "setId", "workoutId"]
 const FORBIDDEN_CHART_COMPOSITION_LINK_FIELDS := ["songId", "setId", "workoutId"]
@@ -349,9 +355,24 @@ func _validate_set_record(path: String, set_data: Dictionary) -> Array:
 func _validate_environment_record(package_dir: String, path: String, environment: Dictionary) -> Array:
 	var issues: Array = []
 	var environment_id: String = String(environment.get("environmentId", ""))
-	var scene_path: String = String(environment.get("scenePath", ""))
-	if not scene_path.is_empty() and not _package_file_exists(package_dir, scene_path):
-		issues.append(_issue("missing_file", "Environment scenePath does not resolve inside the package.", path, "environments", environment_id, "scenePath", {"pathValue": scene_path}))
+	var environment_type: String = String(environment.get("type", ""))
+	if not environment_type.is_empty() and not VALID_ENVIRONMENT_TYPES.has(environment_type):
+		issues.append(_issue("invalid_environment_type", "Environment type must be one of image_background/video_background/glb_environment.", path, "environments", environment_id, "type"))
+	var resource_path: String = String(environment.get("resourcePath", ""))
+	if not resource_path.is_empty() and not _package_file_exists(package_dir, resource_path):
+		issues.append(_issue("missing_file", "Environment resourcePath does not resolve inside the package.", path, "environments", environment_id, "resourcePath", {"pathValue": resource_path}))
+	if not environment_type.is_empty() and not resource_path.is_empty() and VALID_ENVIRONMENT_TYPES.has(environment_type):
+		var allowed_extensions: Array = ENVIRONMENT_RESOURCE_EXTENSIONS.get(environment_type, [])
+		if not _path_has_allowed_extension(resource_path, allowed_extensions):
+			issues.append(_issue(
+				"environment_resource_type_mismatch",
+				"Environment resourcePath must match the expected file family for type '%s'." % environment_type,
+				path,
+				"environments",
+				environment_id,
+				"resourcePath",
+				{"pathValue": resource_path, "type": environment_type, "allowedExtensions": allowed_extensions}
+			))
 	return issues
 
 func _validate_asset_record(package_dir: String, path: String, asset: Dictionary) -> Array:
@@ -740,6 +761,13 @@ func _sql_paths(sql_files: Array) -> Array:
 
 func _package_file_exists(package_dir: String, relative_path: String) -> bool:
 	return FileAccess.file_exists(package_dir.path_join(relative_path))
+
+func _path_has_allowed_extension(path: String, allowed_extensions: Array) -> bool:
+	var normalized_path: String = path.to_lower()
+	for extension in allowed_extensions:
+		if normalized_path.ends_with(String(extension).to_lower()):
+			return true
+	return false
 
 func _base_counts(context: Dictionary) -> Dictionary:
 	return {

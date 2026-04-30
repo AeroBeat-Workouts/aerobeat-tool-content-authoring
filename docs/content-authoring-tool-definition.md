@@ -399,7 +399,7 @@ If this tool later emits local or remote catalog projections as a workflow artif
    - ids exist and are unique
    - `workout.yaml` references resolve to package records
    - set -> chart -> song composition is coherent, with the set acting as the only linker
-   - environment and asset ids resolve correctly
+   - environment and asset ids resolve correctly, with each set linking exactly one environment record
    - if coaching is enabled, coach overlay clips are keyed by `entryId` and cover workout entries one-to-one
 
 3. **Locked v1 package rules**
@@ -412,6 +412,10 @@ If this tool later emits local or remote catalog projections as a workflow artif
    - entry-selectable asset types are only `gloves`, `targets`, `obstacles`, `trails`
    - `workout_assets` is not part of the current v1 proposal
    - each session entry has exactly one environment
+   - environment records use the shared schema/provenance block plus `environmentId`, `environmentName`, `type`, and `resourcePath`
+   - environment `type` is locked to `image_background`, `video_background`, or `glb_environment`
+   - baseline `godot_scene` is not part of the v1 package contract
+   - first-pass validator checks stay honest: package-local `resourcePath` existence and coarse type/path-family consistency only
    - at most one asset per asset type per entry
    - unknown asset types fail validation
    - song genres are author-provided metadata chosen from a locked enum; validators must not invent genres

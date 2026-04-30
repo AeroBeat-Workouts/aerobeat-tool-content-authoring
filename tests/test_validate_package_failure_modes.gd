@@ -17,6 +17,9 @@ static func run() -> Dictionary:
 		_forbidden_song_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_chart_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
+		_invalid_environment_type_scenario(base_fixture_dir, base_tmp_dir),
+		_environment_resource_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
+		_legacy_environment_scene_path_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
 	for scenario in scenarios:
@@ -177,3 +180,54 @@ static func _count_code(codes: Array, code: String) -> int:
 		if String(value) == code:
 			count += 1
 	return count
+
+
+static func _invalid_environment_type_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("invalid_environment_type")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text = environment_text.replace("type: image_background", "type: godot_scene")
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "invalid_environment_type",
+		"passed": codes.has("invalid_environment_type"),
+		"codes": codes,
+	}
+
+static func _environment_resource_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("environment_resource_type_mismatch")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var mismatched_resource_path: String = scenario_dir.path_join("media/environments/sunrise-studio.mp4")
+	TestSupport.write_text(mismatched_resource_path, "placeholder video background asset for validator mismatch scenario\n")
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text = environment_text.replace("resourcePath: media/environments/sunrise-studio.png", "resourcePath: media/environments/sunrise-studio.mp4")
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "environment_resource_type_mismatch",
+		"passed": codes.has("environment_resource_type_mismatch"),
+		"codes": codes,
+	}
+
+static func _legacy_environment_scene_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("legacy_environment_scene_path")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text = environment_text.replace("resourcePath: media/environments/neon-rooftop.glb", "scenePath: media/environments/neon-rooftop.glb")
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "legacy_environment_scene_path",
+		"passed": codes.has("required_field_missing"),
+		"codes": codes,
+	}
