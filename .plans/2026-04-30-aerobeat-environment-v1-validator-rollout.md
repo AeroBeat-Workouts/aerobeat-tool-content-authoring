@@ -57,7 +57,7 @@ This work belongs in `aerobeat-tool-content-authoring`, but it depends on the do
 
 **Status:** ✅ Complete
 
-**Results:** Updated `services/validation/validate_package_service.gd` so environment records now require `type` + `resourcePath` instead of legacy `scenePath`, enforce the exact v1 enum (`image_background`, `video_background`, `glb_environment`), verify package-local `resourcePath` existence, and flag coarse type/path-family mismatches by extension. Updated repo docs in `docs/content-authoring-tool-definition.md` and `README.md` to match the locked Environment v1 contract and explicitly keep validation scope first-pass only. Expanded `tests/test_validate_package_failure_modes.gd` with coverage for invalid environment types, mismatched resource families, and legacy `scenePath` usage. Validation run: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` ✅. Commit hash: `ebc2f6f`.
+**Results:** Updated `services/validation/validate_package_service.gd` so environment records now require `type` + `resourcePath` instead of legacy `scenePath`, enforce the exact v1 enum (`image_background`, `video_background`, `glb_environment`), verify package-local `resourcePath` existence, and flag coarse type/path-family mismatches by extension. Updated repo docs in `docs/content-authoring-tool-definition.md` and `README.md` to match the locked Environment v1 contract and explicitly keep validation scope first-pass only. Expanded `tests/test_validate_package_failure_modes.gd` with coverage for invalid environment types, mismatched resource families, and legacy `scenePath` usage. Validation run: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` ✅. Commit hash: `278ebeb`.
 
 ---
 
@@ -110,7 +110,7 @@ This work belongs in `aerobeat-tool-content-authoring`, but it depends on the do
 **Reference Check:** `REF-03`, `REF-04`, `REF-05`, and `REF-06` are now aligned to the approved downstream contract from `REF-01`, with validation scope intentionally limited to first-pass structural checks only.
 
 **Commits:**
-- `ebc2f6f` - Align Environment v1 validator contract
+- `278ebeb` - Align Environment v1 validator contract
 
 **Lessons Learned:** The key risk stayed the same: enforce the approved contract exactly, but keep the validator honest about what it can actually prove today. Coarse type/path-family checks were enough for this slice without inventing deeper runtime or performance rules.
 
