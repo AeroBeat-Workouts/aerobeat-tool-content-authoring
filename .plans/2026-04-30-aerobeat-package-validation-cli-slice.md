@@ -132,9 +132,9 @@ Recommended implementation scope for Task 3: implement the new YAML/SQL package-
 **Files Created/Deleted/Modified:**
 - docs follow-up scope only
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Updated the docs follow-up in `aerobeat-docs` so package authors are pointed at `aerobeat-tool-content-authoring` for real validation instead of the docs repo implying docs-local validation. Files changed in `aerobeat-docs`: `docs/architecture/workout-package-storage-and-discovery.md`, `docs/guides/demo_workout_package.md`, `docs/examples/workout-packages/overview.md`, `docs/examples/workout-packages/demo-neon-boxing-bootcamp/README.md`, and `docs/guides/coaching.md`. The edits explicitly state the current first-slice scope: the authoring validator covers current YAML package records plus checked-in `sql/*.schema.sql` artifacts, supports full-package and subject-specific validation, and still defers live SQLite `.db` validation. Validation/build evidence: (1) `./venv/bin/mkdocs build --strict` in `aerobeat-docs` (pass; existing MkDocs/nav warnings only), (2) headless CLI proof run in `aerobeat-tool-content-authoring` against the docs demo package using the implemented `validate` command surface via a tiny temporary Godot script entrypoint, with `validate <package_dir> --json` passing, and (3) `validate sql <package_dir> --json` passing for the checked-in schema artifacts. Commit hashes: authoring-repo implementation from Task 3 is `3e5939b` (`Implement YAML package validation CLI slice`); docs follow-up commit is `6cc1572` (`Point package docs at authoring validator`). Remaining caveat for QA/audit follow-up: the current plain-text formatter path still throws in this repo build, so the proof run here used the implemented `--json` output path while still exercising the real validator subjects.
 
 ---
 
