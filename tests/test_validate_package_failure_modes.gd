@@ -14,6 +14,8 @@ static func run() -> Dictionary:
 		_missing_required_coaching_overlay_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_asset_selection_key_scenario(base_fixture_dir, base_tmp_dir),
 		_asset_selection_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
+		_forbidden_song_composition_links_scenario(base_fixture_dir, base_tmp_dir),
+		_forbidden_chart_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
@@ -123,6 +125,38 @@ static func _asset_selection_type_mismatch_scenario(base_fixture_dir: String, ba
 		"codes": codes,
 	}
 
+static func _forbidden_song_composition_links_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_composition_links")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var song_path: String = scenario_dir.path_join("songs/ab-song-neon-stride.yaml")
+	var song_text: String = TestSupport.read_text(song_path)
+	song_text += "\nchartId: ab-chart-neon-stride-boxing-medium\nsetId: ab-set-neon-stride-opening-round\nworkoutId: ab-workout-demo-neon-boxing-bootcamp\n"
+	TestSupport.write_text(song_path, song_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "songs")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "forbidden_song_composition_links",
+		"passed": _count_code(codes, "forbidden_composition_link_field") >= 3,
+		"codes": codes,
+	}
+
+static func _forbidden_chart_composition_links_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("forbidden_chart_composition_links")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-boxing-medium.yaml")
+	var chart_text: String = TestSupport.read_text(chart_path)
+	chart_text += "\nsongId: ab-song-neon-stride\nsetId: ab-set-neon-stride-opening-round\nworkoutId: ab-workout-demo-neon-boxing-bootcamp\n"
+	TestSupport.write_text(chart_path, chart_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "charts")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "forbidden_chart_composition_links",
+		"passed": _count_code(codes, "forbidden_composition_link_field") >= 3,
+		"codes": codes,
+	}
+
 static func _invalid_sql_schema_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("invalid_sql_schema")
 	TestSupport.ensure_clean_dir(scenario_dir)
@@ -136,3 +170,10 @@ static func _invalid_sql_schema_scenario(base_fixture_dir: String, base_tmp_dir:
 		"passed": codes.has("sql_schema_missing_create_table") and codes.has("sql_schema_missing_create_index"),
 		"codes": codes,
 	}
+
+static func _count_code(codes: Array, code: String) -> int:
+	var count: int = 0
+	for value in codes:
+		if String(value) == code:
+			count += 1
+	return count

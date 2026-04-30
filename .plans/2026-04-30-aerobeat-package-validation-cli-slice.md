@@ -132,7 +132,7 @@ Recommended implementation scope for Task 3: implement the new YAML/SQL package-
 **Files Created/Deleted/Modified:**
 - docs follow-up scope only
 
-**Status:** ⏳ In Progress — coder retry after QA failure
+**Status:** ⏳ In Progress — coder retry after QA failure (validator/docs parity pass)
 
 **Results:** Updated the docs follow-up in `aerobeat-docs` so package authors are pointed at `aerobeat-tool-content-authoring` for real validation instead of the docs repo implying docs-local validation. Files changed in `aerobeat-docs`: `docs/architecture/workout-package-storage-and-discovery.md`, `docs/guides/demo_workout_package.md`, `docs/examples/workout-packages/overview.md`, `docs/examples/workout-packages/demo-neon-boxing-bootcamp/README.md`, and `docs/guides/coaching.md`. The edits explicitly state the current first-slice scope: the authoring validator covers current YAML package records plus checked-in `sql/*.schema.sql` artifacts, supports full-package and subject-specific validation, and still defers live SQLite `.db` validation. Coder-side evidence recorded here remains: (1) `./venv/bin/mkdocs build --strict` in `aerobeat-docs`, (2) headless CLI proof run in `aerobeat-tool-content-authoring` against the docs demo package using the implemented `validate` command surface via a tiny temporary Godot script entrypoint, with `validate <package_dir> --json` passing, and (3) `validate sql <package_dir> --json` passing for the checked-in schema artifacts. Commit hashes: authoring-repo implementation from Task 3 is `3e5939b` (`Implement YAML package validation CLI slice`); docs follow-up commit is `6cc1572` (`Point package docs at authoring validator`).
 
@@ -152,6 +152,27 @@ Defects/gaps identified by QA:
 QA verdict for Task 4: the demo package does validate successfully on the working JSON path, and the docs are directionally correct about validator ownership/scope versus docs-local validation. However, the current implementation does **not** fully satisfy the documented/claimed validation contract, and the default plain-text CLI path is materially broken. This bead should **bounce back to coder**, not proceed to audit yet.
 
 Coder retry on 2026-04-30: fixed the plain-text formatter so the default `validate <package_dir>` path renders successfully instead of throwing on `String(...)` conversions; tightened package cross-reference validation so enabled coaching now requires every set to declare a non-empty `coachingOverlayId` that resolves into `coaches/coach-config.yaml`; and enforced `assetSelections` key ↔ asset `assetType` matching once the referenced asset record resolves. Files changed in this retry: `cli/formatters/plain_text_output.gd`, `services/validation/validate_package_service.gd`, `tests/test_validate_command.gd`, and `tests/test_validate_package_failure_modes.gd`. Validation/tests rerun for the retry: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` (pass); real CLI smoke via a temporary headless Godot entry script against `projects/aerobeat/aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp/` on both `validate <package_dir>` plain-text output and `validate <package_dir> --json` (both pass with `issueCount: 0` on the demo package). Commit hash: `5d16cee` (`Fix validate CLI retry defects`).
+
+QA retry pass on 2026-04-30 after commits `5d16cee` and `4b5940f`:
+- Independent checks re-run:
+  - `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` in `aerobeat-tool-content-authoring`: pass.
+  - `./venv/bin/mkdocs build --strict` in `aerobeat-docs`: pass, with the same existing nav-not-included informational warnings.
+  - Real CLI smoke via a temporary headless Godot entry script against the docs demo package:
+    - `validate <demo-package-dir>`: pass, exit 0, plain-text report rendered successfully.
+    - `validate <demo-package-dir> --json`: pass, exit 0, `valid: true`, `issueCount: 0`.
+- Independent semantic regression probes against temporary mutated copies of the demo package:
+  - Removed one set `coachingOverlayId` while coaching stayed enabled → validator now fails correctly with `missing_required_coaching_overlay_ref` and exit 1.
+  - Changed `assetSelections.gloves` to `ab-asset-targets-holo-rings` → validator now fails correctly with `asset_selection_type_mismatch` and exit 1.
+- Additional docs-accuracy probe:
+  - `docs/architecture/workout-package-storage-and-discovery.md` still says validators should enforce that `songs/*.yaml` must not link to charts/sets/workouts and `charts/*.yaml` must not link to songs/sets/workouts.
+  - The current implementation does **not** enforce those rules. A temporary mutated demo package with extra `workoutId`/`chartId` keys added to a song record and `songId`/`setId` keys added to a chart record still passed `validate <package_dir> --json` with `valid: true` and `issueCount: 0`.
+
+QA retry verdict:
+- The three previously reported retry defects are now **cleared**: plain-text/default CLI output works, enabled-coaching overlay completeness is enforced, and `assetSelections` key ↔ asset `assetType` matching is enforced.
+- However, the docs follow-up is **not fully accurate yet** because the storage/discovery validator-rules section still overclaims enforcement that the current validator does not implement.
+- Because Task 4 explicitly includes confirming docs accuracy after the retry, this bead should **bounce back again** for either docs correction or matching validator enforcement before audit. It should **not** proceed to audit in the current state.
+
+Coder parity-fix retry on 2026-04-30: enforced the remaining docs/code parity rule that Songs and Charts must not carry composition-linking fields that belong to Sets. The validator now rejects non-empty `chartId`, `setId`, and `workoutId` on `songs/*.yaml`, and rejects non-empty `songId`, `setId`, and `workoutId` on `charts/*.yaml`, emitting `forbidden_composition_link_field` so the current package model stays locked to Sets as the canonical linker. Files changed in this retry: `services/validation/validate_package_service.gd`, `tests/test_validate_package_failure_modes.gd`, and this plan file. Validation/tests rerun for the retry: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` (pass, including new forbidden-link scenarios) and a direct headless CLI smoke against `projects/aerobeat/aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp` using `validate <package_dir> --json` (pass with `valid: true`, `issueCount: 0`). Commit hash: `b652a10` (`Enforce set-centered package link validation`). Docs/code parity status: resolved for the remaining QA-reported songs/charts composition-link rule; the validator now matches the storage/discovery doc on that point.
 
 ---
 

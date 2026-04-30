@@ -46,6 +46,8 @@ const FAMILY_CONFIG := {
 const VALID_ASSET_SELECTION_TYPES := ["gloves", "targets", "obstacles", "trails"]
 const VALID_ASSET_TYPES := ["gloves", "targets", "obstacles", "trails"]
 const SONG_TIMING_REQUIRED_FIELDS := ["anchorMs", "tempoSegments", "stopSegments", "timeSignatureSegments"]
+const FORBIDDEN_SONG_COMPOSITION_LINK_FIELDS := ["chartId", "setId", "workoutId"]
+const FORBIDDEN_CHART_COMPOSITION_LINK_FIELDS := ["songId", "setId", "workoutId"]
 
 var _chart_validator: ValidateChartService = ValidateChartService.new()
 
@@ -284,6 +286,7 @@ func _validate_record_family(context: Dictionary, family: String) -> Dictionary:
 				issues.append_array(_validate_song_record(package_dir, path, data))
 			"charts":
 				issues.append_array(_chart_validator.validate_chart_record(data, path))
+				issues.append_array(_validate_forbidden_composition_link_fields(path, "charts", record_id, data, FORBIDDEN_CHART_COMPOSITION_LINK_FIELDS))
 			"sets":
 				issues.append_array(_validate_set_record(path, data))
 			"environments":
@@ -295,6 +298,7 @@ func _validate_record_family(context: Dictionary, family: String) -> Dictionary:
 func _validate_song_record(package_dir: String, path: String, song: Dictionary) -> Array:
 	var issues: Array = []
 	var song_id: String = String(song.get("songId", ""))
+	issues.append_array(_validate_forbidden_composition_link_fields(path, "songs", song_id, song, FORBIDDEN_SONG_COMPOSITION_LINK_FIELDS))
 	if not (song.get("audio") is Dictionary):
 		issues.append(_issue("song_audio_invalid_type", "Song audio must be a dictionary.", path, "songs", song_id, "audio"))
 	else:
@@ -305,6 +309,24 @@ func _validate_song_record(package_dir: String, path: String, song: Dictionary) 
 		elif not _package_file_exists(package_dir, file_path):
 			issues.append(_issue("missing_file", "Song audio.filePath does not resolve inside the package.", path, "songs", song_id, "audio.filePath", {"pathValue": file_path}))
 	issues.append_array(_validate_song_timing(path, song))
+	return issues
+
+func _validate_forbidden_composition_link_fields(path: String, subject: String, record_id: String, record: Dictionary, forbidden_fields: Array) -> Array:
+	var issues: Array = []
+	for field in forbidden_fields:
+		if not record.has(String(field)):
+			continue
+		if _is_missing_value(record.get(String(field), null)):
+			continue
+		issues.append(_issue(
+			"forbidden_composition_link_field",
+			"%s must not declare composition-link field '%s'; sets are the canonical linker." % [_family_label(subject).trim_suffix("s"), String(field)],
+			path,
+			subject,
+			record_id,
+			String(field),
+			{"field": String(field)}
+		))
 	return issues
 
 func _validate_set_record(path: String, set_data: Dictionary) -> Array:
