@@ -1,7 +1,7 @@
 # AeroBeat Package Validation CLI Slice
 
 **Date:** 2026-04-30  
-**Status:** In Progress  
+**Status:** Complete  
 **Agent:** Chip 🐱‍💻
 
 ---
@@ -132,63 +132,52 @@ Recommended implementation scope for Task 3: implement the new YAML/SQL package-
 **Files Created/Deleted/Modified:**
 - docs follow-up scope only
 
-**Status:** ⏳ In Progress — coder retry after QA failure (validator/docs parity pass)
+**Status:** ✅ Complete
 
-**Results:** Updated the docs follow-up in `aerobeat-docs` so package authors are pointed at `aerobeat-tool-content-authoring` for real validation instead of the docs repo implying docs-local validation. Files changed in `aerobeat-docs`: `docs/architecture/workout-package-storage-and-discovery.md`, `docs/guides/demo_workout_package.md`, `docs/examples/workout-packages/overview.md`, `docs/examples/workout-packages/demo-neon-boxing-bootcamp/README.md`, and `docs/guides/coaching.md`. The edits explicitly state the current first-slice scope: the authoring validator covers current YAML package records plus checked-in `sql/*.schema.sql` artifacts, supports full-package and subject-specific validation, and still defers live SQLite `.db` validation. Coder-side evidence recorded here remains: (1) `./venv/bin/mkdocs build --strict` in `aerobeat-docs`, (2) headless CLI proof run in `aerobeat-tool-content-authoring` against the docs demo package using the implemented `validate` command surface via a tiny temporary Godot script entrypoint, with `validate <package_dir> --json` passing, and (3) `validate sql <package_dir> --json` passing for the checked-in schema artifacts. Commit hashes: authoring-repo implementation from Task 3 is `3e5939b` (`Implement YAML package validation CLI slice`); docs follow-up commit is `6cc1572` (`Point package docs at authoring validator`).
+**Results:** Updated the docs follow-up in `aerobeat-docs` so package authors are pointed at `aerobeat-tool-content-authoring` for real validation instead of the docs repo implying docs-local validation. Files changed in `aerobeat-docs`: `docs/architecture/workout-package-storage-and-discovery.md`, `docs/guides/demo_workout_package.md`, `docs/examples/workout-packages/overview.md`, `docs/examples/workout-packages/demo-neon-boxing-bootcamp/README.md`, and `docs/guides/coaching.md`. The edits explicitly state the current first-slice scope: the authoring validator covers current YAML package records plus checked-in `sql/*.schema.sql` artifacts, supports full-package and subject-specific validation, and still defers live SQLite `.db` validation. Commit hashes tied to this slice: authoring-repo implementation `3e5939b` (`Implement YAML package validation CLI slice`), authoring-repo retry/fix `5d16cee` (`Fix validate CLI retry defects`), authoring-repo parity fix `d3be359` (`Enforce set-centered package link validation`), and docs follow-up `6cc1572` (`Point package docs at authoring validator`).
 
-QA pass findings (independent rerun on 2026-04-30):
-- Re-ran `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` in `aerobeat-tool-content-authoring`: pass.
-- Re-ran `./venv/bin/mkdocs build --strict` in `aerobeat-docs`: pass, with the same existing nav-not-included warnings noted by coder.
-- Re-exercised the real CLI surface through a tiny temporary Godot entrypoint script that calls `cli/main.gd`:
-  - `validate <demo-package-dir> --json`: pass.
-  - `validate <demo-package-dir>` plain-text path: reproducible runtime error from `cli/formatters/plain_text_output.gd:7` (`Invalid call 'String' constructor: subject=package`). Despite the script error, the wrapper process still returned status 0, so the non-JSON surface currently both throws and can appear successful at the shell boundary.
-- Reproduced a deeper contract gap with a temporary copy of the demo package: removed one set `coachingOverlayId` while coaching remained enabled, and changed another set `assetSelections.gloves` to point at an asset whose `assetType` is `targets`. The implemented validator still returned `valid: true` / `issueCount: 0` on the full-package JSON pass.
+QA loop summary captured here for audit traceability:
+- Initial QA correctly caught three real defects: broken plain-text/default CLI output, missing enforcement of required `coachingOverlayId` when coaching is enabled, and missing `assetSelections` key ↔ asset `assetType` enforcement.
+- Retry QA correctly caught one remaining docs/code parity gap: storage/discovery docs claimed songs/charts forbidden composition-link rules that the validator still did not enforce.
+- Final parity QA after `d3be359` passed with the demo package green and the formerly missing songs/charts forbidden-link rules enforced.
 
-Defects/gaps identified by QA:
-1. **Plain-text CLI output path is broken**. This is not just a formatting nicety: the documented command surface is `validate <package_dir>` and `validate <subject> <package_dir> [--json]`, which implies plain-text/default output is a supported path. Right now that default path throws at runtime.
-2. **Enabled-coaching overlay completeness is not enforced**. The docs/tool definition currently say that when coaching is enabled, every set should resolve exactly one overlay audio record. Implementation only validates `coachingOverlayId` when present; it does not require one for each set.
-3. **`assetSelections` type-to-asset contract is not enforced**. Docs say the referenced asset id must exist and its `assetType` must match the key used in `assetSelections`, but implementation only checks that the asset id exists.
+Auditor verification on 2026-04-30:
+- Read and checked the owning plan, tool-definition doc, current validator code (`cli/commands/validate_command.gd`, `cli/formatters/plain_text_output.gd`, `services/validation/validate_package_service.gd`, `services/validation/validate_chart_service.gd`), relevant validation tests, the docs follow-up pages, and recent git history/state in both repos.
+- Re-ran `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` in `aerobeat-tool-content-authoring`: pass, including `test_validate_command`, `test_build_content_package_service`, `test_validate_song_timing_contract`, and `test_validate_package_failure_modes` with the target defect scenarios green.
+- Re-ran `./venv/bin/mkdocs build --strict` in `aerobeat-docs`: pass. Only the pre-existing nav-not-included informational warnings remained.
+- Independently exercised the real CLI surface through a temporary headless Godot entry script calling `cli/main.gd` directly:
+  - `validate <demo-package-dir>`: pass, exit 0, plain-text/default output rendered correctly.
+  - `validate <demo-package-dir> --json`: pass, exit 0, `valid: true`, `issueCount: 0`.
+  - `validate sql <demo-package-dir> --json`: pass, exit 0, confirming the checked-in `.schema.sql` slice works on the current demo package.
+- Independently mutated fresh temporary copies of the docs demo package and confirmed the validator now fails correctly for the previously found defects:
+  - removed one set `coachingOverlayId` while coaching remained enabled → `missing_required_coaching_overlay_ref`, exit 1.
+  - changed `assetSelections.gloves` to reference `ab-asset-targets-holo-rings` → `asset_selection_type_mismatch`, exit 1.
+  - added `chartId`, `setId`, and `workoutId` to a song record → three `forbidden_composition_link_field` issues, exit 1.
+  - added `songId`, `setId`, and `workoutId` to a chart record → three `forbidden_composition_link_field` issues, exit 1.
+- Audited docs truthfulness against current implementation and confirmed the docs now accurately point users to the validator, describe the current YAML + checked-in `sql/*.schema.sql` scope, and do not claim live SQLite `.db` validation or deeper environment/asset semantics that are intentionally deferred.
+- Audited repo handoff state: `aerobeat-docs` is clean at `6cc1572`; `aerobeat-tool-content-authoring` is on `main` with the relevant slice commits present and only plan-file working-tree edits remaining for task documentation.
 
-QA verdict for Task 4: the demo package does validate successfully on the working JSON path, and the docs are directionally correct about validator ownership/scope versus docs-local validation. However, the current implementation does **not** fully satisfy the documented/claimed validation contract, and the default plain-text CLI path is materially broken. This bead should **bounce back to coder**, not proceed to audit yet.
-
-Coder retry on 2026-04-30: fixed the plain-text formatter so the default `validate <package_dir>` path renders successfully instead of throwing on `String(...)` conversions; tightened package cross-reference validation so enabled coaching now requires every set to declare a non-empty `coachingOverlayId` that resolves into `coaches/coach-config.yaml`; and enforced `assetSelections` key ↔ asset `assetType` matching once the referenced asset record resolves. Files changed in this retry: `cli/formatters/plain_text_output.gd`, `services/validation/validate_package_service.gd`, `tests/test_validate_command.gd`, and `tests/test_validate_package_failure_modes.gd`. Validation/tests rerun for the retry: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` (pass); real CLI smoke via a temporary headless Godot entry script against `projects/aerobeat/aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp/` on both `validate <package_dir>` plain-text output and `validate <package_dir> --json` (both pass with `issueCount: 0` on the demo package). Commit hash: `5d16cee` (`Fix validate CLI retry defects`).
-
-QA retry pass on 2026-04-30 after commits `5d16cee` and `4b5940f`:
-- Independent checks re-run:
-  - `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` in `aerobeat-tool-content-authoring`: pass.
-  - `./venv/bin/mkdocs build --strict` in `aerobeat-docs`: pass, with the same existing nav-not-included informational warnings.
-  - Real CLI smoke via a temporary headless Godot entry script against the docs demo package:
-    - `validate <demo-package-dir>`: pass, exit 0, plain-text report rendered successfully.
-    - `validate <demo-package-dir> --json`: pass, exit 0, `valid: true`, `issueCount: 0`.
-- Independent semantic regression probes against temporary mutated copies of the demo package:
-  - Removed one set `coachingOverlayId` while coaching stayed enabled → validator now fails correctly with `missing_required_coaching_overlay_ref` and exit 1.
-  - Changed `assetSelections.gloves` to `ab-asset-targets-holo-rings` → validator now fails correctly with `asset_selection_type_mismatch` and exit 1.
-- Additional docs-accuracy probe:
-  - `docs/architecture/workout-package-storage-and-discovery.md` still says validators should enforce that `songs/*.yaml` must not link to charts/sets/workouts and `charts/*.yaml` must not link to songs/sets/workouts.
-  - The current implementation does **not** enforce those rules. A temporary mutated demo package with extra `workoutId`/`chartId` keys added to a song record and `songId`/`setId` keys added to a chart record still passed `validate <package_dir> --json` with `valid: true` and `issueCount: 0`.
-
-QA retry verdict:
-- The three previously reported retry defects are now **cleared**: plain-text/default CLI output works, enabled-coaching overlay completeness is enforced, and `assetSelections` key ↔ asset `assetType` matching is enforced.
-- However, the docs follow-up is **not fully accurate yet** because the storage/discovery validator-rules section still overclaims enforcement that the current validator does not implement.
-- Because Task 4 explicitly includes confirming docs accuracy after the retry, this bead should **bounce back again** for either docs correction or matching validator enforcement before audit. It should **not** proceed to audit in the current state.
-
-Coder parity-fix retry on 2026-04-30: enforced the remaining docs/code parity rule that Songs and Charts must not carry composition-linking fields that belong to Sets. The validator now rejects non-empty `chartId`, `setId`, and `workoutId` on `songs/*.yaml`, and rejects non-empty `songId`, `setId`, and `workoutId` on `charts/*.yaml`, emitting `forbidden_composition_link_field` so the current package model stays locked to Sets as the canonical linker. Files changed in this retry: `services/validation/validate_package_service.gd`, `tests/test_validate_package_failure_modes.gd`, and this plan file. Validation/tests rerun for the retry: `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` (pass, including new forbidden-link scenarios) and a direct headless CLI smoke against `projects/aerobeat/aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp` using `validate <package_dir> --json` (pass with `valid: true`, `issueCount: 0`). Commit hash: `d3be359` (`Enforce set-centered package link validation`). Docs/code parity status: resolved for the remaining QA-reported songs/charts composition-link rule; the validator now matches the storage/discovery doc on that point.
+Auditor verdict for Task 4: the bead is actually done. Validation now lives in `aerobeat-tool-content-authoring`, the CLI honestly validates the current YAML package model plus checked-in `.schema.sql` artifacts, the docs accurately point to the validator without overclaiming scope, the current demo package validates successfully, and all four previously reported defects are now demonstrably fixed. Closed bead `aerobeat-tool-content-authoring-2ax` after this audit.
 
 ---
 
 ## Final Results
 
-**Status:** ⚠️ Draft / Discussion only
+**Status:** ✅ Complete
 
-**What We Built:** Created the implementation plan for moving workout-package validation into `aerobeat-tool-content-authoring`, where it belongs. The plan scopes the first slice around the actual current package artifacts: root `workout.yaml`, domain YAML records, SQL schema files, cross-file/reference checks, media-path checks, and a thin CLI surface with both per-artifact-family and full-package validation entrypoints. It also reserves a small docs follow-up so `aerobeat-docs` can point to the tool instead of pretending to own validation.
+**What We Built:** Landed the first real AeroBeat workout-package validation slice in `aerobeat-tool-content-authoring` and aligned the docs repo to treat that tool as the validator of record. The shipped slice validates the current demo-package-style YAML contract (`workout.yaml`, `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`) plus checked-in `sql/*.schema.sql` artifacts, exposes both full-package and subject-specific CLI entrypoints, keeps plain-text and JSON reporting working, and preserves the intentionally deferred boundaries around live SQLite `.db` validation and deeper environment/asset/runtime semantics.
 
-**Reference Check:** Pending.
+**Reference Check:** `REF-01` through `REF-09` satisfied. In particular: `REF-01` ownership boundary is honored because validation now lives in the authoring repo; `REF-03` / `REF-04` current demo package validates successfully; `REF-05` / `REF-06` plus the related docs follow-up pages now point users at the authoring validator and describe only the current implemented scope; `REF-07` / `REF-08` / `REF-09` are satisfied by the implemented CLI/service/test surface, including the retry fixes for plain-text output, coaching-overlay completeness, `assetSelections` type matching, and forbidden composition-link fields on songs/charts.
 
 **Commits:**
-- None yet.
+- `3e5939b` - Implement YAML package validation CLI slice
+- `5d16cee` - Fix validate CLI retry defects
+- `d3be359` - Enforce set-centered package link validation
+- `6cc1572` - Point package docs at authoring validator
+- `724152e` - Record final parity-fix commit in plan
 
-**Lessons Learned:** The biggest risk here is over-claiming contract depth for package surfaces whose detailed semantics are not locked yet, especially environments/assets. The honest first slice should validate what is really current and durable now, and leave clean seams for deeper contract validators after those schemas are purposefully designed.
+**Lessons Learned:** The risky part of this slice was not raw implementation volume; it was truthfulness. QA found real gaps exactly where overclaim risk was highest: default-output support, coaching completeness, asset-selection semantics, and docs/code parity around set-centered linking. The final pass is solid because those claims were reduced to testable behaviors and re-verified against the real demo package plus targeted negative mutations. Keeping SQLite `.db` validation and deeper environment/asset semantics explicitly deferred prevented scope drift and made the finished slice honest.
 
 ---
 
-*Completed on 2026-04-30 (draft for discussion)*
+*Completed on 2026-04-30*
