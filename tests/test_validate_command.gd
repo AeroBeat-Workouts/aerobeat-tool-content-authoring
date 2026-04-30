@@ -5,11 +5,17 @@ const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var fixture_dir: String = TestSupport.demo_package_dir()
+	var plain_result: Dictionary = ValidateCommand.new().execute([fixture_dir])
 	var full_result: Dictionary = ValidateCommand.new().execute([fixture_dir, "--json"])
 	var full_report: Dictionary = full_result.get("data", {})
 	var songs_result: Dictionary = ValidateCommand.new().execute(["songs", fixture_dir, "--json"])
 	var songs_report: Dictionary = songs_result.get("data", {})
-	var passed: bool = bool(full_result.get("ok", false)) \
+	var plain_output: String = String(plain_result.get("output", ""))
+	var passed: bool = bool(plain_result.get("ok", false)) \
+		and int(plain_result.get("exitCode", -1)) == 0 \
+		and plain_output.find("subject=package") != -1 \
+		and plain_output.find("valid=true") != -1 \
+		and bool(full_result.get("ok", false)) \
 		and bool(full_report.get("valid", false)) \
 		and int(full_report.get("issueCount", -1)) == 0 \
 		and full_report.get("sections", {}).has("workout") \
@@ -20,6 +26,7 @@ static func run() -> Dictionary:
 		"passed": passed,
 		"details": {
 			"fixtureDir": fixture_dir,
+			"plainResult": plain_result,
 			"fullResult": full_result,
 			"songsResult": songs_result,
 		},

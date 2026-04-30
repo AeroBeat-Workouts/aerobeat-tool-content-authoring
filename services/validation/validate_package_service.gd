@@ -404,17 +404,27 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 			issues.append(_issue("missing_chart_ref", "Set references a chartId that is not present in the package.", path, "package", set_id, "chartId", {"chartId": chart_id}))
 		if not environment_id.is_empty() and not environments_by_id.has(environment_id):
 			issues.append(_issue("missing_environment_ref", "Set references an environmentId that is not present in the package.", path, "package", set_id, "environmentId", {"environmentId": environment_id}))
-		if not coaching_overlay_id.is_empty():
-			if not coach_enabled:
-				issues.append(_issue("unexpected_coaching_overlay_ref", "Set references coachingOverlayId while coaching is disabled or unavailable.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
+		if coach_enabled:
+			if coaching_overlay_id.is_empty():
+				issues.append(_issue("missing_required_coaching_overlay_ref", "Set must declare coachingOverlayId when coaching is enabled.", path, "package", set_id, "coachingOverlayId"))
 			elif not overlay_ids.has(coaching_overlay_id):
 				issues.append(_issue("missing_coaching_overlay_ref", "Set references a coachingOverlayId that is not present in coaches/coach-config.yaml.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
+		elif not coaching_overlay_id.is_empty():
+			issues.append(_issue("unexpected_coaching_overlay_ref", "Set references coachingOverlayId while coaching is disabled or unavailable.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
 		if set_data.get("assetSelections") is Dictionary:
 			var asset_selections: Dictionary = set_data.get("assetSelections", {})
 			for key in asset_selections.keys():
+				var asset_type: String = String(key)
 				var asset_id: String = String(asset_selections.get(key, ""))
-				if not asset_id.is_empty() and not assets_by_id.has(asset_id):
-					issues.append(_issue("missing_asset_ref", "Set assetSelections references an assetId that is not present in the package.", path, "package", set_id, "assetSelections.%s" % String(key), {"assetId": asset_id}))
+				if asset_id.is_empty():
+					continue
+				if not assets_by_id.has(asset_id):
+					issues.append(_issue("missing_asset_ref", "Set assetSelections references an assetId that is not present in the package.", path, "package", set_id, "assetSelections.%s" % asset_type, {"assetId": asset_id}))
+					continue
+				var asset_record: Dictionary = assets_by_id.get(asset_id, {})
+				var asset_data: Dictionary = asset_record.get("data", {})
+				if String(asset_data.get("assetType", "")) != asset_type:
+					issues.append(_issue("asset_selection_type_mismatch", "Set assetSelections.%s must reference an asset whose assetType is %s." % [asset_type, asset_type], path, "package", set_id, "assetSelections.%s" % asset_type, {"assetId": asset_id, "assetType": asset_data.get("assetType", "")}))
 	return _report("package", package_dir, issues, {"crossCheckCount": 1}, context.get("artifacts", {}), {})
 
 func _load_package_context(package_dir: String) -> Dictionary:

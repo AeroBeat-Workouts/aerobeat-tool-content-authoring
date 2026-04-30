@@ -11,7 +11,9 @@ static func run() -> Dictionary:
 		_duplicate_song_id_scenario(base_fixture_dir, base_tmp_dir),
 		_missing_set_reference_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_coaching_path_scenario(base_fixture_dir, base_tmp_dir),
+		_missing_required_coaching_overlay_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_asset_selection_key_scenario(base_fixture_dir, base_tmp_dir),
+		_asset_selection_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
@@ -73,6 +75,22 @@ static func _invalid_coaching_path_scenario(base_fixture_dir: String, base_tmp_d
 		"codes": codes,
 	}
 
+static func _missing_required_coaching_overlay_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("missing_required_coaching_overlay")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-flow-round.yaml")
+	var set_text: String = TestSupport.read_text(set_path)
+	set_text = set_text.replace("coachingOverlayId: ab-overlay-aria-neon-stride-cue\n", "")
+	TestSupport.write_text(set_path, set_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "missing_required_coaching_overlay",
+		"passed": codes.has("missing_required_coaching_overlay_ref"),
+		"codes": codes,
+	}
+
 static func _invalid_asset_selection_key_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("invalid_asset_selection_key")
 	TestSupport.ensure_clean_dir(scenario_dir)
@@ -86,6 +104,22 @@ static func _invalid_asset_selection_key_scenario(base_fixture_dir: String, base
 	return {
 		"name": "invalid_asset_selection_key",
 		"passed": codes.has("invalid_asset_selection_type"),
+		"codes": codes,
+	}
+
+static func _asset_selection_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("asset_selection_type_mismatch")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-opening-round.yaml")
+	var set_text: String = TestSupport.read_text(set_path)
+	set_text = set_text.replace("gloves: ab-asset-gloves-neon-pulse", "gloves: ab-asset-targets-holo-rings")
+	TestSupport.write_text(set_path, set_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "asset_selection_type_mismatch",
+		"passed": codes.has("asset_selection_type_mismatch"),
 		"codes": codes,
 	}
 
