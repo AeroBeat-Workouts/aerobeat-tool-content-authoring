@@ -10,6 +10,7 @@ static func run() -> Dictionary:
 	var full_report: Dictionary = full_result.get("data", {})
 	var songs_result: Dictionary = ValidateCommand.new().execute(["songs", fixture_dir, "--json"])
 	var songs_report: Dictionary = songs_result.get("data", {})
+	var legacy_assets_result: Dictionary = ValidateCommand.new().execute(["assets", fixture_dir, "--json"])
 	var plain_output: String = String(plain_result.get("output", ""))
 	var passed: bool = bool(plain_result.get("ok", false)) \
 		and int(plain_result.get("exitCode", -1)) == 0 \
@@ -20,7 +21,10 @@ static func run() -> Dictionary:
 		and int(full_report.get("issueCount", -1)) == 0 \
 		and full_report.get("sections", {}).has("workout") \
 		and bool(songs_result.get("ok", false)) \
-		and bool(songs_report.get("valid", false))
+		and bool(songs_report.get("valid", false)) \
+		and not bool(legacy_assets_result.get("ok", true)) \
+		and int(legacy_assets_result.get("exitCode", -1)) == 2 \
+		and String(legacy_assets_result.get("output", "")).find("Unknown validate subject 'assets'.") != -1
 	return {
 		"name": "test_validate_command",
 		"passed": passed,
@@ -29,5 +33,6 @@ static func run() -> Dictionary:
 			"plainResult": plain_result,
 			"fullResult": full_result,
 			"songsResult": songs_result,
+			"legacyAssetsResult": legacy_assets_result,
 		},
 	}

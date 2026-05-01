@@ -5,7 +5,7 @@ const ValidatePackageService = preload("../../services/validation/validate_packa
 const PlainTextOutput = preload("../formatters/plain_text_output.gd")
 const JsonOutput = preload("../formatters/json_output.gd")
 
-const VALID_SUBJECTS := ["package", "workout", "songs", "charts", "sets", "coaches", "environments", "assets", "sql"]
+const VALID_SUBJECTS := ["package", "workout", "songs", "charts", "sets", "coaches", "environments", "sql"]
 
 var _validate_package_service: ValidatePackageService = ValidatePackageService.new()
 var _plain_text_output: PlainTextOutput = PlainTextOutput.new()

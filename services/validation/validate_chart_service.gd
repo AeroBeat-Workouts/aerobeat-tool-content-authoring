@@ -1,7 +1,7 @@
 class_name ValidateChartService
 extends RefCounted
 
-const VALID_FEATURES := ["boxing", "dance", "step", "flow"]
+const VALID_FEATURES := ["boxing", "flow"]
 const VALID_DIFFICULTIES := ["easy", "medium", "hard", "pro"]
 
 func validate_chart_record(chart_data: Dictionary, path: String = "") -> Array:
@@ -11,7 +11,7 @@ func validate_chart_record(chart_data: Dictionary, path: String = "") -> Array:
 			issues.append(_issue("required_field_missing", "%s is missing required field '%s'." % [path if not path.is_empty() else "chart", field], path, {"field": field}))
 	var feature: String = String(chart_data.get("feature", ""))
 	if not feature.is_empty() and not VALID_FEATURES.has(feature):
-		issues.append(_issue("invalid_feature", "Chart feature must be one of the canonical content features.", path, {"feature": feature}))
+		issues.append(_issue("invalid_feature", "Chart feature must be one of the v1 gameplay features: boxing/flow.", path, {"feature": feature}))
 	var difficulty: String = String(chart_data.get("difficulty", ""))
 	if not difficulty.is_empty() and not VALID_DIFFICULTIES.has(difficulty):
 		issues.append(_issue("invalid_difficulty", "Chart difficulty must be one of easy/medium/hard/pro.", path, {"difficulty": difficulty}))

@@ -12,8 +12,10 @@ static func run() -> Dictionary:
 		_missing_set_reference_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_coaching_path_scenario(base_fixture_dir, base_tmp_dir),
 		_missing_required_coaching_overlay_scenario(base_fixture_dir, base_tmp_dir),
-		_invalid_asset_selection_key_scenario(base_fixture_dir, base_tmp_dir),
-		_asset_selection_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
+		_asset_selections_not_supported_scenario(base_fixture_dir, base_tmp_dir),
+		_assets_directory_not_supported_scenario(base_fixture_dir, base_tmp_dir),
+		_dance_chart_rejected_scenario(base_fixture_dir, base_tmp_dir),
+		_step_chart_rejected_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_song_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_chart_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
@@ -96,35 +98,66 @@ static func _missing_required_coaching_overlay_scenario(base_fixture_dir: String
 		"codes": codes,
 	}
 
-static func _invalid_asset_selection_key_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("invalid_asset_selection_key")
+static func _asset_selections_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("asset_selections_not_supported")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-opening-round.yaml")
 	var set_text: String = TestSupport.read_text(set_path)
-	set_text += "\n  confetti: ab-asset-gloves-neon-pulse\n"
+	set_text += "\nassetSelections:\n  gloves: ab-asset-gloves-neon-pulse\n"
 	TestSupport.write_text(set_path, set_text)
 	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "sets")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {
-		"name": "invalid_asset_selection_key",
-		"passed": codes.has("invalid_asset_selection_type"),
+		"name": "asset_selections_not_supported",
+		"passed": codes.has("asset_selections_not_supported"),
 		"codes": codes,
 	}
 
-static func _asset_selection_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("asset_selection_type_mismatch")
+static func _assets_directory_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("assets_directory_not_supported")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-opening-round.yaml")
-	var set_text: String = TestSupport.read_text(set_path)
-	set_text = set_text.replace("gloves: ab-asset-gloves-neon-pulse", "gloves: ab-asset-targets-holo-rings")
-	TestSupport.write_text(set_path, set_text)
+	var assets_dir: String = scenario_dir.path_join("assets")
+	DirAccess.make_dir_recursive_absolute(assets_dir)
+	TestSupport.write_text(assets_dir.path_join("ab-asset-gloves-neon-pulse.yaml"), "schemaId: aerobeat.asset.v1\nschemaVersion: 1\nrecordVersion: 1\nassetId: ab-asset-gloves-neon-pulse\nassetName: Neon Pulse Gloves\nassetType: gloves\nresourcePath: media/art/neon-pulse-gloves-thumb.png\n")
 	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {
-		"name": "asset_selection_type_mismatch",
-		"passed": codes.has("asset_selection_type_mismatch"),
+		"name": "assets_directory_not_supported",
+		"passed": codes.has("assets_directory_not_supported"),
+		"codes": codes,
+	}
+
+static func _dance_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("dance_chart_rejected")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-flow-medium.yaml")
+	var chart_text: String = TestSupport.read_text(chart_path)
+	chart_text = chart_text.replace("feature: flow", "feature: dance")
+	TestSupport.write_text(chart_path, chart_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "charts")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "dance_chart_rejected",
+		"passed": codes.has("invalid_feature"),
+		"codes": codes,
+	}
+
+static func _step_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("step_chart_rejected")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-flow-medium.yaml")
+	var chart_text: String = TestSupport.read_text(chart_path)
+	chart_text = chart_text.replace("feature: flow", "feature: step")
+	TestSupport.write_text(chart_path, chart_text)
+	var report: Dictionary = ValidatePackageService.new().validate_path(scenario_dir, "charts")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "step_chart_rejected",
+		"passed": codes.has("invalid_feature"),
 		"codes": codes,
 	}
 

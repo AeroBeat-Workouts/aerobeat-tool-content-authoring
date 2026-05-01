@@ -3,8 +3,8 @@ extends RefCounted
 
 const ValidateChartService = preload("validate_chart_service.gd")
 
-const VALID_SUBJECTS := ["package", "workout", "songs", "charts", "sets", "coaches", "environments", "assets", "sql"]
-const RECORD_FAMILY_ORDER := ["songs", "charts", "sets", "coaches", "environments", "assets", "sql"]
+const VALID_SUBJECTS := ["package", "workout", "songs", "charts", "sets", "coaches", "environments", "sql"]
+const RECORD_FAMILY_ORDER := ["songs", "charts", "sets", "coaches", "environments", "sql"]
 const FAMILY_CONFIG := {
 	"songs": {
 		"dir": "songs",
@@ -36,15 +36,7 @@ const FAMILY_CONFIG := {
 		"idKey": "environmentId",
 		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "environmentId", "environmentName", "type", "resourcePath"],
 	},
-	"assets": {
-		"dir": "assets",
-		"extension": ".yaml",
-		"idKey": "assetId",
-		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "assetId", "assetName", "assetType", "resourcePath"],
-	},
 }
-const VALID_ASSET_SELECTION_TYPES := ["gloves", "targets", "obstacles", "trails"]
-const VALID_ASSET_TYPES := ["gloves", "targets", "obstacles", "trails"]
 const VALID_ENVIRONMENT_TYPES := ["image_background", "video_background", "glb_environment"]
 const ENVIRONMENT_RESOURCE_EXTENSIONS := {
 	"image_background": [".png", ".jpg", ".jpeg", ".webp"],
@@ -79,8 +71,6 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 			return _validate_coaches(context)
 		"environments":
 			return _validate_environments(context)
-		"assets":
-			return _validate_assets(context)
 		"sql":
 			return _validate_sql(context)
 		_:
@@ -105,8 +95,6 @@ func _validate_package(context: Dictionary) -> Dictionary:
 				section_report = _validate_coaches(context)
 			"environments":
 				section_report = _validate_environments(context)
-			"assets":
-				section_report = _validate_assets(context)
 			"sql":
 				section_report = _validate_sql(context)
 		sections[family] = section_report
@@ -233,8 +221,6 @@ func _validate_coaches(context: Dictionary) -> Dictionary:
 func _validate_environments(context: Dictionary) -> Dictionary:
 	return _validate_record_family(context, "environments")
 
-func _validate_assets(context: Dictionary) -> Dictionary:
-	return _validate_record_family(context, "assets")
 
 func _validate_sql(context: Dictionary) -> Dictionary:
 	var package_dir: String = String(context.get("packageDir", ""))
@@ -297,8 +283,6 @@ func _validate_record_family(context: Dictionary, family: String) -> Dictionary:
 				issues.append_array(_validate_set_record(path, data))
 			"environments":
 				issues.append_array(_validate_environment_record(package_dir, path, data))
-			"assets":
-				issues.append_array(_validate_asset_record(package_dir, path, data))
 	return _report(family, package_dir, issues, {"fileCount": records.size()}, {"files": _record_paths(records)}, {})
 
 func _validate_song_record(package_dir: String, path: String, song: Dictionary) -> Array:
@@ -338,18 +322,15 @@ func _validate_forbidden_composition_link_fields(path: String, subject: String, 
 func _validate_set_record(path: String, set_data: Dictionary) -> Array:
 	var issues: Array = []
 	var set_id: String = String(set_data.get("setId", ""))
-	if set_data.has("assetSelections"):
-		if not (set_data.get("assetSelections") is Dictionary):
-			issues.append(_issue("asset_selections_invalid_type", "Set assetSelections must be a dictionary when present.", path, "sets", set_id, "assetSelections"))
-		else:
-			var asset_selections: Dictionary = set_data.get("assetSelections", {})
-			for key in asset_selections.keys():
-				var asset_type: String = String(key)
-				var asset_id: String = String(asset_selections.get(key, ""))
-				if not VALID_ASSET_SELECTION_TYPES.has(asset_type):
-					issues.append(_issue("invalid_asset_selection_type", "Set assetSelections key '%s' is not allowed." % asset_type, path, "sets", set_id, "assetSelections.%s" % asset_type))
-				if asset_id.is_empty():
-					issues.append(_issue("asset_selection_missing_id", "Set assetSelections.%s must reference a non-empty asset id." % asset_type, path, "sets", set_id, "assetSelections.%s" % asset_type))
+	if set_data.has("assetSelections") and not _is_missing_value(set_data.get("assetSelections", null)):
+		issues.append(_issue(
+			"asset_selections_not_supported",
+			"Set assetSelections is no longer part of the v1 workout-package contract; remove package-local asset selection data.",
+			path,
+			"sets",
+			set_id,
+			"assetSelections"
+		))
 	return issues
 
 func _validate_environment_record(package_dir: String, path: String, environment: Dictionary) -> Array:
@@ -375,16 +356,6 @@ func _validate_environment_record(package_dir: String, path: String, environment
 			))
 	return issues
 
-func _validate_asset_record(package_dir: String, path: String, asset: Dictionary) -> Array:
-	var issues: Array = []
-	var asset_id: String = String(asset.get("assetId", ""))
-	var asset_type: String = String(asset.get("assetType", ""))
-	if not asset_type.is_empty() and not VALID_ASSET_TYPES.has(asset_type):
-		issues.append(_issue("invalid_asset_type", "Asset assetType must be one of gloves/targets/obstacles/trails.", path, "assets", asset_id, "assetType"))
-	var resource_path: String = String(asset.get("resourcePath", ""))
-	if not resource_path.is_empty() and not _package_file_exists(package_dir, resource_path):
-		issues.append(_issue("missing_file", "Asset resourcePath does not resolve inside the package.", path, "assets", asset_id, "resourcePath", {"pathValue": resource_path}))
-	return issues
 
 func _validate_media_reference(package_dir: String, path: String, field_name: String, value: Variant, subject: String, record_id: String) -> Array:
 	var issues: Array = []
@@ -401,13 +372,12 @@ func _validate_media_reference(package_dir: String, path: String, field_name: St
 
 func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 	var package_dir: String = String(context.get("packageDir", ""))
-	var issues: Array = []
+	var issues: Array = _legacy_package_contract_issues(context)
 	var workout: Dictionary = context.get("workout", {}).get("data", {}) if bool(context.get("workout", {}).get("ok", false)) else {}
 	var songs_by_id: Dictionary = _index_records(context.get("songs", []), "songId")
 	var charts_by_id: Dictionary = _index_records(context.get("charts", []), "chartId")
 	var sets_by_id: Dictionary = _index_records(context.get("sets", []), "setId")
 	var environments_by_id: Dictionary = _index_records(context.get("environments", []), "environmentId")
-	var assets_by_id: Dictionary = _index_records(context.get("assets", []), "assetId")
 	var coach_config: Dictionary = _coach_config_record(context)
 	var coach_data: Dictionary = coach_config.get("data", {}) if bool(coach_config.get("ok", false)) else {}
 	var coach_enabled: bool = bool(coach_data.get("enabled", false)) if not coach_data.is_empty() else false
@@ -454,21 +424,21 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 				issues.append(_issue("missing_coaching_overlay_ref", "Set references a coachingOverlayId that is not present in coaches/coach-config.yaml.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
 		elif not coaching_overlay_id.is_empty():
 			issues.append(_issue("unexpected_coaching_overlay_ref", "Set references coachingOverlayId while coaching is disabled or unavailable.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
-		if set_data.get("assetSelections") is Dictionary:
-			var asset_selections: Dictionary = set_data.get("assetSelections", {})
-			for key in asset_selections.keys():
-				var asset_type: String = String(key)
-				var asset_id: String = String(asset_selections.get(key, ""))
-				if asset_id.is_empty():
-					continue
-				if not assets_by_id.has(asset_id):
-					issues.append(_issue("missing_asset_ref", "Set assetSelections references an assetId that is not present in the package.", path, "package", set_id, "assetSelections.%s" % asset_type, {"assetId": asset_id}))
-					continue
-				var asset_record: Dictionary = assets_by_id.get(asset_id, {})
-				var asset_data: Dictionary = asset_record.get("data", {})
-				if String(asset_data.get("assetType", "")) != asset_type:
-					issues.append(_issue("asset_selection_type_mismatch", "Set assetSelections.%s must reference an asset whose assetType is %s." % [asset_type, asset_type], path, "package", set_id, "assetSelections.%s" % asset_type, {"assetId": asset_id, "assetType": asset_data.get("assetType", "")}))
 	return _report("package", package_dir, issues, {"crossCheckCount": 1}, context.get("artifacts", {}), {})
+
+func _legacy_package_contract_issues(context: Dictionary) -> Array:
+	var issues: Array = []
+	var package_dir: String = String(context.get("packageDir", ""))
+	if bool(context.get("legacyAssetsDirExists", false)):
+		issues.append(_issue(
+			"assets_directory_not_supported",
+			"Package assets/ is no longer an accepted authored package family in the v1 workout-package contract.",
+			package_dir.path_join("assets"),
+			"package",
+			"",
+			"assets"
+		))
+	return issues
 
 func _load_package_context(package_dir: String) -> Dictionary:
 	var workout_path: String = package_dir.path_join("workout.yaml")
@@ -493,8 +463,8 @@ func _load_package_context(package_dir: String) -> Dictionary:
 		"sets": _load_yaml_records(package_dir, "sets"),
 		"coaches": _load_yaml_records(package_dir, "coaches"),
 		"environments": _load_yaml_records(package_dir, "environments"),
-		"assets": _load_yaml_records(package_dir, "assets"),
 		"sql": _load_sql_files(package_dir),
+		"legacyAssetsDirExists": DirAccess.dir_exists_absolute(package_dir.path_join("assets")),
 	}
 	context["artifacts"] = {
 		"workout": "workout.yaml",
@@ -503,7 +473,6 @@ func _load_package_context(package_dir: String) -> Dictionary:
 		"sets": _record_paths(context.get("sets", [])),
 		"coaches": _record_paths(context.get("coaches", [])),
 		"environments": _record_paths(context.get("environments", [])),
-		"assets": _record_paths(context.get("assets", [])),
 		"sql": _sql_paths(context.get("sql", [])),
 	}
 	return context
@@ -776,7 +745,6 @@ func _base_counts(context: Dictionary) -> Dictionary:
 		"setCount": context.get("sets", []).size(),
 		"coachConfigCount": context.get("coaches", []).size(),
 		"environmentCount": context.get("environments", []).size(),
-		"assetCount": context.get("assets", []).size(),
 		"sqlFileCount": context.get("sql", []).size(),
 	}
 

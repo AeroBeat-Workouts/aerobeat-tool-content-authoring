@@ -1,6 +1,6 @@
 # AeroBeat Content Authoring Tool Definition
 
-**Date:** 2026-04-25
+**Date:** 2026-05-01
 **Status:** Proposed definition
 **Repo:** `aerobeat-tool-content-authoring`
 
@@ -28,7 +28,7 @@ It is not the source of truth for content meaning. It is the source of truth for
 
 In plain terms:
 
-- `aerobeat-content-core` defines what a valid `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, `Environment`, and `Asset` record means.
+- `aerobeat-content-core` defines what a valid `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, and `Environment` record means for the locked v1 package slice.
 - `aerobeat-tool-content-authoring` defines how a creator or CI job can create, inspect, validate, scaffold, migrate, package, and normalize a workout package that uses those records.
 
 If `content-core` is the language, this repo is the authoring toolbox.
@@ -50,12 +50,12 @@ That includes:
 
 2. **Record authoring helpers**
    - create/add/update package records through explicit tool operations
-   - help creators add songs, charts, sets, environments, assets, workout entries, and the single package-level coach config
+   - help creators add songs, charts, sets, environments, workout entries, and the single package-level coach config
    - keep package manifests and cross-file references coherent when the user chooses a tool-driven operation, with sets as the single song/chart linker
 
 3. **Validation orchestration**
    - run shared structural validation from `aerobeat-content-core`
-   - run tool-layer package checks such as missing files, bad paths, duplicate ids, illegal asset selections, and submission-cleanliness rules
+   - run tool-layer package checks such as missing files, bad paths, duplicate ids, removed package-local asset concepts, and submission-cleanliness rules
    - produce human-usable reports for CLI, editor, and CI
 
 4. **Inspection and reporting**
@@ -85,7 +85,7 @@ That includes:
 ### This repo does not own
 
 1. **Canonical record/schema definitions**
-   - not `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, `Environment`, `Asset` field ownership
+   - not `Song`, `Chart`, `Set`, `Workout`, `Coach Config`, or `Environment` field ownership
    - not schema ids/versions
    - not the shared chart envelope contract
    - those live in `aerobeat-content-core`
@@ -189,7 +189,7 @@ Goal:
 Minimum output:
 
 - `workout.yaml`
-- `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`, `media/`
+- `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `media/`, `sql/`
 - exactly one `coaches/coach-config.yaml`
 - starter metadata fields (`schemaId`, `schemaVersion`, `recordVersion`, `createdByTool`, timestamps)
 
@@ -224,7 +224,7 @@ Minimum checks:
 - when coaching is disabled, the coach config is minimal and contains only `enabled: false`
 - when coaching is enabled, the coach config includes a required coach roster, required warmup video, required cooldown video, and per-entry overlay audio clips keyed by `entryId`
 - when coaching is enabled, every workout entry has exactly one overlay audio clip and every referenced file path exists
-- `assetSelections` only use allowed entry-selectable asset types
+- `assetSelections` are no longer part of the authored workout-package contract and must fail validation if present
 - `cache/` is ignored or flagged appropriately for export/submission
 
 ### D. Add or scaffold individual records
@@ -239,7 +239,6 @@ Day-one record actions:
 - add chart for a song/feature compatibility slice
 - add set that links one exact song and one exact chart
 - add environment
-- add asset
 - add or toggle the package-level `coaches/coach-config.yaml`
 - add workout session entry referencing exact ids, including the matching coaching overlay clip when coaching is enabled
 
@@ -355,7 +354,7 @@ The demo package is not just docs wallpaper. It should act as the **teaching fix
 From package contents:
 
 - `workout.yaml`
-- all domain YAML files under `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`
+- all domain YAML files under `songs/`, `charts/`, `sets/`, `coaches/`, and `environments/`
 - package-local media/resource paths when validating or exporting
 - optional `cache/` only for ignore/strip/report behavior, not as authored truth
 
@@ -399,7 +398,7 @@ If this tool later emits local or remote catalog projections as a workflow artif
    - ids exist and are unique
    - `workout.yaml` references resolve to package records
    - set -> chart -> song composition is coherent, with the set acting as the only linker
-   - environment and asset ids resolve correctly, with each set linking exactly one environment record
+   - environment ids resolve correctly, with each set linking exactly one environment record
    - if coaching is enabled, coach overlay clips are keyed by `entryId` and cover workout entries one-to-one
 
 3. **Locked v1 package rules**
@@ -409,15 +408,14 @@ If this tool later emits local or remote catalog projections as a workflow artif
    - all coach-config file paths must resolve inside the package when required
    - `default_coach_name` is not part of the v1 contract
    - legacy coach support fields such as `coach_avatar`, `coach_voice`, avatar ids, voice ids, or trigger graphs are not part of the v1 contract and should fail validation if surfaced as required authoring behavior
-   - entry-selectable asset types are only `gloves`, `targets`, `obstacles`, `trails`
-   - `workout_assets` is not part of the current v1 proposal
+   - package-local `assets/` is not part of the current v1 proposal and should fail validation if present
+   - set-level `assetSelections` is not part of the current v1 proposal and should fail validation if present
+   - internal AeroBeat product assets may still exist for UI, environments, future avatars, or future skins, but they are not authored as workout-package subsets in this contract
    - each session entry has exactly one environment
    - environment records use the shared schema/provenance block plus `environmentId`, `environmentName`, `type`, and `resourcePath`
    - environment `type` is locked to `image_background`, `video_background`, or `glb_environment`
    - baseline `godot_scene` is not part of the v1 package contract
    - first-pass validator checks stay honest: package-local `resourcePath` existence and coarse type/path-family consistency only
-   - at most one asset per asset type per entry
-   - unknown asset types fail validation
    - song genres are author-provided metadata chosen from a locked enum; validators must not invent genres
    - workout difficulty values are locked to `easy`, `medium`, `hard`, `pro`
 
@@ -435,7 +433,7 @@ Day one should scaffold:
 - starter `coaches/coach-config.yaml`
 - if coaching is disabled, scaffold only `enabled: false`
 - if coaching is enabled, scaffold the required coach roster, warmup video, cooldown video, and per-entry overlay audio placeholders keyed by `entryId`
-- starter song/chart/set/environment/asset records
+- starter song/chart/set/environment records
 - entry stubs wired to exact ids
 
 The scaffold should aim for **valid boring correctness**, not maximal convenience magic.
@@ -460,7 +458,7 @@ The tool must not silently:
 - rename ids
 - move authored records between domains
 - rewrite chart events for style reasons
-- change `assetType` values
+- move internal product assets into or out of workout packages behind the author's back
 - reassign workout references to “closest match” ids
 - strip authored optional metadata because it looks unused
 - upgrade schema versions without an explicit migration path/report
@@ -515,7 +513,6 @@ Examples only; naming can still change.
 - `aerobeat-content add set <package-path> ...`
 - `aerobeat-content add chart <package-path> ...`
 - `aerobeat-content add environment <package-path> ...`
-- `aerobeat-content add asset <package-path> ...`
 - `aerobeat-content add session-entry <package-path> ...`
 - `aerobeat-content migrate package <path> --preview`
 - `aerobeat-content build package <path> --out <artifact>`

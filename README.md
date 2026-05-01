@@ -38,8 +38,8 @@ The important rule is:
 
 The repo now includes a minimal but real first slice for:
 
-- authoring service boundaries for songs, charts, sets, and workouts
-- package validation aligned to the `aerobeat-content-core` fixture path shape
+- authoring service boundaries for songs, charts, sets, workouts, coaching, and environments
+- package validation aligned to the current downscoped workout-package contract
 - packaging/build workflow scaffolding
 - migration and import workflow scaffolding
 - inspection and formatting helpers for CLI use
@@ -150,8 +150,10 @@ godot --headless --path .testbed --script ../tests/run_tool_tests.gd
 
 ## Validation notes
 
+- Workout packages keep authored songs, charts, sets, workouts, coaching, and environments.
+- Package-local authored `assets/` content and set-level `assetSelections` are intentionally rejected by validation; internal AeroBeat product assets remain a separate product/runtime concern.
 - The authoritative runnable validation path is the headless workflow runner at `tests/run_tool_tests.gd`, executed with `godot --headless --path .testbed --script ../tests/run_tool_tests.gd`.
 - `.testbed` is the hidden import/workbench project used to restore addons and provide a Godot project context for headless execution; it is not a separate authoritative test suite.
-- The validation scaffold should stay aligned to the approved package shape described in `docs/content-authoring-tool-definition.md` (`workout.yaml`, `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `assets/`, `media/`).
-- The service layer currently performs lightweight structural validation suitable for the first scaffold slice, including the locked Environment v1 shape (`environmentId`, `environmentName`, `type`, `resourcePath`) and exact enum (`image_background`, `video_background`, `glb_environment`).
+- The validation scaffold stays aligned to the approved package shape described in `docs/content-authoring-tool-definition.md` (`workout.yaml`, `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `media/`, `sql/`).
+- The service layer currently performs lightweight structural validation suitable for the first scaffold slice, including the locked v1 gameplay feature set (`boxing`, `flow`) and the locked Environment v1 shape (`environmentId`, `environmentName`, `type`, `resourcePath`) with exact enum (`image_background`, `video_background`, `glb_environment`).
 - As richer shared contracts land in `aerobeat-content-core` and `aerobeat-tool-core`, those services should tighten around those canonical DTOs rather than growing duplicate schema logic here.
