@@ -63,21 +63,21 @@ This work belongs in `aerobeat-tool-content-authoring`, but it depends on the do
 
 ### Task 2: QA the Environment v1 validator/doc alignment
 
-**Bead ID:** `Pending`  
+**Bead ID:** `aerobeat-tool-content-authoring-zgv`  
 **SubAgent:** `primary` (for `qa`)  
 **Role:** `qa`  
 **References:** `REF-01` through `REF-06`  
 **Prompt:** Independently verify that the authoring tool repo now matches the approved Environment v1 contract. Re-run the relevant validation/test suite, exercise the validator against the docs demo package, and check that the tool behavior/docs align with the locked enum and field names without overclaiming `godot_scene` or deep runtime validation.
 
 **Folders Created/Deleted/Modified:**
-- implementation scope only
+- `.plans/`
 
 **Files Created/Deleted/Modified:**
-- QA-only scope if a trivial parity fix is needed
+- `.plans/2026-04-30-aerobeat-environment-v1-validator-rollout.md`
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending QA.
+**Results:** Re-ran the repo validation suite with `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` and independently confirmed it passes, including `test_validate_command` and `test_validate_package_failure_modes`. Re-exercised the validator directly against the docs demo package through the CLI/service surface and confirmed the demo package validates cleanly with zero issues. Independently spot-checked the four requested environment parity risks: stale `scenePath` is not accepted as a substitute for `resourcePath` (fails with `required_field_missing`), bad enum values like `godot_scene` fail with `invalid_environment_type`, missing `resourcePath` fails with `required_field_missing`, and mismatched type/path-family combinations fail with `environment_resource_type_mismatch`. Verified repo docs/help text in `README.md` and `docs/content-authoring-tool-definition.md` match the approved Environment v1 contract: locked shape (`environmentId`, `environmentName`, `type`, `resourcePath` plus shared schema/provenance), exact enum (`image_background`, `video_background`, `glb_environment`), no baseline `godot_scene`, and first-pass-only validation claims. Also confirmed the current demo package sets each declare exactly one `environmentId` link. No code changes were needed; no new commit was created during QA.
 
 ---
 
