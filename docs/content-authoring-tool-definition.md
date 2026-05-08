@@ -51,7 +51,8 @@ That includes:
 2. **Record authoring helpers**
    - create/add/update package records through explicit tool operations
    - help creators add songs, charts, sets, environments, workout entries, and the single package-level coach config
-   - keep package manifests and cross-file references coherent when the user chooses a tool-driven operation, with sets as the single song/chart linker
+   - keep `workout.yaml` package structure and cross-file references coherent when the user chooses a tool-driven operation, with sets as the single song/chart linker
+   - do not silently treat legacy `manifest.json` / `routineId` package flows as current package truth; any temporary compatibility path must be clearly marked legacy-only until a real `workout.yaml` authoring flow exists
 
 3. **Validation orchestration**
    - run shared structural validation from `aerobeat-content-core`

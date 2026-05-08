@@ -9,11 +9,11 @@ var _json_output: JsonOutput = JsonOutput.new()
 
 func execute(args: Array) -> Dictionary:
 	if args.size() < 3:
-		return _usage_error("author requires chart upsert <package_dir> --from <chart_json>." )
+		return _usage_error("author requires chart upsert <legacy_manifest_package_dir> --from <chart_json>. Current workout.yaml package authoring is not implemented here yet.")
 	var record_kind: String = String(args[0])
 	var operation: String = String(args[1])
 	if record_kind != "chart" or operation != "upsert":
-		return _usage_error("author currently supports only: chart upsert <package_dir> --from <chart_json>.")
+		return _usage_error("author currently supports only temporary legacy compatibility: chart upsert <legacy_manifest_package_dir> --from <chart_json>.")
 
 	var package_dir: String = String(args[2])
 	var chart_json_path := ""

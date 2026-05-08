@@ -1,13 +1,14 @@
 extends RefCounted
 
 const ChartAuthoringService = preload("../services/authoring/chart_authoring_service.gd")
-const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
+const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var fixture_dir: String = _fixture_dir("package_minimal_boxing")
 	var output_dir: String = ProjectSettings.globalize_path("res://tmp/chart_authoring_service")
 	_ensure_clean_dir(output_dir)
 	_copy_tree(fixture_dir, output_dir)
+	_seed_legacy_routine_fixture(output_dir)
 
 	var chart_input := {
 		"packageDir": output_dir,
@@ -24,8 +25,8 @@ static func run() -> Dictionary:
 			{"beat": 4, "type": "hook_left"},
 		],
 	}
-	var result: Dictionary = ChartAuthoringService.new().upsert_record(chart_input)
-	var validation: Dictionary = result.get("validation", {})
+	var legacy_result: Dictionary = ChartAuthoringService.new().upsert_record(chart_input)
+	var validation: Dictionary = legacy_result.get("validation", {})
 	var chart_path: String = output_dir.path_join("charts/song-demo-boxing-hard.json")
 	var manifest: Dictionary = _load_json(output_dir.path_join("manifest.json"))
 	var routine: Dictionary = _load_json(output_dir.path_join("routines/song-demo-boxing.json"))
@@ -33,7 +34,7 @@ static func run() -> Dictionary:
 	var song: Dictionary = _load_json(output_dir.path_join("songs/song-demo.json"))
 	var manifest_has_chart := _manifest_has_path(manifest.get("charts", []), "charts/song-demo-boxing-hard.json")
 	var timing: Dictionary = song.get("timing", {})
-	var passed := bool(result.get("ok", false)) \
+	var legacy_passed := bool(legacy_result.get("ok", false)) \
 		and FileAccess.file_exists(chart_path) \
 		and manifest_has_chart \
 		and Array(routine.get("charts", [])).has("chart_demo_boxing_hard") \
@@ -42,19 +43,44 @@ static func run() -> Dictionary:
 		and String(chart.get("interactionFamily", "")) == "gesture_2d" \
 		and not chart.has("timing") \
 		and int(timing.get("anchorMs", -1)) == 0 \
-		and bool(validation.get("valid", false))
+		and bool(validation.get("valid", false)) \
+		and bool(validation.get("skipped", false)) \
+		and String(validation.get("subject", "")) == "legacy_manifest_package"
+
+	var current_package_dir: String = ProjectSettings.globalize_path("res://tmp/chart_authoring_service_current_package")
+	_ensure_clean_dir(current_package_dir)
+	_copy_tree(TestSupport.demo_package_dir(), current_package_dir)
+	var current_result: Dictionary = ChartAuthoringService.new().upsert_record({
+		"packageDir": current_package_dir,
+		"chartId": "chart_demo_boxing_hard",
+		"chartName": "Demo Boxing Hard",
+		"songId": "song_demo_neon_strike",
+		"routineId": "routine_legacy_should_not_apply",
+		"feature": "boxing",
+		"difficulty": "hard",
+		"interactionFamily": "gesture_2d",
+		"events": [
+			{"beat": 1, "type": "jab_left"},
+		],
+	})
+	var current_passed := not bool(current_result.get("ok", false)) \
+		and String(current_result.get("error", "")).find("workout.yaml packages") != -1 \
+		and bool(current_result.get("legacyCompatibilityOnly", false))
+
 	return {
 		"name": "test_chart_authoring_service",
-		"passed": passed,
+		"passed": legacy_passed and current_passed,
 		"details": {
 			"fixtureDir": fixture_dir,
 			"outputDir": output_dir,
-			"result": result,
+			"legacyResult": legacy_result,
 			"validation": validation,
 			"manifest": manifest,
 			"routine": routine,
 			"chart": chart,
 			"song": song,
+			"currentPackageDir": current_package_dir,
+			"currentResult": current_result,
 		},
 	}
 
@@ -74,6 +100,25 @@ static func _load_json(path: String) -> Dictionary:
 	if parsed == null or not (parsed is Dictionary):
 		return {}
 	return parsed
+
+static func _seed_legacy_routine_fixture(package_dir: String) -> void:
+	var manifest_path: String = package_dir.path_join("manifest.json")
+	var manifest: Dictionary = _load_json(manifest_path)
+	manifest["routines"] = [{"path": "routines/song-demo-boxing.json"}]
+	_write_json(package_dir.path_join("routines/song-demo-boxing.json"), {
+		"schema": "aerobeat.content.routine.v1",
+		"routineId": "routine_demo_boxing",
+		"songId": "song_demo",
+		"feature": "boxing",
+		"charts": ["chart_demo_boxing_medium"],
+	})
+	_write_json(manifest_path, manifest)
+
+static func _write_json(path: String, data: Dictionary) -> void:
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(JSON.stringify(data, "  ") + "\n")
 
 static func _ensure_clean_dir(path: String) -> void:
 	var absolute_path: String = ProjectSettings.globalize_path(path)

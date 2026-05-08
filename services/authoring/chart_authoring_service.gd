@@ -22,10 +22,19 @@ func upsert_record(record_data: Dictionary) -> Dictionary:
 	if String(chart.get("songId", "")).is_empty():
 		return _error("songId is required for chart upsert.", {"packageDir": package_dir, "record": chart})
 
+	var has_workout_yaml: bool = FileAccess.file_exists(package_dir.path_join("workout.yaml"))
+	if has_workout_yaml:
+		return _error("chart upsert does not support current workout.yaml packages yet; the remaining authoring path is temporary legacy manifest-only compatibility.", {
+			"packageDir": package_dir,
+			"record": chart,
+			"legacyCompatibilityOnly": true,
+			"expectedPackageContract": "workout.yaml",
+		})
+
 	var manifest_path: String = package_dir.path_join("manifest.json")
 	var manifest: Dictionary = _load_json(manifest_path)
 	if manifest.is_empty():
-		return _error("Package manifest is missing or invalid.", {"packageDir": package_dir, "manifestPath": manifest_path, "record": chart})
+		return _error("Legacy manifest package is missing or invalid. chart upsert currently supports only temporary manifest-based compatibility fixtures.", {"packageDir": package_dir, "manifestPath": manifest_path, "record": chart, "legacyCompatibilityOnly": true})
 
 	var chart_path: String = _canonical_chart_path(chart)
 	var chart_file_path: String = package_dir.path_join(chart_path)
@@ -162,7 +171,7 @@ func _validation_for_package_state(package_dir: String) -> Dictionary:
 			"warnings": [],
 			"packageDir": package_dir,
 			"skipped": true,
-			"note": "Skipped YAML package validation for legacy manifest-based authoring fixture.",
+			"note": "Skipped current workout.yaml package validation because this authoring flow is quarantined to temporary legacy manifest-based fixtures only.",
 		}
 	return _validate_package_service.validate_path(package_dir)
 
