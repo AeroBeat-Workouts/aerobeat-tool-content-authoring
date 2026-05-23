@@ -19,10 +19,10 @@ mono_crash.*.json
 .DS_Store
 Thumbs.db
 
-# GodotEnv package workbench
-.testbed/addons/*
-!.testbed/addons/.editorconfig
-.testbed/.addons/
+# Local/generated addon trees
+/addons/
+/.addons/
+/.testbed/addons/
 
 # Beads / Dolt files (added by bd init)
 .dolt/
