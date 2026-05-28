@@ -1,6 +1,12 @@
 {
   "$schema": "https://chickensoft.games/schemas/addons.schema.json",
   "addons": {
+    // Install this repo into the hidden workbench the same way a consumer does.
+    "aerobeat-tool-content-authoring": {
+      "url": "..",
+      "source": "symlink",
+      "subfolder": "/"
+    },
     // Tool-lane dependencies used by the hidden workbench and tests.
     "aerobeat-content-core": {
       "url": "git@github.com:AeroBeat-Workouts/aerobeat-content-core.git",
