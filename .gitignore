@@ -23,6 +23,7 @@ Thumbs.db
 /addons/
 /.addons/*
 /.testbed/addons/
+/.testbed/.addons/
 
 # Beads / Dolt files (added by bd init)
 .dolt/
