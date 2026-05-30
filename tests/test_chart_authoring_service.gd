@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ChartAuthoringService = preload("../services/authoring/chart_authoring_service.gd")
+const ADDON_CHART_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/authoring/chart_authoring_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -25,7 +25,7 @@ static func run() -> Dictionary:
 			{"beat": 4, "type": "hook_left"},
 		],
 	}
-	var legacy_result: Dictionary = ChartAuthoringService.new().upsert_record(chart_input)
+	var legacy_result: Dictionary = load(ADDON_CHART_AUTHORING_SERVICE_PATH).new().upsert_record(chart_input)
 	var validation: Dictionary = legacy_result.get("validation", {})
 	var chart_path: String = output_dir.path_join("charts/song-demo-boxing-hard.json")
 	var manifest: Dictionary = _load_json(output_dir.path_join("manifest.json"))
@@ -50,7 +50,7 @@ static func run() -> Dictionary:
 	var current_package_dir: String = ProjectSettings.globalize_path("res://tmp/chart_authoring_service_current_package")
 	_ensure_clean_dir(current_package_dir)
 	_copy_tree(TestSupport.demo_package_dir(), current_package_dir)
-	var current_result: Dictionary = ChartAuthoringService.new().upsert_record({
+	var current_result: Dictionary = load(ADDON_CHART_AUTHORING_SERVICE_PATH).new().upsert_record({
 		"packageDir": current_package_dir,
 		"chartId": "chart_demo_boxing_hard",
 		"chartName": "Demo Boxing Hard",

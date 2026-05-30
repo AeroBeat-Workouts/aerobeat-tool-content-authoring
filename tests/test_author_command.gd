@@ -1,6 +1,6 @@
 extends RefCounted
 
-const AeroBeatContentAuthoringCli = preload("../cli/main.gd")
+const ADDON_CLI_PATH := "res://addons/aerobeat-tool-content-authoring/cli/main.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -26,7 +26,7 @@ static func run() -> Dictionary:
 		],
 	})
 
-	var legacy_result: Dictionary = AeroBeatContentAuthoringCli.new().run_cli([
+	var legacy_result: Dictionary = load(ADDON_CLI_PATH).new().run_cli([
 		"author",
 		"chart",
 		"upsert",
@@ -63,7 +63,7 @@ static func run() -> Dictionary:
 			{"beat": 1, "type": "jab_left"},
 		],
 	})
-	var current_result: Dictionary = AeroBeatContentAuthoringCli.new().run_cli([
+	var current_result: Dictionary = load(ADDON_CLI_PATH).new().run_cli([
 		"author",
 		"chart",
 		"upsert",

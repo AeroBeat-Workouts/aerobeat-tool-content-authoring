@@ -3,6 +3,7 @@ extends SceneTree
 func _initialize() -> void:
 	var script_dir: String = get_script().resource_path.get_base_dir()
 	var test_scripts: Array = [
+		load(script_dir.path_join("test_AeroContentManager.gd")),
 		load(script_dir.path_join("test_validate_command.gd")),
 		load(script_dir.path_join("test_build_content_package_service.gd")),
 		load(script_dir.path_join("test_chart_authoring_service.gd")),

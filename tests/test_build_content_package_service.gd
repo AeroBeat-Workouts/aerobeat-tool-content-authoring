@@ -1,13 +1,13 @@
 extends RefCounted
 
-const BuildContentPackageService = preload("../services/packaging/build_content_package_service.gd")
+const ADDON_BUILD_CONTENT_PACKAGE_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/packaging/build_content_package_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var fixture_dir: String = TestSupport.demo_package_dir()
 	var output_dir: String = ProjectSettings.globalize_path("res://tmp/build_content_package_service")
 	TestSupport.ensure_clean_dir(output_dir)
-	var result: Dictionary = BuildContentPackageService.new().build_package(fixture_dir, output_dir)
+	var result: Dictionary = load(ADDON_BUILD_CONTENT_PACKAGE_SERVICE_PATH).new().build_package(fixture_dir, output_dir)
 	var workout_exists := FileAccess.file_exists(output_dir.path_join("workout.yaml"))
 	var chart_exists := FileAccess.file_exists(output_dir.path_join("charts/ab-chart-neon-stride-boxing-medium.yaml"))
 	var media_exists := FileAccess.file_exists(output_dir.path_join("media/audio/neon-stride.ogg"))

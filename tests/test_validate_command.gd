@@ -1,16 +1,16 @@
 extends RefCounted
 
-const ValidateCommand = preload("../cli/commands/validate_command.gd")
+const ADDON_VALIDATE_COMMAND_PATH := "res://addons/aerobeat-tool-content-authoring/cli/commands/validate_command.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var fixture_dir: String = TestSupport.demo_package_dir()
-	var plain_result: Dictionary = ValidateCommand.new().execute([fixture_dir])
-	var full_result: Dictionary = ValidateCommand.new().execute([fixture_dir, "--json"])
+	var plain_result: Dictionary = load(ADDON_VALIDATE_COMMAND_PATH).new().execute([fixture_dir])
+	var full_result: Dictionary = load(ADDON_VALIDATE_COMMAND_PATH).new().execute([fixture_dir, "--json"])
 	var full_report: Dictionary = full_result.get("data", {})
-	var songs_result: Dictionary = ValidateCommand.new().execute(["songs", fixture_dir, "--json"])
+	var songs_result: Dictionary = load(ADDON_VALIDATE_COMMAND_PATH).new().execute(["songs", fixture_dir, "--json"])
 	var songs_report: Dictionary = songs_result.get("data", {})
-	var legacy_assets_result: Dictionary = ValidateCommand.new().execute(["assets", fixture_dir, "--json"])
+	var legacy_assets_result: Dictionary = load(ADDON_VALIDATE_COMMAND_PATH).new().execute(["assets", fixture_dir, "--json"])
 	var plain_output: String = String(plain_result.get("output", ""))
 	var passed: bool = bool(plain_result.get("ok", false)) \
 		and int(plain_result.get("exitCode", -1)) == 0 \

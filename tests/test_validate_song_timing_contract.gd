@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
+const ADDON_VALIDATE_PACKAGE_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/validation/validate_package_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -13,7 +13,7 @@ static func run() -> Dictionary:
 	song_text = song_text.replace("timing:\n  anchorMs: 0\n  tempoSegments:", "timing:\n  anchorMs: 0\n  bpm: 132\n  tempoSegments:")
 	TestSupport.write_text(song_path, song_text)
 
-	var report: Dictionary = ValidatePackageService.new().validate_path(invalid_dir, "songs")
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(invalid_dir, "songs")
 	var issue_codes := TestSupport.issue_codes(report.get("issues", []))
 	var passed: bool = not bool(report.get("valid", true)) and issue_codes.has("song_timing_bpm_shortcut_forbidden")
 	return {

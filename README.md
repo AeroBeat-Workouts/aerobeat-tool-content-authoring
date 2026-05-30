@@ -29,6 +29,7 @@ This repo now follows the intended day-one split:
 - `editor/` is **optional scaffolding only**, and it also delegates to shared services instead of duplicating logic.
 - `mappers/` convert normalized service reports into output-friendly or UI-friendly shapes.
 - `tests/` verify that the service layer is the authority and that both CLI and editor entrypoints depend on it.
+- `src/AeroContentManager.gd` is the lightweight facade/singleton that exposes the shared authoring services through one repo-owned entrypoint.
 
 The important rule is:
 

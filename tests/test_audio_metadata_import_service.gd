@@ -1,13 +1,13 @@
 extends RefCounted
 
-const AudioMetadataImportService = preload("../services/importers/audio_metadata_import_service.gd")
+const ADDON_AUDIO_METADATA_IMPORT_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/importers/audio_metadata_import_service.gd"
 
 static func run() -> Dictionary:
 	var fixture_path := ProjectSettings.globalize_path("res://tmp/audio_metadata_import_service/demo-song.ogg")
 	_ensure_parent_dir(fixture_path)
 	_ensure_fixture_file(fixture_path)
 
-	var result: Dictionary = AudioMetadataImportService.new().import_source(fixture_path, {
+	var result: Dictionary = load(ADDON_AUDIO_METADATA_IMPORT_SERVICE_PATH).new().import_source(fixture_path, {
 		"songId": "song_demo_imported",
 		"songName": "Demo Imported Song",
 		"anchorMs": 24,

@@ -1,4 +1,4 @@
-class_name AeroToolManager
+class_name AeroContentManager
 extends Node
 
 const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
