@@ -1,9 +1,9 @@
 # AeroBeat Tool Content Authoring Godot-First Refactor
 
 **Date:** 2026-06-01
-**Status:** In Progress
-**Last Updated:** 2026-06-01 13:52 EDT
-**Blocked Reason:** None
+**Status:** Pending Human Validation / In Progress
+**Last Updated:** 2026-06-01 15:16 EDT
+**Blocked Reason:** Awaiting human validation and any appended change requests
 **Agent:** Pico
 
 ---
@@ -243,7 +243,7 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 
 ### Task 7: Validate package round-tripping, audit downstream repos, and sync dependencies
 
-**Bead ID:** `aerobeat-tool-content-authoring-lbe`  
+**Bead ID:** `aerobeat-tool-content-authoring-lbe`
 **SubAgent:** `primary`
 **Role:** `qa`
 **References:** `REF-01`, `REF-05`, `REF-06`
@@ -275,7 +275,7 @@ Two honest seams remain for Task 8 audit visibility. First, a fresh-from-blank a
 
 ### Task 8: Independently audit completion and close the refactor slice
 
-**Bead ID:** `Pending`
+**Bead ID:** `aerobeat-tool-content-authoring-8ad`  
 **SubAgent:** `primary`
 **Role:** `auditor`
 **References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`
@@ -291,9 +291,11 @@ Two honest seams remain for Task 8 audit visibility. First, a fresh-from-blank a
 - `.plans/2026-06-01-aerobeat-tool-content-authoring-godot-first-refactor.md`
 - audit evidence files if needed
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Independent audit completed on 2026-06-01. The refactor slice is substantively delivered but not truthfully complete as a fully closed plan. Confirmed against repo state and runtime checks: root-level GodotEnv/addon publication artifacts are gone (`addons/`, `.addons/`, `addons.jsonc`, `cli/`, `tests/`, and `src/AeroToolManager.gd` absent at repo root); `src/AeroContentAuthoring.gd` is the singleton authority and the editor bridge delegates its shared service registry through `ContentAuthoringPlugin.build_service_registry() -> AeroContentAuthoring.build_service_registry()`; `.testbed/` now owns the automated and manual validation surface (`project.godot` boots `res://scenes/ContentAuthoring.tscn`, tests live under `.testbed/scripts/tests/`, and root-level test/runtime scaffolding no longer carries the old posture); the `ContentAuthoring` shell exists and its smoke checks pass; Task 6 scope landed for set authoring plus environment/audio/video preview seams; and the canonical demo package still round-trips load/edit/save/reload as valid via both the workflow test and the headless scene smoke path. Downstream fallout was handled explicitly in `aerobeat-docs` by adding canonical `preferredEnvironmentId` + `fallbackEnvironmentId` fields to the demo package sets, while the legacy-only `aerobeat-assembly-community` environment-contract fixture remains an explicit follow-up outside this repo.
+
+The blocking truth-check is the blank-new authoring seam documented by QA. Independent audit reproduced it directly with a fresh `AeroContentAuthoring.create_new_workout_package(...)` run: immediate validation stays invalid and save output fails validator-clean status because new drafts still lack required songs/charts/environments/SQL plus required workout/set linkage fields. That means the implementation does not yet satisfy the stronger plan/goal language that the singleton should be able to create a valid new workout package end to end from blank state. The approved refactor slice is therefore best marked **partial, not blocked**: the Godot-first architecture migration, canonical package round-trip, testbed ownership, and Task 6 integrations are real and complete for existing-package workflows, but blank-new authoring/import/sql seeding remains the exact follow-up gap before this broader plan can be called fully complete.
 
 ---
 
@@ -301,14 +303,19 @@ Two honest seams remain for Task 8 audit visibility. First, a fresh-from-blank a
 
 **Status:** ⚠️ Partial
 
-**What We Built:** Drafted the execution plan for a repo-wide Godot-first refactor centered on a new `AeroContentAuthoring` singleton and a `.testbed`-driven authoring/validation workflow.
+**What We Built:** Landed the Godot-first refactor itself: the repo root now carries the runtime package shape instead of a published root-level GodotEnv posture; `AeroContentAuthoring` is the shared singleton authority; editor wiring is a thin bridge; `.testbed/` owns local dependency sync, automated tests, and the `ContentAuthoring` scene shell; Task 6 set authoring plus preview integrations are present; and the canonical demo package can be loaded, edited, saved, reloaded, and revalidated successfully through the new workflow.
 
-**Reference Check:** Plan drafted against the current singleton entrypoint, tool-definition doc, root dependency manifest, existing `.testbed` project, and repo README. Cross-repo dependency references still need to be added during the audit task before implementation begins.
+**Reference Check:** `REF-01` through `REF-06` are satisfied for the architecture migration, singleton authority, `.testbed` ownership, canonical package round-trip, and downstream docs-fixture fallout handling. The one material gap against the broader plan language is blank-new authoring parity: a fresh draft created from empty state still cannot reach validator-clean output because required imported content + SQL seeding/workout linkage remain incomplete. That is an explicit follow-up seam, not hidden scope drift.
 
 **Commits:**
-- None yet.
+- `0521f7f` - Refactor content authoring repo toward Godot-first runtime
+- `0aac407` - Implement AeroContentAuthoring package workflow
+- `540a353` - Move automated tests into testbed
+- `d52355d` - Build ContentAuthoring testbed shell
+- `7694e50` - Implement set authoring and media previews
+- `346d0a1` - test: align workflow QA with canonical fallback fixture
 
-**Lessons Learned:** This refactor is both an internal architecture migration and a workflow-contract migration. Treating `.testbed` as the primary human-verifiable surface should reduce ambiguity, but only if the singleton/service layer stays authoritative and downstream dependency fallout is audited explicitly.
+**Lessons Learned:** The architecture migration succeeded, but "round-trip works on a canonical existing package" is not the same thing as "blank-new authoring is complete." The plan should distinguish those seams explicitly: existing-package workflows are real today, while from-scratch authoring still needs draft seeding/import coverage for songs, charts, environments, coach config, and SQL before the overall authoring story is truthfully complete.
 
 ---
 
