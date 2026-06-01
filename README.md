@@ -1,161 +1,105 @@
 # aerobeat-tool-content-authoring
 
-`aerobeat-tool-content-authoring` is the first concrete **Tool-lane** repo for AeroBeat content authoring.
+`aerobeat-tool-content-authoring` is a **Godot-first runtime package** for AeroBeat workout authoring.
 
-It exists to give humans, CI, and other automation a shared place to **author, inspect, validate, migrate, package, and transform canonical AeroBeat workout packages**. This repo owns those workflows; it does **not** own the durable meaning of the content itself.
+Its root contract is no longer a CLI toolchain or a published root-level GodotEnv manifest. The repo now aims at a runtime-capable singleton surface that can eventually run inside built consumers such as `aerobeat-assembly-community`, while `.testbed/` acts as the local GodotEnv-backed verification project for development and manual testing.
 
-The current definition-phase source of truth for repo scope, day-one workflows, and the package/content-core contract lives in:
+## Responsibility boundary
 
-- [`docs/content-authoring-tool-definition.md`](docs/content-authoring-tool-definition.md)
+- `aerobeat-content-core` owns canonical workout-package contracts and the authoritative validation truth.
+- `aerobeat-tool-content-authoring` owns authoring/runtime workflows that operate on those contracts.
+- `.testbed/` owns local verification-only dependency sync and future human-facing authoring scenes.
 
-That definition also locks the downstream catalog stance for future tooling: local and remote workout catalogs should project from one shared browse core (`workouts`, `tags`, `features`, `difficulties`, `songs`, `coaches`, `genres`) with companion tables `workout_local` and `workout_remote`, rather than divergent local-vs-remote schemas.
+If a rule changes the meaning of the package contract, it belongs in `aerobeat-content-core`, not here.
 
-## Purpose
+## Current architecture direction
 
-This repo sits on top of the approved lane-based architecture:
+The repo is being refactored toward a single runtime authority:
 
-- `aerobeat-content-core` owns canonical content contracts such as `Song`, `Chart`, `Set`, `Workout`, shared chart-envelope contracts, manifests, ids, and shared structural validation rules.
-- `aerobeat-tool-core` owns shared tool-side DTOs, operation/result models, progress/report contracts, and other tooling-common interfaces.
-- `aerobeat-tool-content-authoring` owns the concrete workflows that operate on that content: authoring, validation orchestration, migration, packaging, import/export, and inspection.
+- `src/AeroContentAuthoring.gd` is the public singleton/runtime entrypoint.
+- `services/` holds reusable workflow services used by the singleton.
+- `editor/plugins/content_authoring_plugin.gd` is only a thin editor bridge over the same runtime registry.
+- `.testbed/` is the Godot project used to sync local addons, import the package, and host future manual authoring UI.
 
-If a behavior belongs to canonical schema ownership, it should live in `aerobeat-content-core`. If it belongs to gameplay runtime logic or presentation, it should live in `aerobeat-feature-core` or a concrete `aerobeat-feature-*` repo instead.
-
-## Headless-first architecture
-
-This repo now follows the intended day-one split:
-
-- `services/` is the **canonical workflow layer**.
-- `cli/` is a **thin headless surface** that delegates to shared services.
-- `editor/` is **optional scaffolding only**, and it also delegates to shared services instead of duplicating logic.
-- `mappers/` convert normalized service reports into output-friendly or UI-friendly shapes.
-- `tests/` verify that the service layer is the authority and that both CLI and editor entrypoints depend on it.
-- `src/AeroContentManager.gd` is the lightweight facade/singleton that exposes the shared authoring services through one repo-owned entrypoint.
-
-The important rule is:
-
-> CLI/headless workflows and editor/interactive workflows must call the same service layer.
-
-### Current scaffolded workflow slices
-
-The repo now includes a minimal but real first slice for:
-
-- authoring service boundaries for songs, charts, sets, workouts, coaching, and environments
-- package validation aligned to the current downscoped workout-package contract
-- packaging/build workflow scaffolding
-- migration and import workflow scaffolding
-- inspection and formatting helpers for CLI use
-- an editor plugin scaffold that resolves shared services instead of implementing parallel logic
+This makes the repo truthful for eventual in-game/runtime consumption instead of treating Godot usage as a sidecar around a headless CLI.
 
 ## Repository shape
 
 ```text
 aerobeat-tool-content-authoring/
-├── interfaces/
-├── services/
-│   ├── authoring/
-│   ├── validation/
-│   ├── migration/
-│   ├── packaging/
-│   ├── importers/
-│   └── registry/
-├── cli/
-│   ├── commands/
-│   └── formatters/
+├── .testbed/
+│   ├── addons.jsonc
+│   └── project.godot
+├── docs/
 ├── editor/
-│   ├── plugins/
-│   ├── docks/
-│   ├── inspectors/
-│   └── view_models/
+├── interfaces/
 ├── mappers/
+├── services/
+├── src/
+│   └── AeroContentAuthoring.gd
 ├── tests/
 ├── plugin.cfg
-└── addons.jsonc
+└── README.md
 ```
 
-## Shared-service rule in practice
+## GodotEnv posture
 
-Examples from the current scaffold:
+Root-level GodotEnv publication state has been removed from this repo.
 
-- `cli/commands/validate_command.gd` calls `services/validation/validate_package_service.gd`
-- `cli/commands/package_command.gd` calls `services/packaging/build_content_package_service.gd`
-- `editor/plugins/content_authoring_plugin.gd` exposes the same shared validation and packaging services for future editor UI
-- report formatting is kept in `cli/formatters/` and `mappers/`, not embedded inside the service layer
+The only addon sync manifest that should exist here is:
 
-## What this repo should own
+- `.testbed/addons.jsonc`
 
-This repo is the correct home for workflow-oriented content tooling such as:
+The only locally generated addon trees that should exist are:
 
-- authoring services for songs, charts, sets, and workouts
-- validation orchestration for packages and charts
-- migration workflows for approved schema changes
-- package-building flows
-- import/export adapters
-- inspection and indexing helpers
-- thin CLI commands and optional editor UI built on shared services
+- `.testbed/addons/`
+- `.testbed/.addons/`
 
-## What this repo should not own
+Those are development artifacts, not published package contract files.
 
-This repo should **not** become a schema repo or a gameplay repo.
+## Runtime and validation contract
 
-Keep the following out of this repo:
+The intended runtime surface is `AeroContentAuthoring`, not `AeroToolManager` and not a CLI wrapper.
 
-- canonical content contract definitions that belong in `aerobeat-content-core`
-- gameplay scoring/runtime execution logic
-- feature/runtime presentation systems
-- mode-specific gameplay interpretation that belongs in `aerobeat-feature-*`
-- a replacement for `aerobeat-tool-core`
+The singleton direction for the next slices is:
 
-## GodotEnv development flow
+- create/reset runtime authoring state
+- load an authored workout from an **unzipped folder**
+- save authored output as an **unzipped folder plus sibling zip archive**
+- delegate package validation truth toward `aerobeat-content-core` where the validator is runtime-loadable
+- keep package contract rules centered on canonical authored data
 
-This repo uses the AeroBeat GodotEnv package convention.
+Important contract notes already locked for follow-up implementation:
 
-- Canonical package dependency manifest: `addons.jsonc`
-- Canonical dev/test manifest: `.testbed/addons.jsonc`
-- Installed dev/test addons: `.testbed/addons/`
-- GodotEnv cache: `.testbed/.addons/`
-- Hidden workbench project: `.testbed/project.godot`
-- Root workflow tests: `tests/`
+- primary + fallback environments are canonical set data
+- a set without fallback is invalid
+- fallback may equal primary
+- video/audio preview dependencies are `.testbed` verification concerns, not root package contract dependencies
 
-### Restore dev/test dependencies
+## Current open seam
 
-From the repo root:
+Task 3 removes the repo's legacy singleton drift and establishes a workout-folder workflow surface, but two follow-up seams remain:
+
+- `services/authoring/chart_authoring_service.gd` still contains quarantined legacy manifest/routine behavior
+- `aerobeat-content-core` validation is only directly delegatable once that repo exposes a runtime-loadable addon/root-safe validator script
+
+## Local development
+
+Restore local testbed dependencies:
 
 ```bash
 cd .testbed
 godotenv addons install
 ```
 
-### Open the workbench
-
-From the repo root:
-
-```bash
-godot --editor --path .testbed
-```
-
-### Import smoke check
-
-From the repo root:
+Import the verification project:
 
 ```bash
 godot --headless --path .testbed --import
 ```
 
-### Run the headless workflow tests
-
-From the repo root:
+Run the current repo validation tests:
 
 ```bash
 godot --headless --path .testbed --script ../tests/run_tool_tests.gd
 ```
-
-## Validation notes
-
-- Workout packages keep authored songs, charts, sets, workouts, coaching, and environments.
-- Package-local authored `assets/` content and set-level `assetSelections` are intentionally rejected by validation; internal AeroBeat product assets remain a separate product/runtime concern.
-- The authoritative runnable validation path is the headless workflow runner at `tests/run_tool_tests.gd`, executed with `godot --headless --path .testbed --script ../tests/run_tool_tests.gd`.
-- `.testbed` is the hidden import/workbench project used to restore addons and provide a Godot project context for headless execution; it is not a separate authoritative test suite.
-- The validation scaffold stays aligned to the approved package shape described in `docs/content-authoring-tool-definition.md` (`workout.yaml`, `songs/`, `charts/`, `sets/`, `coaches/`, `environments/`, `media/`, `sql/`).
-- The remaining `author chart upsert` flow is quarantined as temporary legacy compatibility for old `manifest.json` fixtures only. It is not a truthful write path for current `workout.yaml` packages and now fails explicitly if pointed at one.
-- The service layer currently performs lightweight structural validation suitable for the first scaffold slice, including the locked v1 gameplay feature set (`boxing`, `flow`) and the locked Environment v1 shape (`environmentId`, `environmentName`, `type`, `resourcePath`) with exact enum (`image_background`, `video_background`, `glb_environment`).
-- As richer shared contracts land in `aerobeat-content-core` and `aerobeat-tool-core`, those services should tighten around those canonical DTOs rather than growing duplicate schema logic here.
