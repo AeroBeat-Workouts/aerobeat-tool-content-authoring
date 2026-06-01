@@ -21,6 +21,9 @@ static func run() -> Dictionary:
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_environment_type_scenario(base_fixture_dir, base_tmp_dir),
 		_environment_resource_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
+		_missing_environment_config_path_scenario(base_fixture_dir, base_tmp_dir),
+		_environment_config_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
+		_valid_splat_environment_scenario(base_fixture_dir, base_tmp_dir),
 		_legacy_environment_scene_path_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
@@ -246,6 +249,59 @@ static func _environment_resource_type_mismatch_scenario(base_fixture_dir: Strin
 	return {
 		"name": "environment_resource_type_mismatch",
 		"passed": codes.has("environment_resource_type_mismatch"),
+		"codes": codes,
+	}
+
+static func _missing_environment_config_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("missing_environment_config_path")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text += "\nconfigPath: media/environments/missing-neon-rooftop.config.yaml\n"
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "missing_environment_config_path",
+		"passed": codes.has("missing_file"),
+		"codes": codes,
+	}
+
+static func _environment_config_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("environment_config_type_mismatch")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-rooftop.json"), "{}\n")
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text += "\nconfigPath: media/environments/neon-rooftop.json\n"
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "environment_config_type_mismatch",
+		"passed": codes.has("environment_config_type_mismatch"),
+		"codes": codes,
+	}
+
+static func _valid_splat_environment_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("valid_splat_environment")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-splat.compressed.ply"), "tiny splat placeholder\n")
+	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-splat.config.yaml"), "transform:\n  scale:\n    - 1\n    - 1\n    - 1\n")
+	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
+	var environment_text: String = TestSupport.read_text(environment_path)
+	environment_text = environment_text.replace("type: image_background", "type: splat")
+	environment_text = environment_text.replace("resourcePath: media/environments/sunrise-studio.png", "resourcePath: media/environments/neon-splat.compressed.ply")
+	environment_text += "\nconfigPath: media/environments/neon-splat.config.yaml\n"
+	TestSupport.write_text(environment_path, environment_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "valid_splat_environment",
+		"passed": codes.is_empty(),
 		"codes": codes,
 	}
 

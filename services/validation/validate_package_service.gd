@@ -37,12 +37,14 @@ const FAMILY_CONFIG := {
 		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "environmentId", "environmentName", "type", "resourcePath"],
 	},
 }
-const VALID_ENVIRONMENT_TYPES := ["image_background", "video_background", "glb_environment"]
+const VALID_ENVIRONMENT_TYPES := ["image_background", "video_background", "glb_environment", "splat"]
 const ENVIRONMENT_RESOURCE_EXTENSIONS := {
 	"image_background": [".png", ".jpg", ".jpeg", ".webp"],
 	"video_background": [".mp4", ".webm", ".ogv"],
 	"glb_environment": [".glb"],
+	"splat": [".compressed.ply", ".ply", ".splat", ".sog"],
 }
+const ENVIRONMENT_CONFIG_EXTENSIONS := [".config.yaml", ".config.yml", ".yaml", ".yml"]
 const SONG_TIMING_REQUIRED_FIELDS := ["anchorMs", "tempoSegments", "stopSegments", "timeSignatureSegments"]
 const FORBIDDEN_SONG_COMPOSITION_LINK_FIELDS := ["chartId", "setId", "workoutId"]
 const FORBIDDEN_CHART_COMPOSITION_LINK_FIELDS := ["songId", "setId", "workoutId"]
@@ -338,7 +340,7 @@ func _validate_environment_record(package_dir: String, path: String, environment
 	var environment_id: String = String(environment.get("environmentId", ""))
 	var environment_type: String = String(environment.get("type", ""))
 	if not environment_type.is_empty() and not VALID_ENVIRONMENT_TYPES.has(environment_type):
-		issues.append(_issue("invalid_environment_type", "Environment type must be one of image_background/video_background/glb_environment.", path, "environments", environment_id, "type"))
+		issues.append(_issue("invalid_environment_type", "Environment type must be one of image_background/video_background/glb_environment/splat.", path, "environments", environment_id, "type"))
 	var resource_path: String = String(environment.get("resourcePath", ""))
 	if not resource_path.is_empty() and not _package_file_exists(package_dir, resource_path):
 		issues.append(_issue("missing_file", "Environment resourcePath does not resolve inside the package.", path, "environments", environment_id, "resourcePath", {"pathValue": resource_path}))
@@ -354,6 +356,12 @@ func _validate_environment_record(package_dir: String, path: String, environment
 				"resourcePath",
 				{"pathValue": resource_path, "type": environment_type, "allowedExtensions": allowed_extensions}
 			))
+	var config_path: String = String(environment.get("configPath", ""))
+	if not config_path.is_empty():
+		if not _package_file_exists(package_dir, config_path):
+			issues.append(_issue("missing_file", "Environment configPath does not resolve inside the package.", path, "environments", environment_id, "configPath", {"pathValue": config_path}))
+		elif not _path_has_allowed_extension(config_path, ENVIRONMENT_CONFIG_EXTENSIONS):
+			issues.append(_issue("environment_config_type_mismatch", "Environment configPath must point to a YAML sidecar file.", path, "environments", environment_id, "configPath", {"pathValue": config_path, "allowedExtensions": ENVIRONMENT_CONFIG_EXTENSIONS}))
 	return issues
 
 
