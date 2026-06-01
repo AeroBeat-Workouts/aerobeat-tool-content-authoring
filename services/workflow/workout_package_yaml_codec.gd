@@ -118,6 +118,8 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 	written_files.append_array(copied_sql_files)
 	var copied_passthrough: Array = _copy_passthrough_content(state, absolute_dir)
 	written_files.append_array(copied_passthrough)
+	var copied_draft_assets: Array = _copy_draft_asset_sources(state, absolute_dir)
+	written_files.append_array(copied_draft_assets)
 	return {
 		"ok": true,
 		"packageDir": absolute_dir,
@@ -296,6 +298,22 @@ func _copy_passthrough_content(state: Dictionary, package_dir: String) -> Array:
 		DirAccess.make_dir_recursive_absolute(destination_file.get_base_dir())
 		if FileAccess.file_exists(source_file) and DirAccess.copy_absolute(source_file, destination_file) == OK:
 			copied.append(file_name)
+	return copied
+
+func _copy_draft_asset_sources(state: Dictionary, package_dir: String) -> Array:
+	var copied: Array = []
+	var draft_sources: Dictionary = Dictionary(state.get("draftAssetSources", {}))
+	for relative_path_variant in draft_sources.keys():
+		var relative_path: String = String(relative_path_variant).strip_edges()
+		var source_path: String = String(draft_sources.get(relative_path_variant, "")).strip_edges()
+		if relative_path.is_empty() or source_path.is_empty():
+			continue
+		if not FileAccess.file_exists(source_path):
+			continue
+		var destination_path: String = package_dir.path_join(relative_path)
+		DirAccess.make_dir_recursive_absolute(destination_path.get_base_dir())
+		if DirAccess.copy_absolute(source_path, destination_path) == OK:
+			copied.append(relative_path)
 	return copied
 
 func _discover_passthrough_directories(package_dir: String) -> Array:

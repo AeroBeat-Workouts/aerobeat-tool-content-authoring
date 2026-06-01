@@ -7,7 +7,7 @@
       "source": "symlink",
       "subfolder": "/"
     },
-    // Tool-lane dependencies used by the hidden workbench and tests.
+    // Canonical content validation/runtime truth.
     "aerobeat-content-core": {
       "url": "git@github.com:AeroBeat-Workouts/aerobeat-content-core.git",
       "checkout": "main",
@@ -17,6 +17,68 @@
       "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-core.git",
       "checkout": "main",
       "subfolder": "/"
+    },
+    // Task 6 preview integrations live only in the testbed/workbench.
+    "aerobeat-environment-loader": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-environment-loader.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-environment-core": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-environment-core.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-tool-video-player": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-video-player.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-vendor-godot-video": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-video.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-tool-audio-player": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-audio-player.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-vendor-godot-audio": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-audio.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-tool-image-loader": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-image-loader.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-vendor-godot-image": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-image.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-tool-gltf-loader": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-gltf-loader.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-vendor-godot-gltf": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-gltf.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    "aerobeat-tool-device-detection": {
+      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-device-detection.git",
+      "checkout": "main",
+      "subfolder": "/"
+    },
+    // GUT drives the repo-local test suite inside the hidden testbed/workbench.
+    "gut": {
+      "url": "git@github.com:bitwes/Gut.git",
+      "checkout": "main",
+      "subfolder": "/addons/gut"
     }
   }
 }

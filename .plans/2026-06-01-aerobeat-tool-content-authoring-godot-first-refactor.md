@@ -211,7 +211,7 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 
 ### Task 6: Implement set authoring, environment preview, and media-preview integrations
 
-**Bead ID:** `Pending`
+**Bead ID:** `aerobeat-tool-content-authoring-1ys`  
 **SubAgent:** `primary`
 **Role:** `coder`
 **References:** `REF-01`, `REF-05`
@@ -226,14 +226,18 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 
 **Files Created/Deleted/Modified:**
 - `.testbed/scripts/content_authoring/**`
+- `.testbed/scripts/tests/**`
 - `.testbed/scenes/ContentAuthoring.tscn`
+- `.testbed/addons.jsonc`
 - `src/AeroContentAuthoring.gd`
-- `services/**`
+- `services/workflow/workout_package_yaml_codec.gd`
 - dependency manifests/configuration as needed
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Completed the set-authoring and preview slice on 2026-06-01. `src/AeroContentAuthoring.gd` now normalizes draft state to one default set, exposes set create/delete/update helpers, imports beatmap metadata into chart records, assigns per-set primary+fallback environment links, materializes draft media selections through a `draftAssetSources` map, and resolves preview requests with sidecar-driven `fit_mode` data for environment preview. The YAML workflow codec was extended so authored draft media selected from outside an existing package can still be copied into staged save/validation output. In the `.testbed` shell, `content_authoring.gd` now upgrades the `Sets` tab into a lower-level editing surface with create/delete controls, per-set file pickers for beatmap / primary environment / fallback environment / coaching audio, beatmap/environment/media metadata labels, coaching-audio preview controls, background environment preview, and warm-up / cool-down `.ogv` preview panels driven by `aerobeat-tool-video-player` plus `aerobeat-vendor-godot-video`. `.testbed/addons.jsonc` was expanded explicitly to include the environment loader plus video/audio preview testbed-only verification dependencies, and new runtime/smoke coverage was added for Task 6 behavior.
+
+Validation for this slice: `godot --headless --path .testbed --import` ✅, `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` ✅, and `godot --headless --path .testbed --script scripts/tests/smoke_content_authoring_scene.gd` ✅. The headless suite still exits with the pre-existing ObjectDB/resource-leak warnings at process shutdown, but the Task 6 runtime + smoke assertions pass and no scene-script errors remain. Honest seams left for Task 7+: environment/audio/video previews are verified through the testbed dependency stack and headless/runtime wiring, but a fuller interactive QA pass is still needed to confirm ergonomics and backend behavior on real desktop playback; beatmap import currently focuses on metadata/linking rather than full authoring/editing of chart contents; deleting a set intentionally leaves imported environment/chart records in draft state for now instead of performing aggressive cross-record garbage collection.
 
 ---
 

@@ -11,6 +11,7 @@ func _initialize() -> void:
 		load(script_dir.path_join("test_validate_package_failure_modes.gd")),
 		load(script_dir.path_join("test_editor_uses_shared_services.gd")),
 		load(script_dir.path_join("test_aero_content_authoring_workflow.gd")),
+		load(script_dir.path_join("test_task6_set_authoring_runtime.gd")),
 	]
 	var results: Array = []
 	var has_failures := false

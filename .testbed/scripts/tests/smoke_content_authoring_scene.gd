@@ -35,6 +35,10 @@ func _run() -> void:
 	var loaded_state: Dictionary = runtime.get_current_package_state()
 	var sets_list: ItemList = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/SetsTab/SetOrderList")
 	var loaded_package_label: Label = scene.get_node("MarginContainer/RootVBox/InfoPanel/InfoMargin/InfoVBox/LoadedPackageLabel")
+	var create_set_button: Button = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/SetsTab/SetActionsRow/CreateSetButton")
+	var set_editor_panel: VBoxContainer = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/SetsTab/SetEditorPanel")
+	var warmup_surface: Control = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmupVideoSurfaceFrame/WarmupVideoSurface")
+	var preview_layer: SubViewportContainer = scene.get_node("EnvironmentPreviewLayer")
 
 	var checks := {
 		"scene_name": scene.name == "ContentAuthoring",
@@ -44,7 +48,11 @@ func _run() -> void:
 		"metadata_scroll_present": metadata_scroll != null,
 		"metadata_binding": String(Dictionary(committed_state.get("workout", {})).get("workoutId", "")) == "ab-workout-scene-smoke" and String(committed_state.get("workout", {}).get("packageVersion", "")) == "9.9.9",
 		"fixture_loaded": bool(load_result.get("ok", false)) and String(Dictionary(loaded_state.get("workout", {})).get("workoutId", "")) == "ab-workout-demo-neon-boxing-bootcamp",
+		"default_one_set_exists": Array(runtime.get_current_package_state().get("sets", [])).size() >= 1,
 		"sets_reflected": sets_list.item_count > 0,
+		"set_editor_present": create_set_button != null and set_editor_panel != null,
+		"warmup_preview_present": warmup_surface != null,
+		"background_preview_present": preview_layer != null,
 		"loaded_label_updated": loaded_package_label.text.contains("demo-neon-boxing-bootcamp"),
 	}
 
