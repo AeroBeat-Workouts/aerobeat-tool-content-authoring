@@ -5,36 +5,173 @@ const ValidatePackageService = preload("../validation/validate_package_service.g
 
 const AUTHORED_DIRECTORIES := ["songs", "charts", "sets", "coaches", "environments", "sql"]
 const AUTHORED_ROOT_FILES := ["workout.yaml"]
+const DEFAULT_WORKOUT_ID := "ab-workout-draft"
+const DEFAULT_WORKOUT_NAME := "Draft Workout"
+const DEFAULT_SET_ID := "ab-set-001"
+const DEFAULT_SET_NAME := "Set 1"
+const DEFAULT_SONG_ID := "ab-song-001"
+const DEFAULT_SONG_NAME := "Placeholder Song"
+const DEFAULT_CHART_ID := "ab-chart-001"
+const DEFAULT_CHART_NAME := "Placeholder Boxing Chart"
+const DEFAULT_ENVIRONMENT_ID := "ab-environment-001"
+const DEFAULT_ENVIRONMENT_NAME := "Placeholder Environment"
+const DEFAULT_COACH_CONFIG_ID := "ab-coach-config-draft"
+const DEFAULT_COACH_CONFIG_NAME := "Draft Workout Coaching"
+const DEFAULT_COACH_ID := "ab-coach-default"
+const DEFAULT_COACH_NAME := "Coach Default"
+const DEFAULT_OVERLAY_ID := "ab-overlay-001"
+const DEFAULT_SQL_PATH := "sql/workouts.schema.sql"
+const PLACEHOLDER_SONG_AUDIO_PATH := "media/audio/blank-song.ogg"
+const PLACEHOLDER_OVERLAY_AUDIO_PATH := "media/coaching/blank-overlay.ogg"
+const PLACEHOLDER_COACH_VIDEO_PATH := "media/coaching/blank-coaching-video.mp4"
+const PLACEHOLDER_ENVIRONMENT_PATH := "media/environments/blank-environment.png"
+const PLACEHOLDER_SOURCE_ROOT := "res://addons/aerobeat-tool-content-authoring/assets/placeholders"
+const DEFAULT_SQL_SCHEMA := "CREATE TABLE IF NOT EXISTS workouts (\n  workout_id TEXT PRIMARY KEY,\n  workout_name TEXT NOT NULL\n);\n\nCREATE INDEX IF NOT EXISTS idx_workouts_name ON workouts(workout_name);\n"
 
 var _yaml_loader: ValidatePackageService = ValidatePackageService.new()
 
 func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
-	var workout_id: String = _token(seed.get("workoutId", seed.get("packageId", "")))
-	var coach_config_id: String = _token(seed.get("coachConfigId", ""))
-	return {
-		"packageVersion": String(seed.get("packageVersion", "1.0.0")).strip_edges(),
+	var package_version: String = String(seed.get("packageVersion", "1.0.0")).strip_edges()
+	var workout_id: String = _token(seed.get("workoutId", seed.get("packageId", DEFAULT_WORKOUT_ID)))
+	if workout_id.is_empty():
+		workout_id = DEFAULT_WORKOUT_ID
+	var workout_name: String = String(seed.get("workoutName", DEFAULT_WORKOUT_NAME)).strip_edges()
+	if workout_name.is_empty():
+		workout_name = DEFAULT_WORKOUT_NAME
+	var description: String = String(seed.get("description", "")).strip_edges()
+	var set_id: String = _token(seed.get("setId", DEFAULT_SET_ID))
+	var set_name: String = String(seed.get("setName", DEFAULT_SET_NAME)).strip_edges()
+	var song_id: String = _token(seed.get("songId", DEFAULT_SONG_ID))
+	var song_name: String = String(seed.get("songName", DEFAULT_SONG_NAME)).strip_edges()
+	var chart_id: String = _token(seed.get("chartId", DEFAULT_CHART_ID))
+	var chart_name: String = String(seed.get("chartName", DEFAULT_CHART_NAME)).strip_edges()
+	var environment_id: String = _token(seed.get("environmentId", DEFAULT_ENVIRONMENT_ID))
+	var environment_name: String = String(seed.get("environmentName", DEFAULT_ENVIRONMENT_NAME)).strip_edges()
+	var coach_config_id: String = _token(seed.get("coachConfigId", "ab-coach-config-%s" % workout_id))
+	if coach_config_id.is_empty():
+		coach_config_id = DEFAULT_COACH_CONFIG_ID
+	var coach_config_name: String = String(seed.get("coachConfigName", DEFAULT_COACH_CONFIG_NAME)).strip_edges()
+	if coach_config_name.is_empty():
+		coach_config_name = DEFAULT_COACH_CONFIG_NAME
+	var coach_id: String = _token(seed.get("coachId", DEFAULT_COACH_ID))
+	var coach_name: String = String(seed.get("coachName", DEFAULT_COACH_NAME)).strip_edges()
+	var overlay_id: String = _token(seed.get("overlayId", DEFAULT_OVERLAY_ID))
+	var state := {
+		"packageVersion": package_version,
 		"sourcePackageDir": "",
 		"loadedPackageDir": "",
 		"passthroughDirectories": [],
 		"passthroughFiles": [],
+		"draftAssetSources": {
+			PLACEHOLDER_SONG_AUDIO_PATH: _placeholder_source_path("blank-song.ogg"),
+			PLACEHOLDER_OVERLAY_AUDIO_PATH: _placeholder_source_path("blank-overlay.ogg"),
+			PLACEHOLDER_COACH_VIDEO_PATH: _placeholder_source_path("blank-coaching-video.mp4"),
+			PLACEHOLDER_ENVIRONMENT_PATH: _placeholder_source_path("blank-environment.png"),
+		},
+		"draftTextSources": {
+			DEFAULT_SQL_PATH: String(seed.get("sqlSchemaText", DEFAULT_SQL_SCHEMA)),
+		},
 		"workout": {
 			"schemaId": "aerobeat.workout-package.v1",
 			"schemaVersion": 1,
 			"recordVersion": 1,
 			"workoutId": workout_id,
-			"workoutName": String(seed.get("workoutName", "")).strip_edges(),
-			"description": String(seed.get("description", "")).strip_edges(),
-			"packageVersion": String(seed.get("packageVersion", "1.0.0")).strip_edges(),
+			"workoutName": workout_name,
+			"description": description,
+			"packageVersion": package_version,
 			"coachConfigId": coach_config_id,
-			"setOrder": [],
+			"setOrder": [set_id],
 		},
-		"coachConfig": {"enabled": false},
-		"songs": [],
-		"charts": [],
-		"sets": [],
-		"environments": [],
-		"sqlFiles": [],
+		"coachConfig": {
+			"schemaId": "aerobeat.coach-config.v1",
+			"schemaVersion": 1,
+			"recordVersion": 1,
+			"enabled": true,
+			"coachConfigId": coach_config_id,
+			"coachConfigName": coach_config_name,
+			"featuredCoaches": [{
+				"coachId": coach_id,
+				"coachName": coach_name,
+			}],
+			"warmupVideo": {
+				"mediaId": "ab-warmup-video-001",
+				"path": PLACEHOLDER_COACH_VIDEO_PATH,
+			},
+			"cooldownVideo": {
+				"mediaId": "ab-cooldown-video-001",
+				"path": PLACEHOLDER_COACH_VIDEO_PATH,
+			},
+			"overlayAudio": [{
+				"overlayId": overlay_id,
+				"coachId": coach_id,
+				"mediaId": "ab-overlay-audio-001",
+				"path": PLACEHOLDER_OVERLAY_AUDIO_PATH,
+			}],
+		},
+		"songs": [{
+			"schemaId": "aerobeat.song.v1",
+			"schemaVersion": 1,
+			"recordVersion": 1,
+			"songId": song_id,
+			"songName": song_name,
+			"audio": {
+				"filePath": PLACEHOLDER_SONG_AUDIO_PATH,
+			},
+			"timing": {
+				"anchorMs": 0,
+				"tempoSegments": [{
+					"startBeat": 0,
+					"bpm": 120,
+				}],
+				"stopSegments": [],
+				"timeSignatureSegments": [{
+					"startBeat": 0,
+					"numerator": 4,
+					"denominator": 4,
+				}],
+			},
+		}],
+		"charts": [{
+			"schemaId": "aerobeat.chart.boxing.v1",
+			"schemaVersion": 1,
+			"recordVersion": 1,
+			"chartId": chart_id,
+			"chartName": chart_name,
+			"feature": "boxing",
+			"difficulty": "medium",
+			"beats": [{
+				"start": 1.0,
+				"type": "punch_left",
+			}],
+		}],
+		"sets": [{
+			"schemaId": "aerobeat.set.v1",
+			"schemaVersion": 1,
+			"recordVersion": 1,
+			"setId": set_id,
+			"setName": set_name,
+			"songId": song_id,
+			"chartId": chart_id,
+			"preferredEnvironmentId": environment_id,
+			"fallbackEnvironmentId": environment_id,
+			"environmentId": environment_id,
+			"coachingOverlayId": overlay_id,
+		}],
+		"environments": [{
+			"schemaId": "aerobeat.environment.v1",
+			"schemaVersion": 1,
+			"recordVersion": 1,
+			"environmentId": environment_id,
+			"environmentName": environment_name,
+			"type": "image_background",
+			"resourcePath": PLACEHOLDER_ENVIRONMENT_PATH,
+		}],
+		"sqlFiles": [DEFAULT_SQL_PATH],
 	}
+	return state
+
+func _placeholder_source_path(file_name: String) -> String:
+	return ProjectSettings.globalize_path(PLACEHOLDER_SOURCE_ROOT.path_join(file_name))
 
 func load_package_state(package_dir: String) -> Dictionary:
 	var absolute_dir: String = package_dir.simplify_path()
@@ -114,6 +251,8 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
 		written_files.append(path)
 
+	var written_text_files: Array = _write_draft_text_sources(state, absolute_dir)
+	written_files.append_array(written_text_files)
 	var copied_sql_files: Array = _copy_sql_files(state, absolute_dir)
 	written_files.append_array(copied_sql_files)
 	var copied_passthrough: Array = _copy_passthrough_content(state, absolute_dir)
@@ -259,6 +398,19 @@ func _normalize_environment_record(record: Dictionary) -> Dictionary:
 		normalized["configPath"] = String(normalized.get("configPath", "")).strip_edges()
 	return normalized
 
+func _write_draft_text_sources(state: Dictionary, package_dir: String) -> Array:
+	var written: Array = []
+	var draft_text_sources: Dictionary = Dictionary(state.get("draftTextSources", {}))
+	for relative_path_variant in draft_text_sources.keys():
+		var relative_path: String = String(relative_path_variant).strip_edges()
+		if relative_path.is_empty():
+			continue
+		var text: String = String(draft_text_sources.get(relative_path_variant, ""))
+		var destination_path: String = package_dir.path_join(relative_path)
+		if _write_text_file(destination_path, text):
+			written.append(relative_path)
+	return written
+
 func _copy_sql_files(state: Dictionary, package_dir: String) -> Array:
 	var copied: Array = []
 	var source_dir: String = String(state.get("sourcePackageDir", "")).strip_edges()
@@ -268,8 +420,10 @@ func _copy_sql_files(state: Dictionary, package_dir: String) -> Array:
 		var sql_path: String = String(relative_path).strip_edges()
 		if sql_path.is_empty():
 			continue
-		var source_path: String = source_dir.path_join(sql_path)
 		var destination_path: String = package_dir.path_join(sql_path)
+		if FileAccess.file_exists(destination_path):
+			continue
+		var source_path: String = source_dir.path_join(sql_path)
 		DirAccess.make_dir_recursive_absolute(destination_path.get_base_dir())
 		if FileAccess.file_exists(source_path) and DirAccess.copy_absolute(source_path, destination_path) == OK:
 			copied.append(sql_path)
@@ -375,14 +529,17 @@ func _copy_tree(source_dir: String, output_dir: String, copied_files: Array, rel
 				copied_files.append(relative_path)
 	dir.list_dir_end()
 
-func _write_yaml_file(path: String, data: Variant) -> bool:
+func _write_text_file(path: String, text: String) -> bool:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		return false
-	file.store_string(_serialize_yaml(data))
+	file.store_string(text)
 	file.close()
 	return true
+
+func _write_yaml_file(path: String, data: Variant) -> bool:
+	return _write_text_file(path, _serialize_yaml(data))
 
 func _serialize_yaml(value: Variant, indent: int = 0) -> String:
 	var prefix := "  ".repeat(indent)

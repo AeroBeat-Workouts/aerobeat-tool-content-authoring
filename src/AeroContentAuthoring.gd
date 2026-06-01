@@ -529,6 +529,8 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 	var normalized := state.duplicate(true)
 	if not normalized.has("draftAssetSources") or not (normalized.get("draftAssetSources") is Dictionary):
 		normalized["draftAssetSources"] = {}
+	if not normalized.has("draftTextSources") or not (normalized.get("draftTextSources") is Dictionary):
+		normalized["draftTextSources"] = {}
 	if not normalized.has("draftBeatmapSources") or not (normalized.get("draftBeatmapSources") is Dictionary):
 		normalized["draftBeatmapSources"] = {}
 	var coach_config := Dictionary(normalized.get("coachConfig", {})).duplicate(true)

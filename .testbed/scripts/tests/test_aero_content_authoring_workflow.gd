@@ -12,7 +12,18 @@ static func run() -> Dictionary:
 		"packageVersion": "1.0.0",
 	})
 	var draft_state: Dictionary = create_result.get("state", {})
-	var create_passed := bool(create_result.get("ok", false)) and String(draft_state.get("workout", {}).get("workoutId", "")) == "ab-workout-draft"
+	var draft_sets: Array = Array(draft_state.get("sets", []))
+	var draft_songs: Array = Array(draft_state.get("songs", []))
+	var draft_charts: Array = Array(draft_state.get("charts", []))
+	var draft_environments: Array = Array(draft_state.get("environments", []))
+	var draft_coach_config: Dictionary = Dictionary(draft_state.get("coachConfig", {}))
+	var create_passed := bool(create_result.get("ok", false)) \
+		and String(draft_state.get("workout", {}).get("workoutId", "")) == "ab-workout-draft" \
+		and draft_sets.size() == 1 \
+		and draft_songs.size() == 1 \
+		and draft_charts.size() == 1 \
+		and draft_environments.size() == 1 \
+		and bool(draft_coach_config.get("enabled", false))
 
 	var load_result: Dictionary = runtime.load_workout_package_folder(fixture_dir)
 	var loaded_state: Dictionary = runtime.get_current_package_state()
@@ -45,7 +56,8 @@ static func run() -> Dictionary:
 
 	runtime.reset_authoring_state()
 	var reset_state: Dictionary = runtime.get_current_package_state()
-	var reset_passed := String(reset_state.get("workout", {}).get("workoutId", "")) == ""
+	var reset_validation: Dictionary = runtime.validate_current_package()
+	var reset_passed := not String(reset_state.get("workout", {}).get("workoutId", "")).is_empty() and bool(reset_validation.get("valid", false))
 
 	var passed := create_passed and load_passed and validate_passed and repaired_passed and fallback_rule_passed and save_passed and reset_passed
 	return {
@@ -59,5 +71,6 @@ static func run() -> Dictionary:
 			"repairedValidation": repaired_validation,
 			"saveResult": save_result,
 			"resetState": reset_state,
+			"resetValidation": reset_validation,
 		},
 	}
