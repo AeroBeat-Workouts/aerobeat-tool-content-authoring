@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-01
 **Status:** In Progress
-**Last Updated:** 2026-06-01 12:53 EDT
+**Last Updated:** 2026-06-01 13:52 EDT
 **Blocked Reason:** None
 **Agent:** Pico
 
@@ -181,7 +181,7 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 ### Task 5: Build the `ContentAuthoring` testbed scene and workflow tabs
 
-**Bead ID:** `Pending`
+**Bead ID:** `aerobeat-tool-content-authoring-0n3`
 **SubAgent:** `primary`
 **Role:** `coder`
 **References:** `REF-01`, `REF-05`
@@ -194,13 +194,18 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 **Files Created/Deleted/Modified:**
 - `.testbed/scenes/ContentAuthoring.tscn`
+- `.testbed/scenes/TestbedRoot.tscn` (removed)
 - `.testbed/scripts/content_authoring/**`
+- `.testbed/scripts/testbed_root.gd` (removed)
+- `.testbed/scripts/tests/smoke_content_authoring_scene.gd`
 - `.testbed/assets/**`
 - `.testbed/project.godot`
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Completed the workflow-shell slice on 2026-06-01. The placeholder `TestbedRoot` scene was removed and `.testbed/project.godot` now boots `res://scenes/ContentAuthoring.tscn`. The new scene wires a local `AeroContentAuthoring` runtime node into a metadata-first authoring surface with top-right `Load Workout` / `Save Workout` actions, a default `Metadata` tab with scrollable form fields, and additional top-level tabs for `Warm-Up Coaching`, `Sets`, and `Cool-Down Coaching`. Metadata and basic coach-config shell fields now round-trip directly into `AeroContentAuthoring` state, `Load Workout` targets an unzipped workout folder via directory picker and repopulates the UI from loaded state, and `Save Workout` targets a chosen destination directory and routes through the existing singleton workflow that emits both an authored folder and sibling zip archive. The `Sets` tab intentionally stays shell-only in this slice, but it already reflects current `setOrder` / authored set ids so Task 6 can attach richer editors and previews without replacing the scene frame.
+
+Validation for this slice: `godot --headless --path .testbed --import` ✅, `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` ✅, and an added smoke pass `godot --headless --path .testbed --script scripts/tests/smoke_content_authoring_scene.gd` ✅ confirmed the scene loads, the four required tabs are present with `Metadata` selected by default, metadata bindings update runtime state, and loading the demo workout repopulates the shell. The existing headless suite still prints ObjectDB/resource-leak warnings at process exit, but it exits green just as it did in Task 4.
 
 ---
 

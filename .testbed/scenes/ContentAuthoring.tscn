@@ -1,0 +1,300 @@
+[gd_scene load_steps=3 format=3 uid="uid://dp6q1h3jqk7me"]
+
+[ext_resource type="Script" path="res://scripts/content_authoring/content_authoring.gd" id="1_ymdta"]
+[ext_resource type="Script" path="res://addons/aerobeat-tool-content-authoring/src/AeroContentAuthoring.gd" id="2_f3b6m"]
+
+[node name="ContentAuthoring" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ymdta")
+
+[node name="AuthoringRuntime" type="Node" parent="."]
+script = ExtResource("2_f3b6m")
+auto_initialize = true
+
+[node name="SaveWorkoutDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Choose Workout Export Destination"
+size = Vector2i(900, 520)
+file_mode = 2
+access = 2
+ok_button_text = "Export Here"
+use_native_dialog = true
+
+[node name="LoadWorkoutDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Choose Unzipped Workout Folder"
+size = Vector2i(900, 520)
+file_mode = 2
+access = 2
+ok_button_text = "Load Folder"
+use_native_dialog = true
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RootVBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/RootVBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="TitleBlock" type="VBoxContainer" parent="MarginContainer/RootVBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/RootVBox/TopBar/TitleBlock"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "AeroBeat Content Authoring"
+
+[node name="SubtitleLabel" type="Label" parent="MarginContainer/RootVBox/TopBar/TitleBlock"]
+layout_mode = 2
+text = "Task 5 workflow shell: metadata-first authoring surface wired to AeroContentAuthoring."
+autowrap_mode = 3
+
+[node name="ActionButtons" type="HBoxContainer" parent="MarginContainer/RootVBox/TopBar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="LoadWorkoutButton" type="Button" parent="MarginContainer/RootVBox/TopBar/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+text = "Load Workout"
+
+[node name="SaveWorkoutButton" type="Button" parent="MarginContainer/RootVBox/TopBar/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+text = "Save Workout"
+
+[node name="InfoPanel" type="PanelContainer" parent="MarginContainer/RootVBox"]
+layout_mode = 2
+
+[node name="InfoMargin" type="MarginContainer" parent="MarginContainer/RootVBox/InfoPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="InfoVBox" type="VBoxContainer" parent="MarginContainer/RootVBox/InfoPanel/InfoMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LoadedPackageLabel" type="Label" parent="MarginContainer/RootVBox/InfoPanel/InfoMargin/InfoVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Loaded package: draft / unsaved"
+
+[node name="ValidationLabel" type="Label" parent="MarginContainer/RootVBox/InfoPanel/InfoMargin/InfoVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Validation: package not checked yet."
+autowrap_mode = 3
+
+[node name="WorkflowTabs" type="TabContainer" parent="MarginContainer/RootVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="MetadataTab" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs"]
+layout_mode = 2
+size_flags_vertical = 3
+metadata/_tab_name = "Metadata"
+
+[node name="MetadataIntro" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab"]
+layout_mode = 2
+text = "Metadata is the default authoring surface. It scrolls so the draft remains usable on smaller viewports."
+autowrap_mode = 3
+
+[node name="MetadataScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="MetadataMargin" type="MarginContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="MetadataForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 12
+
+[node name="WorkoutIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+layout_mode = 2
+text = "Workout ID"
+
+[node name="WorkoutIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "ab-workout-my-draft"
+
+[node name="WorkoutNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+layout_mode = 2
+text = "Workout Name"
+
+[node name="WorkoutNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "My Workout Draft"
+
+[node name="PackageVersionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+layout_mode = 2
+text = "Package Version"
+
+[node name="PackageVersionEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "1.0.0"
+
+[node name="CoachConfigIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+layout_mode = 2
+text = "Coach Config ID"
+
+[node name="CoachConfigIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "coach-config-my-draft"
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "Description"
+
+[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+wrap_mode = 1
+
+[node name="MetadataHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin"]
+layout_mode = 2
+text = "Task 6 can extend this metadata form with richer asset pickers, validation details, and inline previews without changing the top-level scene contract."
+autowrap_mode = 3
+
+[node name="WarmUpCoachingTab" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs"]
+layout_mode = 2
+metadata/_tab_name = "Warm-Up Coaching"
+
+theme_override_constants/separation = 12
+
+[node name="WarmUpCoachEnabledRow" type="HBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
+layout_mode = 2
+
+[node name="CoachEnabledCheck" type="CheckButton" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpCoachEnabledRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Enable coaching bundle for this workout"
+
+[node name="WarmUpForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 12
+
+[node name="CoachConfigNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
+layout_mode = 2
+text = "Coach Config Name"
+
+[node name="CoachConfigNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Neon Boxing Coaching"
+
+[node name="WarmupVideoPathLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
+layout_mode = 2
+text = "Warm-Up Video Path"
+
+[node name="WarmupVideoPathEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "media/coaching/warmup-video.ogv"
+
+[node name="WarmUpHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
+layout_mode = 2
+text = "This slice stores the warm-up coaching reference in authoring state. Rich media picking and preview land in Task 6."
+autowrap_mode = 3
+
+[node name="SetsTab" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs"]
+layout_mode = 2
+metadata/_tab_name = "Sets"
+
+theme_override_constants/separation = 12
+
+[node name="SetsSummaryLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/SetsTab"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Task 6 seam: rich set authoring plugs in here."
+autowrap_mode = 3
+
+[node name="SetOrderList" type="ItemList" parent="MarginContainer/RootVBox/WorkflowTabs/SetsTab"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+size_flags_vertical = 3
+allow_rmb_select = true
+select_mode = 0
+
+[node name="SetsHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/SetsTab"]
+layout_mode = 2
+text = "The shell already reflects current workout setOrder and authored set ids so Task 6 can attach editors, pickers, and previews without replacing the scene frame."
+autowrap_mode = 3
+
+[node name="CoolDownCoachingTab" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs"]
+layout_mode = 2
+metadata/_tab_name = "Cool-Down Coaching"
+
+theme_override_constants/separation = 12
+
+[node name="CoolDownForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 12
+
+[node name="CooldownVideoPathLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab/CoolDownForm"]
+layout_mode = 2
+text = "Cool-Down Video Path"
+
+[node name="CooldownVideoPathEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab/CoolDownForm"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "media/coaching/cooldown-video.ogv"
+
+[node name="CoolDownHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab"]
+layout_mode = 2
+text = "This shell keeps cool-down coaching wired into the workout package state while leaving preview/media UX for the next slice."
+autowrap_mode = 3
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/RootVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Booting content authoring shell…"
+autowrap_mode = 3
