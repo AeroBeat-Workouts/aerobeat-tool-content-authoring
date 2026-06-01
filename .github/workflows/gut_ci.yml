@@ -42,4 +42,4 @@ jobs:
         run: godot --headless --path .testbed --import
 
       - name: 🧪 Run headless workflow tests
-        run: godot --headless --path .testbed --script ../tests/run_tool_tests.gd
+        run: godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd

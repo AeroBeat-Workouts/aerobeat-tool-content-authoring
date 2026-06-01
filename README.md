@@ -8,7 +8,7 @@ Its root contract is no longer a CLI toolchain or a published root-level GodotEn
 
 - `aerobeat-content-core` owns canonical workout-package contracts and the authoritative validation truth.
 - `aerobeat-tool-content-authoring` owns authoring/runtime workflows that operate on those contracts.
-- `.testbed/` owns local verification-only dependency sync and future human-facing authoring scenes.
+- `.testbed/` owns local verification-only dependency sync, the automated headless test runner, and future human-facing authoring scenes.
 
 If a rule changes the meaning of the package contract, it belongs in `aerobeat-content-core`, not here.
 
@@ -29,7 +29,11 @@ This makes the repo truthful for eventual in-game/runtime consumption instead of
 aerobeat-tool-content-authoring/
 ├── .testbed/
 │   ├── addons.jsonc
-│   └── project.godot
+│   ├── assets/
+│   ├── project.godot
+│   ├── scenes/
+│   └── scripts/
+│       └── tests/
 ├── docs/
 ├── editor/
 ├── interfaces/
@@ -37,7 +41,6 @@ aerobeat-tool-content-authoring/
 ├── services/
 ├── src/
 │   └── AeroContentAuthoring.gd
-├── tests/
 ├── plugin.cfg
 └── README.md
 ```
@@ -101,5 +104,5 @@ godot --headless --path .testbed --import
 Run the current repo validation tests:
 
 ```bash
-godot --headless --path .testbed --script ../tests/run_tool_tests.gd
+godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd
 ```

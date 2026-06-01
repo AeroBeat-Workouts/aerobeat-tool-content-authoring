@@ -1,6 +1,6 @@
 extends RefCounted
 
-const AeroContentAuthoring = preload("../src/AeroContentAuthoring.gd")
+const AeroContentAuthoring = preload("res://addons/aerobeat-tool-content-authoring/src/AeroContentAuthoring.gd")
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -16,7 +16,7 @@ static func run() -> Dictionary:
 
 	var load_result: Dictionary = runtime.load_workout_package_folder(fixture_dir)
 	var loaded_state: Dictionary = runtime.get_current_package_state()
-	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("workout", {}).get("workoutId", "")) == "ab-workout-neon-boxing-bootcamp"
+	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("workout", {}).get("workoutId", "")) == "ab-workout-demo-neon-boxing-bootcamp"
 
 	var validate_result: Dictionary = runtime.validate_current_package()
 	var validate_codes: Array = []
@@ -47,7 +47,7 @@ static func run() -> Dictionary:
 	var fallback_rule_passed := not bool(invalid_validation.get("valid", true)) and invalid_codes.has("missing_fallback_environment_ref")
 
 	runtime.set_current_package_state(repaired_state)
-	var save_parent: String = ProjectSettings.globalize_path("res://tmp/aero_content_authoring_workflow")
+	var save_parent: String = TestSupport.tmp_dir("aero_content_authoring_workflow")
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir: String = String(save_result.get("outputDir", ""))
 	var zip_path: String = String(save_result.get("zipPath", ""))

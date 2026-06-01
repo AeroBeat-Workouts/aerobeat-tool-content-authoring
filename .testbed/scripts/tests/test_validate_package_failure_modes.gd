@@ -5,7 +5,7 @@ const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var base_fixture_dir: String = TestSupport.demo_package_dir()
-	var base_tmp_dir: String = ProjectSettings.globalize_path("res://tmp/test_validate_package_failure_modes")
+	var base_tmp_dir: String = TestSupport.tmp_dir("test_validate_package_failure_modes")
 	TestSupport.ensure_clean_dir(base_tmp_dir)
 	var scenarios: Array = [
 		_duplicate_song_id_scenario(base_fixture_dir, base_tmp_dir),

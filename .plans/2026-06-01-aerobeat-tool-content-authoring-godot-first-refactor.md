@@ -53,10 +53,10 @@ Use these IDs in execution notes and audit results.
 
 ### Task 1: Audit current repo structure, singleton boundaries, and downstream dependents
 
-**Bead ID:** `aerobeat-tool-content-authoring-ptd`  
-**SubAgent:** `primary`  
-**Role:** `research`  
-**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`  
+**Bead ID:** `aerobeat-tool-content-authoring-ptd`
+**SubAgent:** `primary`
+**Role:** `research`
+**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`
 **Prompt:** Claim the bead on start. Audit `aerobeat-tool-content-authoring` for all current CLI-first assumptions, root-level GodotEnv/addon layout usage, current singleton/service boundaries, `.testbed` usage, and every known downstream consumer or dependency touchpoint. Include likely cross-repo impacts for `aerobeat-assembly-community`, `aerobeat-content-core`, `aerobeat-tool-video-player`, `aerobeat-vendor-godot-video`, `aerobeat-tool-audio-player`, and `aerobeat-vendor-godot-audio`. Produce an execution-ready architecture note and consumer-impact list; do not edit code yet.
 
 **Folders Created/Deleted/Modified:**
@@ -82,10 +82,10 @@ Use these IDs in execution notes and audit results.
 
 ### Task 2: Define the Godot-first architecture and repo layout migration
 
-**Bead ID:** `aerobeat-tool-content-authoring-apk`  
-**SubAgent:** `primary`  
-**Role:** `coder`  
-**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`  
+**Bead ID:** `aerobeat-tool-content-authoring-apk`
+**SubAgent:** `primary`
+**Role:** `coder`
+**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`
 **Prompt:** Claim the bead on start. Based on the approved audit and Derrick's follow-up decisions, update the repo architecture so the root package is Godot-engine-first and runtime-capable: remove root-level `/addons/`, `/.addons/`, `addons.jsonc`, and all root-level GodotEnv state; update `.gitignore` so `.testbed/addons/` and `.testbed/.addons/` are treated as locally generated sync artifacts; preserve only what is needed inside `.testbed/`; define the new stable `/src/` API around a real singleton named `AeroContentAuthoring.gd`; and remove CLI as a first-class surface rather than preserving compatibility. Validation truth should be delegated toward `aerobeat-content-core`, and any architecture/documentation changes needed to support future runtime use inside `aerobeat-assembly-community` should be made explicit.
 
 **Folders Created/Deleted/Modified:**
@@ -150,38 +150,41 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 ### Task 4: Move automated tests into `.testbed/` and build the testbed project skeleton
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `coder`  
-**References:** `REF-01`, `REF-05`  
+**Bead ID:** `aerobeat-tool-content-authoring-efk`
+**SubAgent:** `primary`
+**Role:** `coder`
+**References:** `REF-01`, `REF-05`
 **Prompt:** Claim the bead on start. Move the repo-root `/tests/` suite into `/.testbed/` and reorganize the testbed so it has clear `/assets/`, `/scenes/`, and `/scripts/` folders. Preserve or improve automated coverage while making `.testbed/` the canonical human-verifiable validation surface for authoring and package round-tripping.
 
 **Folders Created/Deleted/Modified:**
-- `tests/`
+- `tests/` (removed after migration)
 - `.testbed/`
 - `.testbed/assets/`
 - `.testbed/scenes/`
 - `.testbed/scripts/`
+- `.testbed/scripts/tests/`
 
 **Files Created/Deleted/Modified:**
-- `tests/**`
+- `.github/workflows/gut_ci.yml`
+- `README.md`
 - `.testbed/project.godot`
-- `.testbed/**/*.gd`
-- `.testbed/**/*.tscn`
-- `.testbed/**/*.tres`
+- `.testbed/scenes/TestbedRoot.tscn`
+- `.testbed/scripts/testbed_root.gd`
+- `.testbed/scripts/tests/**`
+- `tests/**` (migrated/removed)
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Completed the `.testbed` ownership migration for the automated suite. The root `tests/` directory was removed and the active test runner plus coverage scripts now live under `.testbed/scripts/tests/`, so the headless harness loads package code through `res://addons/aerobeat-tool-content-authoring/...` only instead of mixing repo-root and addon-mounted paths. The migrated tests were also repointed to use `user://content_authoring_testbed/...` scratch space rather than `res://tmp/...`, which avoids editor/import churn from intentionally invalid fixture files and keeps the testbed runtime-safe. A minimal `.testbed` skeleton was established with tracked `assets/`, `scenes/`, and `scripts/` folders, `project.godot` now boots `res://scenes/TestbedRoot.tscn`, and that placeholder scene explicitly marks the Task 5 handoff seam without prematurely building the real authoring workflow. CI and local docs were updated to run `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`. Validation for this slice: `godot --headless --path .testbed --import` ✅ and `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` ✅. One migrated assertion was corrected during the move so the workflow test matches the current docs fixture id (`ab-workout-demo-neon-boxing-bootcamp`). Godot still prints end-of-process ObjectDB/resource leak warnings after the successful headless suite, but the suite exits green and the duplicate-load collision problem is resolved.
 
 ---
 
 ### Task 5: Build the `ContentAuthoring` testbed scene and workflow tabs
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `coder`  
-**References:** `REF-01`, `REF-05`  
+**Bead ID:** `Pending`
+**SubAgent:** `primary`
+**Role:** `coder`
+**References:** `REF-01`, `REF-05`
 **Prompt:** Claim the bead on start. Build a Godot scene named `ContentAuthoring` inside `.testbed` that acts as the primary manual workflow surface. The top-level UI must provide tabs for `Metadata`, `Warm-Up Coaching`, `Sets`, and `Cool-Down Coaching`, with `Save Workout` and `Load Workout` actions in the top-right. `Save Workout` should create a workout folder, fill/write the relevant YAML files, copy required assets, and emit a sibling zip archive side-by-side at the user-selected location. `Load Workout` should accept an unzipped workout folder, clear current authoring state, import the loaded workout, and repopulate the scene from that data. The `Metadata` tab should be the default and use scrolling so the form remains usable at smaller sizes.
 
 **Folders Created/Deleted/Modified:**
@@ -203,10 +206,10 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 ### Task 6: Implement set authoring, environment preview, and media-preview integrations
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `coder`  
-**References:** `REF-01`, `REF-05`  
+**Bead ID:** `Pending`
+**SubAgent:** `primary`
+**Role:** `coder`
+**References:** `REF-01`, `REF-05`
 **Prompt:** Claim the bead on start. Implement the set-authoring flow in the `Sets` tab: default to one set, allow creating/deleting sets, and reveal set-specific sub-tabs or equivalent lower-level tabs when a set is selected. Each set must support file-picker linking for Beatmap, primary Environment, fallback Environment, and coaching audio. Primary+fallback environment pairing is canonical contract data now; a set without a fallback environment is invalid, and a fallback may equal the primary environment ID. Beatmap selection should display parsed file metadata. Environment selection should preview the environment live in the scene background using the config sidecar's transform/fit_mode rules, with video environments autoplaying and looping. Warm-up and cool-down coaching must accept `.ogv` files and display metadata plus video preview using `aerobeat-tool-video-player` with `aerobeat-vendor-godot-video` as testbed-only verification dependencies. Coaching audio must provide play/pause, seek, and volume preview using `aerobeat-tool-audio-player` with `aerobeat-vendor-godot-audio` as testbed-only verification dependencies.
 
 **Folders Created/Deleted/Modified:**
@@ -231,10 +234,10 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 ### Task 7: Validate package round-tripping, audit downstream repos, and sync dependencies
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `qa`  
-**References:** `REF-01`, `REF-05`, `REF-06`  
+**Bead ID:** `Pending`
+**SubAgent:** `primary`
+**Role:** `qa`
+**References:** `REF-01`, `REF-05`, `REF-06`
 **Prompt:** Claim the bead on start. Verify the full round-trip flow end to end: author a new workout in the `ContentAuthoring` scene, save it, confirm the exported zip contains the correct YAML/assets structure, load that saved workout back into a fresh scene state, and confirm the singleton reports the workout as valid. Then audit downstream repos/consumers for breakage caused by the Godot-first refactor, apply or document required follow-up updates, and run the relevant GodotEnv sync/update workflow so dependent repos consume the new state. Report all bugs discovered and either fix them in-scope or convert them into explicit follow-up work.
 
 **Folders Created/Deleted/Modified:**
@@ -257,10 +260,10 @@ Validation for this slice: the legacy hidden harness still fails exactly as expe
 
 ### Task 8: Independently audit completion and close the refactor slice
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `auditor`  
-**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`  
+**Bead ID:** `Pending`
+**SubAgent:** `primary`
+**Role:** `auditor`
+**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`, `REF-05`, `REF-06`
 **Prompt:** Claim the bead on start. Perform an independent truth-check of the refactor. Confirm the repo root no longer contains the removed GodotEnv/addon files, `AeroContentAuthoring.gd` is the new singleton authority, `.testbed` now owns the test and manual validation surface, `ContentAuthoring` can save and load valid workout packages, media previews work to the agreed scope, and downstream sync fallout was handled explicitly. Close the bead only if the behavior matches the approved plan and references.
 
 **Folders Created/Deleted/Modified:**

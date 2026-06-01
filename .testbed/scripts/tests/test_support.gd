@@ -3,6 +3,12 @@ extends RefCounted
 static func demo_package_dir() -> String:
 	return ProjectSettings.globalize_path("res://../../aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp")
 
+static func tmp_root_dir() -> String:
+	return ProjectSettings.globalize_path("user://content_authoring_testbed")
+
+static func tmp_dir(name: String) -> String:
+	return tmp_root_dir().path_join(name)
+
 static func ensure_clean_dir(path: String) -> void:
 	var absolute_path: String = ProjectSettings.globalize_path(path)
 	if DirAccess.dir_exists_absolute(absolute_path):

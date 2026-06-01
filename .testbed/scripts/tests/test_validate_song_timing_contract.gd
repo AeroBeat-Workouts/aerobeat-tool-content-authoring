@@ -5,7 +5,7 @@ const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var base_fixture_dir: String = TestSupport.demo_package_dir()
-	var invalid_dir: String = ProjectSettings.globalize_path("res://tmp/validate_song_timing_contract_invalid")
+	var invalid_dir: String = TestSupport.tmp_dir("validate_song_timing_contract_invalid")
 	TestSupport.ensure_clean_dir(invalid_dir)
 	TestSupport.copy_tree(base_fixture_dir, invalid_dir)
 	var song_path: String = invalid_dir.path_join("songs/ab-song-neon-stride.yaml")

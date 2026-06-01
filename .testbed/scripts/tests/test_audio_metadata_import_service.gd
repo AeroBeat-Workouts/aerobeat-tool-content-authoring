@@ -1,9 +1,10 @@
 extends RefCounted
 
 const ADDON_AUDIO_METADATA_IMPORT_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/importers/audio_metadata_import_service.gd"
+const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
-	var fixture_path := ProjectSettings.globalize_path("res://tmp/audio_metadata_import_service/demo-song.ogg")
+	var fixture_path := TestSupport.tmp_dir("audio_metadata_import_service/demo-song.ogg")
 	_ensure_parent_dir(fixture_path)
 	_ensure_fixture_file(fixture_path)
 

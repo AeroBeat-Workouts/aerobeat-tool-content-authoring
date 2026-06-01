@@ -5,7 +5,7 @@ const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var fixture_dir: String = _fixture_dir("package_minimal_boxing")
-	var output_dir: String = ProjectSettings.globalize_path("res://tmp/chart_authoring_service")
+	var output_dir: String = TestSupport.tmp_dir("chart_authoring_service")
 	_ensure_clean_dir(output_dir)
 	_copy_tree(fixture_dir, output_dir)
 	_seed_legacy_routine_fixture(output_dir)
@@ -47,7 +47,7 @@ static func run() -> Dictionary:
 		and bool(validation.get("skipped", false)) \
 		and String(validation.get("subject", "")) == "legacy_manifest_package"
 
-	var current_package_dir: String = ProjectSettings.globalize_path("res://tmp/chart_authoring_service_current_package")
+	var current_package_dir: String = TestSupport.tmp_dir("chart_authoring_service_current_package")
 	_ensure_clean_dir(current_package_dir)
 	_copy_tree(TestSupport.demo_package_dir(), current_package_dir)
 	var current_result: Dictionary = load(ADDON_CHART_AUTHORING_SERVICE_PATH).new().upsert_record({

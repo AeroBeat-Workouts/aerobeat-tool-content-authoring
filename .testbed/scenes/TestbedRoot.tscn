@@ -1,0 +1,42 @@
+[gd_scene load_steps=2 format=3 uid="uid://cgvpwcg3rrg4o"]
+
+[ext_resource type="Script" path="res://scripts/testbed_root.gd" id="1_8jr8b"]
+
+[node name="TestbedRoot" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8jr8b")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "AeroBeat Content Authoring"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Booting testbed…"
+
+[node name="Task5HintLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Task 5 will replace this skeleton with the full ContentAuthoring workflow scene."
+autowrap_mode = 3

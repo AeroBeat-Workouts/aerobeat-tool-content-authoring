@@ -4,6 +4,12 @@ config_version=5
 
 config/name="AeroBeat Content Authoring Testbed"
 config/features=PackedStringArray("4.6", "Forward Plus")
+run/main_scene="res://scenes/TestbedRoot.tscn"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
 
 [editor_plugins]
 
