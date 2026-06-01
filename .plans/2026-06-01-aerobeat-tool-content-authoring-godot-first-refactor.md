@@ -211,7 +211,7 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 
 ### Task 6: Implement set authoring, environment preview, and media-preview integrations
 
-**Bead ID:** `aerobeat-tool-content-authoring-1ys`  
+**Bead ID:** `aerobeat-tool-content-authoring-1ys`
 **SubAgent:** `primary`
 **Role:** `coder`
 **References:** `REF-01`, `REF-05`
@@ -243,7 +243,7 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 
 ### Task 7: Validate package round-tripping, audit downstream repos, and sync dependencies
 
-**Bead ID:** `Pending`
+**Bead ID:** `aerobeat-tool-content-authoring-lbe`  
 **SubAgent:** `primary`
 **Role:** `qa`
 **References:** `REF-01`, `REF-05`, `REF-06`
@@ -261,9 +261,15 @@ Validation for this slice: `godot --headless --path .testbed --import` ✅, `god
 - `services/**`
 - repo docs and dependency config in this repo and impacted consumers
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Completed QA on 2026-06-01 with a real `.testbed` scene/workflow pass plus downstream audit. First, the repo-local validation path was rerun after Task 6 state was synced: `godot --headless --path .testbed --import` ✅, `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` ✅, and `godot --headless --path .testbed --script scripts/tests/smoke_content_authoring_scene.gd` ✅. The canonical GodotEnv sync path also now succeeds again via `cd .testbed && godotenv addons install` after cleaning dirty generated addon mirrors caused by transient `.uid` churn inside `.testbed/addons/` and `.testbed/.addons/`.
+
+For the end-to-end round-trip, QA used a focused headless `ContentAuthoring` scene script against the real demo package from `aerobeat-docs`: load the workout through the scene workflow, edit metadata in-scene (`workoutId`, `workoutName`, `packageVersion`), save through the scene workflow, confirm both the exported folder and sibling zip were emitted, reset to a fresh draft state, reload the saved folder, and revalidate through `AeroContentAuthoring`. Result: pass. The saved package landed at `/home/derrick/.local/share/godot/app_userdata/AeroBeat Content Authoring Testbed/content_authoring_testbed/task7_roundtrip_edit_demo/ab-workout-demo-neon-boxing-bootcamp-task7/` with sibling zip `...task7.zip`; both contained the expected authored structure (`workout.yaml`, `coaches/coach-config.yaml`, `charts/*.yaml`, `sets/*.yaml`, `songs/*.yaml`, `environments/*.yaml`, `sql/*.schema.sql`, passthrough `README.md`, and `media/**`). Reloading that unzipped folder into a fresh scene state produced `loadedWorkoutId = ab-workout-demo-neon-boxing-bootcamp-task7` and `validate_current_package().valid == true` with zero issues.
+
+The downstream audit found a real compatibility break in the canonical docs fixture: `aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp/sets/*.yaml` still declared only legacy `environmentId`, so the package was no longer valid under the new canonical preferred+fallback rule. QA fixed that fixture in-place by adding `preferredEnvironmentId` and `fallbackEnvironmentId` (while preserving `environmentId` as the legacy alias), and updated `.testbed/scripts/tests/test_aero_content_authoring_workflow.gd` so the workflow test now expects the docs fixture to be valid and uses an explicit in-memory mutation when it needs a missing-fallback negative case. Additional downstream finding: `aerobeat-assembly-community/fixtures/environment_contract/workout_yaml_valid_image/sets/ab-set-image-demo-round.yaml` still appears to be legacy-only (`environmentId` without canonical preferred/fallback fields) and should be updated in its owning repo as follow-up work if that fixture is still intended to represent a valid canonical workout package.
+
+Two honest seams remain for Task 8 audit visibility. First, a fresh-from-blank authoring attempt exposed that importing a beatmap through the scene currently does not produce a fully valid brand-new package without preexisting package content: the imported chart/song data path is incomplete for brand-new authoring, and a blank draft also has no authored SQL schema source, so a brand-new package cannot yet be taken from empty state all the way to validator-clean output without starting from an existing package template. Second, some demo media assets are placeholder binaries, so headless preview wiring can emit decode/parse noise even though package validation and save/load contract checks still pass. These were documented rather than broadened into new implementation work here so Task 8 can truth-check the refactor with full context.
 
 ---
 

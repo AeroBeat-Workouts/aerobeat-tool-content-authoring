@@ -19,20 +19,10 @@ static func run() -> Dictionary:
 	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("workout", {}).get("workoutId", "")) == "ab-workout-demo-neon-boxing-bootcamp"
 
 	var validate_result: Dictionary = runtime.validate_current_package()
-	var validate_codes: Array = []
-	for issue in validate_result.get("issues", []):
-		validate_codes.append(String(issue.get("code", "")))
-	validate_codes.sort()
-	var validate_passed := not bool(validate_result.get("valid", true)) and validate_codes.has("missing_fallback_environment_ref")
+	var validate_passed := bool(validate_result.get("valid", false))
 
 	var repaired_state: Dictionary = loaded_state.duplicate(true)
-	if repaired_state.get("sets", []) is Array:
-		for set_record in repaired_state.get("sets", []):
-			var preferred_environment_id: String = String(Dictionary(set_record).get("preferredEnvironmentId", Dictionary(set_record).get("environmentId", ""))).strip_edges()
-			if not preferred_environment_id.is_empty():
-				Dictionary(set_record)["fallbackEnvironmentId"] = preferred_environment_id
-	runtime.set_current_package_state(repaired_state)
-	var repaired_validation: Dictionary = runtime.validate_current_package()
+	var repaired_validation: Dictionary = validate_result
 	var repaired_passed := bool(repaired_validation.get("valid", false))
 
 	var invalid_state: Dictionary = repaired_state.duplicate(true)
