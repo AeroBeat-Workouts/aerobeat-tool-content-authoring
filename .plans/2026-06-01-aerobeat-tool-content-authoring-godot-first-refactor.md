@@ -1,9 +1,9 @@
 # AeroBeat Tool Content Authoring Godot-First Refactor
 
-**Date:** 2026-06-01  
-**Status:** In Progress  
-**Last Updated:** 2026-06-01 11:53 EDT  
-**Blocked Reason:** None  
+**Date:** 2026-06-01
+**Status:** In Progress
+**Last Updated:** 2026-06-01 12:53 EDT
+**Blocked Reason:** None
 **Agent:** Pico
 
 ---
@@ -119,10 +119,10 @@ Use these IDs in execution notes and audit results.
 
 ### Task 3: Implement the `AeroContentAuthoring` singleton and package workflow API
 
-**Bead ID:** `Pending`  
-**SubAgent:** `primary`  
-**Role:** `coder`  
-**References:** `REF-01`, `REF-02`, `REF-03`, `REF-05`, `REF-06`  
+**Bead ID:** `aerobeat-tool-content-authoring-pxd`
+**SubAgent:** `primary`
+**Role:** `coder`
+**References:** `REF-01`, `REF-02`, `REF-03`, `REF-05`, `REF-06`
 **Prompt:** Claim the bead on start. Replace `AeroToolManager.gd` with `AeroContentAuthoring.gd` as the authoritative singleton for workout authoring. The singleton must be a real runtime-capable surface and expose structured operations for: creating a new workout package, loading an existing unzipped workout package folder into editable state, validating whether the loaded package is valid through `aerobeat-content-core` contract truth, saving a workout by emitting both an unarchived output folder and a sibling zip archive side-by-side at the chosen destination, and resetting authoring state before loading a different package. Keep UI strings out of the core logic and route authoring behavior through reusable services.
 
 **Folders Created/Deleted/Modified:**
@@ -140,9 +140,11 @@ Use these IDs in execution notes and audit results.
 - `mappers/**`
 - `editor/**`
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Completed the singleton/workflow slice on 2026-06-01. `src/AeroContentAuthoring.gd` now owns runtime authoring state directly instead of mirroring editor-owned wiring, exposes package lifecycle operations (`create_new_workout_package`, `load_workout_package_folder`, `validate_current_package`, `save_current_package`, `reset_authoring_state`), and emits runtime signals for load/save/validate/reset events. The workflow was pushed into new services: `services/workflow/workout_package_workflow_service.gd` composes create/load/reset/write behaviors, `services/workflow/workout_package_yaml_codec.gd` canonicalizes workout-folder state and serializes/deserializes the authored YAML package surface, and `services/validation/workout_package_validation_service.gd` adds canonical primary+fallback environment enforcement while leaving a guarded seam for future `aerobeat-content-core` root-layout delegation when that validator becomes loadable outside its repo root. `services/packaging/build_content_package_service.gd` was reshaped so save/export now validates a staged package, writes an unarchived workout folder to the chosen destination, and emits a sibling zip archive beside it. Legacy singleton truth drift was reduced by removing chart-authoring expectations from the runtime service-registry test and by centering tests around workout-folder package state rather than CLI/manifest seams.
+
+Validation for this slice: the legacy hidden harness still fails exactly as expected when run as `godot --headless --path .testbed --script ../tests/run_tool_tests.gd` because `.testbed` loads this repo twice (repo-relative test scripts plus addon-linked classes), producing existing global-class/preload collisions before the new workflow tests can execute. To truth-check the slice anyway, a one-copy temporary Godot project was created with this repo mounted once as an addon and exercised via headless runtime smoke scripts. In that environment, `AeroContentAuthoring.load_workout_package_folder()` successfully loaded the demo workout folder from `aerobeat-docs`; `validate_current_package()` correctly rejected the current fixture because its sets still omit canonical `fallbackEnvironmentId`; after patching fallback IDs in-memory to equal each set's preferred environment, `validate_current_package()` returned valid; and `save_current_package()` emitted both `/tmp/.../ab-workout-demo-neon-boxing-bootcamp/` and `/tmp/.../ab-workout-demo-neon-boxing-bootcamp.zip` with YAML, SQL, media, and README content copied side-by-side as required. Remaining seams for Task 4+: migrate the automated suite into a `.testbed`-owned project layout so the duplicate-load harness problem goes away, and decide how/when to make `aerobeat-content-core` itself loadable as an addon/runtime validator instead of only as a repo-root project script.
 
 ---
 
