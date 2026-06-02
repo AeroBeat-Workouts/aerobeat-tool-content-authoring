@@ -22,6 +22,9 @@ Thumbs.db
 # Local/generated addon trees
 /.testbed/addons/
 /.testbed/.addons/
+/addons/
+.addons/
+/.addons/
 
 # Beads / Dolt files (added by bd init)
 .dolt/
