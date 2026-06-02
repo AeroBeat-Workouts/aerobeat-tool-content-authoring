@@ -1,80 +1,81 @@
 {
   "$schema": "https://chickensoft.games/schemas/addons.schema.json",
   "addons": {
-    // Install this repo into the hidden workbench the same way a consumer does.
     "aerobeat-tool-content-authoring": {
       "url": "..",
       "source": "symlink",
       "subfolder": "/"
     },
-    // Canonical content validation/runtime truth.
     "aerobeat-content-core": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-content-core.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-content-core",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-core": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-core.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-core",
+      "subfolder": "/",
+      "source": "symlink"
     },
-    // Task 6 preview integrations live only in the testbed/workbench.
     "aerobeat-environment-loader": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-environment-loader.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-environment-loader",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-environment-core": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-environment-core.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-environment-core",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-video-player": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-video-player.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-video-player",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-vendor-godot-video": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-video.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-vendor-godot-video",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-audio-player": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-audio-player.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-audio-player",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-vendor-godot-audio": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-audio.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-vendor-godot-audio",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-image-loader": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-image-loader.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-image-loader",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-vendor-godot-image": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-image.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-vendor-godot-image",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-gltf-loader": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-gltf-loader.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-gltf-loader",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-vendor-godot-gltf": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-vendor-godot-gltf.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-vendor-godot-gltf",
+      "subfolder": "/",
+      "source": "symlink"
     },
     "aerobeat-tool-device-detection": {
-      "url": "git@github.com:AeroBeat-Workouts/aerobeat-tool-device-detection.git",
-      "checkout": "main",
-      "subfolder": "/"
+      "url": "../../aerobeat-tool-device-detection",
+      "subfolder": "/",
+      "source": "symlink"
     },
-    // GUT drives the repo-local test suite inside the hidden testbed/workbench.
+    "aerobeat-tool-headless-manager": {
+      "url": "../../aerobeat-tool-headless-manager",
+      "subfolder": "/",
+      "source": "symlink"
+    },
     "gut": {
       "url": "git@github.com:bitwes/Gut.git",
       "checkout": "main",
