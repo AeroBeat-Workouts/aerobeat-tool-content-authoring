@@ -1,7 +1,7 @@
 # AeroBeat Tool Content Authoring Godot-First Refactor
 
 **Date:** 2026-06-01
-**Status:** Pending Human Validation / In Progress
+**Status:** Stale
 **Last Updated:** 2026-06-01 15:16 EDT
 **Blocked Reason:** Awaiting human validation and any appended change requests
 **Agent:** Pico

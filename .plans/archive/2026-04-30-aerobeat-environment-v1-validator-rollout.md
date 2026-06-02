@@ -1,7 +1,7 @@
 # AeroBeat Environment V1 Validator Rollout
 
 **Date:** 2026-04-30  
-**Status:** In Progress  
+**Status:** Stale  
 **Agent:** Chip 🐱‍💻
 
 ---

@@ -1,7 +1,7 @@
 # AeroBeat Asset V1 Validator Rollout
 
 **Date:** 2026-04-30  
-**Status:** Draft  
+**Status:** Stale  
 **Agent:** Chip 🐱‍💻
 
 ---

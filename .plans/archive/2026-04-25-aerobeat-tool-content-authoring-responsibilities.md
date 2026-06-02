@@ -1,7 +1,7 @@
 # AeroBeat Tool Content Authoring Responsibilities
 
 **Date:** 2026-04-25  
-**Status:** Pending Review  
+**Status:** Stale  
 **Agent:** Chip 🐱‍💻
 
 ---
