@@ -6,6 +6,11 @@ config/name="AeroBeat Content Authoring Testbed"
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/main_scene="res://scenes/ContentAuthoring.tscn"
 
+[autoload]
+
+AeroHeadlessManager="*res://addons/aerobeat-tool-headless-manager/src/AeroHeadlessManager.gd"
+
+
 [display]
 
 window/size/viewport_width=1600
