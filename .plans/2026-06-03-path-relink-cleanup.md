@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-03
 **Status:** In Progress
-**Last Updated:** 2026-06-03 20:40 EDT
+**Last Updated:** 2026-06-03 20:48 EDT
 **Blocked Reason:** None
 **Agent:** `byte`
 
@@ -93,9 +93,19 @@ Validation passed after one follow-up fix to `src/AeroContentAuthoring.gd`, whic
 **Files Created/Deleted/Modified:**
 - validation artifacts/logs only if intentionally created
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Pending.
+**Results:** Independently re-ran the repo-local testbed flow against commit `bd4c9ca` and confirmed the reshaped layout resolves through the actual `.testbed` addon wiring rather than only via static edits. First, `godotenv addons install` in `.testbed/` re-symlinked `aerobeat-tool-content-authoring` from `..` as declared in `.testbed/addons.jsonc` (`REF-03`). I then verified `.testbed/addons/aerobeat-tool-content-authoring` is a symlink back to the repo root and that the repaired runtime entrypoints exist under `src/`, including `src/AeroContentAuthoring.gd`, `src/editor/plugins/content_authoring_plugin.gd`, and `src/services/workflow/workout_package_yaml_codec.gd` (`REF-02`, `REF-03`).
+
+QA validation run:
+- `cd .testbed && godotenv addons install`
+- `cd .. && godot --headless --path .testbed --import`
+- `cd .. && godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`
+- `cd .. && tmp=$(mktemp); godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd >"$tmp" 2>&1; status=$?; printf 'exit_code=%s\n' "$status"; rg -n '"passed": true|WARNING: ObjectDB instances leaked at exit|ERROR: [0-9]+ resources still in use at exit|"name": "test_' "$tmp" | tail -n 40; rm -f "$tmp"; exit $status`
+
+Evidence from the passing suite: `exit_code=0`; `test_aero_content_authoring_workflow`, `test_blank_new_package_seed_save_reload`, and `test_task6_set_authoring_runtime` all passed; the runtime state emitted by the suite shows `draftAssetSources` resolving placeholder assets from `.testbed/addons/aerobeat-tool-content-authoring/src/assets/placeholders/...`, which confirms the repaired `src/` paths are being consumed through the local testbed/addon boundary. I also spot-checked the affected preload constants with `rg`, and the touched tests now point at `res://addons/aerobeat-tool-content-authoring/src/...` while placeholder imports point at `res://addons/aerobeat-tool-content-authoring/src/assets/placeholders/...` (`REF-01`, `REF-02`, `REF-03`).
+
+No new defects were found in this QA pass. The previously noted Godot shutdown warnings still reproduce (`ObjectDB instances leaked at exit` and `9 resources still in use at exit`), but they appear to be pre-existing/non-blocking because the full headless suite still exits `0` and all targeted runtime/test scenarios pass.
 
 ---
 
@@ -113,6 +123,69 @@ Validation passed after one follow-up fix to `src/AeroContentAuthoring.gd`, whic
 **Files Created/Deleted/Modified:**
 - none expected
 
+**Status:** ❌ Failed
+
+**Results:** Independent audit confirmed the implementation commit `bd4c9ca` repaired the actual runtime/testbed path seams that were breaking after the move to `src/`: the touched `.testbed/scripts/tests/*.gd` files now load from `res://addons/aerobeat-tool-content-authoring/src/...`, `src/AeroContentAuthoring.gd` and `src/editor/plugins/content_authoring_plugin.gd` use corrected relative preloads, and `src/services/workflow/workout_package_yaml_codec.gd` plus the placeholder `.import` metadata now point at `src/assets/placeholders/...`. I also re-ran the local verification flow (`godotenv addons install`, `godot --headless --path .testbed --import`, `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`) and independently reproduced a passing headless suite with `exit_code=0`, alongside the already-known non-blocking Godot shutdown warnings.
+
+The audit does **not** pass yet because a touched documentation seam was missed in `README.md`: the `Current open seam` section still references `services/authoring/chart_authoring_service.gd` instead of the new `src/services/authoring/chart_authoring_service.gd` path. That means the plan’s earlier claim that `README.md` was corrected to match the current `src`-owned layout is not fully truthful, and the repo does not yet present a fully consistent post-move path story in all touched areas. The bead should remain open for a narrow doc follow-up to finish the cleanup.
+
+---
+
+### Task 4: Repair stale README path seam after audit
+
+**Bead ID:** `aerobeat-tool-content-authoring-ozj`
+**SubAgent:** `primary` (for `coder` workflow role)
+**Role:** `coder`
+**References:** `REF-01`
+**Prompt:** Claim the bead on start. Apply the narrow audit follow-up needed to finish the path relink cleanup: repair the stale pre-move path reference still left in `README.md` (`services/authoring/chart_authoring_service.gd` → `src/services/authoring/chart_authoring_service.gd`) and sweep any immediately adjacent touched doc wording needed to keep the README truthful about the post-move layout. Keep scope tight, update the plan with actual results, commit/push the follow-up, and close the bead if complete.
+
+**Folders Created/Deleted/Modified:**
+- none expected
+
+**Files Created/Deleted/Modified:**
+- `README.md`
+- `.plans/2026-06-03-path-relink-cleanup.md`
+
+**Status:** ✅ Complete
+
+**Results:** Updated the `README.md` `Current open seam` bullet to point at `src/services/authoring/chart_authoring_service.gd`, matching the post-move layout already reflected elsewhere in the repo. No broader README wording changes were needed because the surrounding seam description remained truthful once the stale path was corrected. Commit/push completed in the narrow doc follow-up commit for this bead.
+
+---
+
+### Task 5: Verify README/doc seam follow-up
+
+**Bead ID:** `aerobeat-tool-content-authoring-9u3`
+**SubAgent:** `primary` (for `qa` workflow role)
+**Role:** `qa`
+**References:** `REF-01`
+**Prompt:** Claim the bead on start. Independently verify the narrow README/doc seam follow-up after the audit failure. Confirm the stale README path reference was corrected and that the documented layout in the touched area now matches the `src/`-owned repo structure. Keep scope tight, update the plan with evidence, and close the bead if QA passes.
+
+**Folders Created/Deleted/Modified:**
+- none expected
+
+**Files Created/Deleted/Modified:**
+- `.plans/2026-06-03-path-relink-cleanup.md` only if needed for QA notes
+
+**Status:** ⏳ Pending
+
+**Results:** Pending.
+
+---
+
+### Task 6: Final audit closure after doc seam fix
+
+**Bead ID:** `aerobeat-tool-content-authoring-e4v`
+**SubAgent:** `primary` (for `auditor` workflow role)
+**Role:** `auditor`
+**References:** `REF-01`, `REF-02`, `REF-03`
+**Prompt:** Claim the bead on start. Perform the final audit after the README/doc seam fix. Confirm the repo and plan are now truthful about the post-move `src/` + `.testbed/` layout, ensure there is no remaining blocker in the touched scope, update Final Results in the plan, and close the bead only if the work is actually complete.
+
+**Folders Created/Deleted/Modified:**
+- none expected
+
+**Files Created/Deleted/Modified:**
+- `.plans/2026-06-03-path-relink-cleanup.md` if needed for final audit notes
+
 **Status:** ⏳ Pending
 
 **Results:** Pending.
@@ -123,15 +196,15 @@ Validation passed after one follow-up fix to `src/AeroContentAuthoring.gd`, whic
 
 **Status:** ⚠️ Partial
 
-**What We Built:** Planning only so far.
+**What We Built:** The implementation commit `bd4c9ca` successfully repaired the actual repo-local runtime and testbed path relinks for the `src/` move, and independent headless validation still passes through the `.testbed/` addon boundary.
 
-**Reference Check:** Pending execution.
+**Reference Check:** `REF-02` and `REF-03` were satisfied in runtime behavior and addon wiring. `REF-01` is only partially satisfied because `README.md` still contains one stale pre-move path reference (`services/authoring/chart_authoring_service.gd`) in a touched section that should now point at `src/services/authoring/chart_authoring_service.gd`.
 
 **Commits:**
-- None yet.
+- `bd4c9ca` - Fix src-relative path relinks in testbed and runtime
 
-**Lessons Learned:** Pending execution.
+**Lessons Learned:** Path-relink cleanup needs a final repo-doc sweep in touched files, not just runtime/test preload fixes, because a single stale path reference is enough to make the documented layout contract untruthful after a structural move.
 
 ---
 
-*Completed on Pending*
+*Completed on Pending audit closure*

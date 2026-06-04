@@ -84,7 +84,7 @@ Important contract notes already locked for follow-up implementation:
 
 Task 3 removes the repo's legacy singleton drift and establishes a workout-folder workflow surface, but two follow-up seams remain:
 
-- `services/authoring/chart_authoring_service.gd` still contains quarantined legacy manifest/routine behavior
+- `src/services/authoring/chart_authoring_service.gd` still contains quarantined legacy manifest/routine behavior
 - `aerobeat-content-core` validation is only directly delegatable once that repo exposes a runtime-loadable addon/root-safe validator script
 
 ## Local development
