@@ -139,62 +139,67 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="MetadataForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin"]
+[node name="MetadataStack" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="MetadataForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack"]
 layout_mode = 2
 size_flags_horizontal = 3
 columns = 2
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 12
 
-[node name="WorkoutIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="WorkoutIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
 text = "Workout ID"
 
-[node name="WorkoutIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="WorkoutIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "ab-workout-my-draft"
 
-[node name="WorkoutNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="WorkoutNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
 text = "Workout Name"
 
-[node name="WorkoutNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="WorkoutNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "My Workout Draft"
 
-[node name="PackageVersionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="PackageVersionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
 text = "Package Version"
 
-[node name="PackageVersionEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="PackageVersionEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "1.0.0"
 
-[node name="CoachConfigIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="CoachConfigIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
 text = "Coach Config ID"
 
-[node name="CoachConfigIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="CoachConfigIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
 placeholder_text = "coach-config-my-draft"
 
-[node name="DescriptionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
 size_flags_vertical = 1
 text = "Description"
 
-[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm"]
+[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 wrap_mode = 1
 
-[node name="MetadataHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin"]
+[node name="MetadataHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack"]
 layout_mode = 2
 text = "Task 6 can extend this metadata form with richer asset pickers, validation details, and inline previews without changing the top-level scene contract."
 autowrap_mode = 3

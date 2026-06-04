@@ -20,9 +20,9 @@ func _run() -> void:
 	for index in range(workflow_tabs.get_tab_count()):
 		tab_titles.append(workflow_tabs.get_tab_title(index))
 
-	var workout_id_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm/WorkoutIdEdit")
-	var workout_name_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm/WorkoutNameEdit")
-	var package_version_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataForm/PackageVersionEdit")
+	var workout_id_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/WorkoutIdEdit")
+	var workout_name_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/WorkoutNameEdit")
+	var package_version_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/PackageVersionEdit")
 	workout_id_edit.text = "ab-workout-scene-smoke"
 	workout_name_edit.text = "Scene Smoke Draft"
 	package_version_edit.text = "9.9.9"
