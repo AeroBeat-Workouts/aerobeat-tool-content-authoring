@@ -1,8 +1,8 @@
 # AeroBeat Tool Content Authoring Testbed UI Layout Fix
 
 **Date:** 2026-06-04  
-**Status:** In Progress  
-**Last Updated:** 2026-06-04 12:48 EDT  
+**Status:** Complete  
+**Last Updated:** 2026-06-04 13:00 EDT  
 **Blocked Reason:** None  
 **Agent:** `cookie`
 
@@ -73,11 +73,12 @@ Use these IDs later in tasks, audit notes, and final results when work must matc
 - `.testbed/` runtime/evidence artifacts only if intentionally created
 
 **Files Created/Deleted/Modified:**
-- evidence artifacts/logs/screenshots only if intentionally created
+- `.plans/2026-06-04-testbed-ui-layout-fix.md`
+- `/tmp/qa_metadata_layout_probe.gd` (temporary local QA probe, not committed)
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Not started.
+**Results:** Claimed bead `aerobeat-tool-content-authoring-qee` and independently verified both structure and runtime layout for `REF-01`. Structural check: `rg -n 'MetadataStack|MetadataForm|MetadataHint' .testbed/scenes/ContentAuthoring.tscn` confirms `MetadataForm` and `MetadataHint` now live under `MetadataStack` (`VBoxContainer`) instead of overlapping as siblings under `MetadataMargin`. Runtime/layout check: `godot --headless --path .testbed -s res://scripts/tests/smoke_content_authoring_scene.gd` returned `"passed": true`; `godot --headless --path .testbed -s /tmp/qa_metadata_layout_probe.gd` returned `"passed": true` with `overlaps=false`, `hint_top_below_form_bottom=true`, `form_parent="MetadataStack"`, and `hint_parent="MetadataStack"`; `godot --headless --path .testbed -s res://scripts/tests/run_tool_tests.gd` returned passing suite entries for the repo-local tool tests. Screenshot capture was attempted from the QA probe, but headless Godot's dummy renderer reported `Parameter "t" is null`, so no screenshot artifact could be produced in this environment. Godot editor/plugin control was unavailable (`godot_sessions` returned zero active sessions), `xvfb-run` was not installed for a virtual-display fallback, and headless Godot was therefore the highest-fidelity repo-local validation path available. QA result: pass. I did not find a remaining metadata hint/form overlap defect in the validated testbed scene/state.
 
 ---
 
@@ -95,24 +96,24 @@ Use these IDs later in tasks, audit notes, and final results when work must matc
 **Files Created/Deleted/Modified:**
 - none expected unless the audit needs plan-result updates
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Not started.
+**Results:** Claimed bead `aerobeat-tool-content-authoring-teb` and independently audited `REF-01`/`REF-04` against the committed scene state at `88860f5`. Diff review confirms the actual fix is the insertion of `MetadataStack` (`VBoxContainer`) under `MetadataMargin`, with both `MetadataForm` and `MetadataHint` moved beneath that stack; this directly removes the prior same-parent/same-rect overlap that was visible in `REF-04`. I re-checked the live repo scene file and smoke-test path updates, then produced higher-fidelity rendered evidence by launching the `.testbed` project on the host X11 display (`DISPLAY=:1`) and capturing the real window contents to `/home/derrick/.openclaw/workspace/.temp/audit-ui/content-authoring.png`. That rendered capture shows the metadata hint flowing below the description field instead of painting on top of the form controls, matching the intended fix and materially differing from `REF-04`. Confidence is high for this bead's actual goal because the audit includes both the structural cause/fix analysis and a real rendered post-fix screenshot, not just headless node/rect checks. Note: closing the manually launched runtime window via `xdotool windowclose` caused a Godot crash on exit; I am not treating that as a failure for this bead because the scoped bug was the metadata layout overlap, not shutdown behavior, but it is worth noting separately if close-path stability matters later.
 
 ---
 
 ## Final Results
 
-**Status:** ⚠️ Pending approval
+**Status:** ✅ Complete
 
-**What We Built:** Not started.
+**What We Built:** Fixed the `.testbed` metadata authoring layout so the hint copy no longer renders on top of the metadata form fields. The final scene now uses a dedicated `MetadataStack` vertical container under `MetadataMargin`, which makes the form and hint participate in normal vertical layout flow instead of competing for the same inner rect.
 
-**Reference Check:** Pending execution.
+**Reference Check:** `REF-01` and `REF-04` are satisfied for the scoped bug: the committed scene hierarchy removes the exact overlap cause visible in the broken screenshot, and the live rendered audit capture at `/home/derrick/.openclaw/workspace/.temp/audit-ui/content-authoring.png` shows the hint text below the form rather than smushed into it. `REF-02` and `REF-03` remained intact; the fix stayed within the local testbed scene/test wiring and did not require contract changes.
 
 **Commits:**
-- None yet
+- `88860f5` - Fix content authoring metadata layout overlap
 
-**Lessons Learned:** Pending execution.
+**Lessons Learned:** For Godot `Control` layouts, a structural hierarchy check can explain the bug, but a final visual truth-check still matters; in this case, the extra rendered capture was the difference between "probably fixed" and a confident closure.
 
 ---
 
