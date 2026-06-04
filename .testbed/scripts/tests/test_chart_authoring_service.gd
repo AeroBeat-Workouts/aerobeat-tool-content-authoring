@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ADDON_CHART_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/authoring/chart_authoring_service.gd"
+const ADDON_CHART_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/authoring/chart_authoring_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:

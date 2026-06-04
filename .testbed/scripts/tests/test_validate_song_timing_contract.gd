@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ADDON_VALIDATE_PACKAGE_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/validation/validate_package_service.gd"
+const ADDON_VALIDATE_PACKAGE_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/validation/validate_package_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:

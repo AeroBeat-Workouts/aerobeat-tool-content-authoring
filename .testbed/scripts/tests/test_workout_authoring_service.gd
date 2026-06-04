@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ADDON_WORKOUT_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/authoring/workout_authoring_service.gd"
+const ADDON_WORKOUT_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/authoring/workout_authoring_service.gd"
 
 static func run() -> Dictionary:
 	var result: Dictionary = load(ADDON_WORKOUT_AUTHORING_SERVICE_PATH).new().upsert_record({

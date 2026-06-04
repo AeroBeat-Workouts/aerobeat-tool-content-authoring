@@ -1,11 +1,11 @@
 extends RefCounted
 
 const AeroContentAuthoring = preload("res://addons/aerobeat-tool-content-authoring/src/AeroContentAuthoring.gd")
-const ContentAuthoringPlugin = preload("res://addons/aerobeat-tool-content-authoring/editor/plugins/content_authoring_plugin.gd")
-const WorkoutPackageValidationService = preload("res://addons/aerobeat-tool-content-authoring/services/validation/workout_package_validation_service.gd")
-const BuildContentPackageService = preload("res://addons/aerobeat-tool-content-authoring/services/packaging/build_content_package_service.gd")
-const RefreshContentIndexService = preload("res://addons/aerobeat-tool-content-authoring/services/registry/refresh_content_index_service.gd")
-const WorkoutPackageWorkflowService = preload("res://addons/aerobeat-tool-content-authoring/services/workflow/workout_package_workflow_service.gd")
+const ContentAuthoringPlugin = preload("res://addons/aerobeat-tool-content-authoring/src/editor/plugins/content_authoring_plugin.gd")
+const WorkoutPackageValidationService = preload("res://addons/aerobeat-tool-content-authoring/src/services/validation/workout_package_validation_service.gd")
+const BuildContentPackageService = preload("res://addons/aerobeat-tool-content-authoring/src/services/packaging/build_content_package_service.gd")
+const RefreshContentIndexService = preload("res://addons/aerobeat-tool-content-authoring/src/services/registry/refresh_content_index_service.gd")
+const WorkoutPackageWorkflowService = preload("res://addons/aerobeat-tool-content-authoring/src/services/workflow/workout_package_workflow_service.gd")
 
 static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()

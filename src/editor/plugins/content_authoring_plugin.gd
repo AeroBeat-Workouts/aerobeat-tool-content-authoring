@@ -2,7 +2,7 @@
 class_name ContentAuthoringPlugin
 extends EditorPlugin
 
-const AeroContentAuthoring = preload("../../src/AeroContentAuthoring.gd")
+const AeroContentAuthoring = preload("../../AeroContentAuthoring.gd")
 
 static func build_service_registry() -> Dictionary:
 	return AeroContentAuthoring.build_service_registry()

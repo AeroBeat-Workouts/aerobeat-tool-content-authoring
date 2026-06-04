@@ -2,11 +2,11 @@
 class_name AeroContentAuthoring
 extends Node
 
-const WorkoutPackageValidationService = preload("../services/validation/workout_package_validation_service.gd")
-const ValidatePackageService = preload("../services/validation/validate_package_service.gd")
-const BuildContentPackageService = preload("../services/packaging/build_content_package_service.gd")
-const RefreshContentIndexService = preload("../services/registry/refresh_content_index_service.gd")
-const WorkoutPackageWorkflowService = preload("../services/workflow/workout_package_workflow_service.gd")
+const WorkoutPackageValidationService = preload("services/validation/workout_package_validation_service.gd")
+const ValidatePackageService = preload("services/validation/validate_package_service.gd")
+const BuildContentPackageService = preload("services/packaging/build_content_package_service.gd")
+const RefreshContentIndexService = preload("services/registry/refresh_content_index_service.gd")
+const WorkoutPackageWorkflowService = preload("services/workflow/workout_package_workflow_service.gd")
 
 signal initialized
 signal authoring_state_reset(state)

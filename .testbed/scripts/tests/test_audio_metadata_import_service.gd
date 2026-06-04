@@ -1,6 +1,6 @@
 extends RefCounted
 
-const ADDON_AUDIO_METADATA_IMPORT_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/services/importers/audio_metadata_import_service.gd"
+const ADDON_AUDIO_METADATA_IMPORT_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/importers/audio_metadata_import_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:

@@ -1,7 +1,7 @@
 extends RefCounted
 
-const BuildContentPackageService = preload("res://addons/aerobeat-tool-content-authoring/services/packaging/build_content_package_service.gd")
-const WorkoutPackageWorkflowService = preload("res://addons/aerobeat-tool-content-authoring/services/workflow/workout_package_workflow_service.gd")
+const BuildContentPackageService = preload("res://addons/aerobeat-tool-content-authoring/src/services/packaging/build_content_package_service.gd")
+const WorkoutPackageWorkflowService = preload("res://addons/aerobeat-tool-content-authoring/src/services/workflow/workout_package_workflow_service.gd")
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:

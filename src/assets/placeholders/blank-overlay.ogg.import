@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://pn4ri0sytnv1"
-path="res://.godot/imported/blank-overlay.ogg-0fb3bc160b761db246efa382af1215d2.oggvorbisstr"
+path="res://.godot/imported/blank-overlay.ogg-e4f3dcf41c0678d4735309db49338c59.oggvorbisstr"
 
 [deps]
 
-source_file="res://addons/aerobeat-tool-content-authoring/assets/placeholders/blank-overlay.ogg"
-dest_files=["res://.godot/imported/blank-overlay.ogg-0fb3bc160b761db246efa382af1215d2.oggvorbisstr"]
+source_file="res://addons/aerobeat-tool-content-authoring/src/assets/placeholders/blank-overlay.ogg"
+dest_files=["res://.godot/imported/blank-overlay.ogg-e4f3dcf41c0678d4735309db49338c59.oggvorbisstr"]
 
 [params]
 

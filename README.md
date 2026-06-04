@@ -17,8 +17,8 @@ If a rule changes the meaning of the package contract, it belongs in `aerobeat-c
 The repo is being refactored toward a single runtime authority:
 
 - `src/AeroContentAuthoring.gd` is the public singleton/runtime entrypoint.
-- `services/` holds reusable workflow services used by the singleton.
-- `editor/plugins/content_authoring_plugin.gd` is only a thin editor bridge over the same runtime registry.
+- `src/services/` holds reusable workflow services used by the singleton.
+- `src/editor/plugins/content_authoring_plugin.gd` is only a thin editor bridge over the same runtime registry.
 - `.testbed/` is the Godot project used to sync local addons, import the package, and host future manual authoring UI.
 
 This makes the repo truthful for eventual in-game/runtime consumption instead of treating Godot usage as a sidecar around a headless CLI.
@@ -34,15 +34,16 @@ aerobeat-tool-content-authoring/
 │   ├── scenes/
 │   └── scripts/
 │       └── tests/
-├── docs/
-├── editor/
-├── interfaces/
-├── mappers/
-├── services/
-├── src/
-│   └── AeroContentAuthoring.gd
 ├── plugin.cfg
-└── README.md
+├── README.md
+└── src/
+    ├── AeroContentAuthoring.gd
+    ├── assets/
+    ├── docs/
+    ├── editor/
+    ├── interfaces/
+    ├── mappers/
+    └── services/
 ```
 
 ## GodotEnv posture
