@@ -1,8 +1,8 @@
 # AeroBeat Tool Content Authoring Single Symlink Addon Reference Normalization
 
 **Date:** 2026-06-03
-**Status:** In Progress
-**Last Updated:** 2026-06-03 21:34 EDT
+**Status:** Complete  
+**Last Updated:** 2026-06-03 21:36 EDT  
 **Blocked Reason:** None
 **Agent:** `byte`
 
@@ -62,10 +62,10 @@ The likely real seam is downstream reference normalization: some files currently
 
 ### Task 2: Verify single-reference addon behavior
 
-**Bead ID:** `aerobeat-tool-content-authoring-ckg`  
-**SubAgent:** `primary` (for `qa` workflow role)  
-**Role:** `qa`  
-**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`  
+**Bead ID:** `aerobeat-tool-content-authoring-ckg`
+**SubAgent:** `primary` (for `qa` workflow role)
+**Role:** `qa`
+**References:** `REF-01`, `REF-02`, `REF-03`, `REF-04`
 **Prompt:** Claim the bead on start. Independently verify that the testbed now uses the single symlinked addon reference model for `aerobeat-tool-content-authoring` in the touched scope, with no duplicate path form still required for correct behavior. Use the highest-fidelity repo-local validation available and capture concrete evidence.
 
 **Folders Created/Deleted/Modified:**
@@ -76,7 +76,7 @@ The likely real seam is downstream reference normalization: some files currently
 
 **Status:** ✅ Complete
 
-**Results:** Independently rechecked the touched scope against `REF-01` and `REF-04` before reproducing behavior. Evidence: `.testbed/addons.jsonc` still declares exactly one `aerobeat-tool-content-authoring` addon entry (`url: ".."`, `source: "symlink"`, `subfolder: "/"`) and no duplicate declaration; `src/services/workflow/workout_package_yaml_codec.gd:28` still points placeholder resolution at `res://addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders`; current import metadata shows the two audio imports at `.testbed/assets/placeholders/blank-song.ogg.import:10` and `.testbed/assets/placeholders/blank-overlay.ogg.import:10` using `source_file="res://assets/placeholders/..."`, while `.testbed/assets/placeholders/blank-environment.png.import:9` uses the addon-mounted spelling. I then manually rewrote both `.ogg.import` `source_file` values to the addon-mounted form and reran the highest-fidelity repo-local validation used by the coder (`cd .testbed && godotenv addons install && godot --headless --path . --import && godot --headless --path . --script scripts/tests/run_tool_tests.gd`). Validation passed with exit code 0, and runtime evidence still favored the addon-mounted model where it matters: the test output’s `draftAssetSources` resolved placeholder assets from `.testbed/addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders/...`. However, after `godot --import`, both `.ogg.import` files were rewritten back to `source_file="res://assets/placeholders/blank-song.ogg"` and `source_file="res://assets/placeholders/blank-overlay.ogg"`. QA verdict: **qualified pass**. The repo already uses a single addon symlink declaration and addon-mounted runtime/source resolution in the functional path, but the touched scope cannot be fully normalized to one textual path spelling because Godot re-canonicalizes these two audio import metadata files back to testbed-root `res://assets/...` during reimport. This looks like Godot import canonicalization behavior, not a duplicate addon reference problem. Repo state after QA was clean except for this plan update; no durable source changes survived the reproduction run.
+**Results:** Independently rechecked the touched scope against `REF-01` and `REF-04` before reproducing behavior. Evidence: `.testbed/addons.jsonc` still declares exactly one `aerobeat-tool-content-authoring` addon entry (`url: ".."`, `source: "symlink"`, `subfolder: "/"`) and no duplicate declaration; `src/services/workflow/workout_package_yaml_codec.gd:28` still points placeholder resolution at `res://addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders`; current import metadata shows the two audio imports at `.testbed/assets/placeholders/blank-song.ogg.import:10` and `.testbed/assets/placeholders/blank-overlay.ogg.import:10` using `source_file="res://assets/placeholders/..."`, while `.testbed/assets/placeholders/blank-environment.png.import:9` uses the addon-mounted spelling. I then manually rewrote both `.ogg.import` `source_file` values to the addon-mounted form and reran the highest-fidelity repo-local validation used by the coder (`cd .testbed && godotenv addons install && godot --headless --path . --import && godot --headless --path . --script scripts/tests/run_tool_tests.gd`). Validation passed with exit code 0, and runtime evidence still favored the addon-mounted model where it matters: the test output's `draftAssetSources` resolved placeholder assets from `.testbed/addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders/...`. However, after `godot --import`, both `.ogg.import` files were rewritten back to `source_file="res://assets/placeholders/blank-song.ogg"` and `source_file="res://assets/placeholders/blank-overlay.ogg"`. QA verdict: **qualified pass**. The repo already uses a single addon symlink declaration and addon-mounted runtime/source resolution in the functional path, but the touched scope cannot be fully normalized to one textual path spelling because Godot re-canonicalizes these two audio import metadata files back to testbed-root `res://assets/...` during reimport. This looks like Godot import canonicalization behavior, not a duplicate addon reference problem. Repo state after QA was clean except for this plan update; no durable source changes survived the reproduction run.
 
 ---
 
