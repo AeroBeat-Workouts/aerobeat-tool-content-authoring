@@ -8,7 +8,7 @@ Its root contract is no longer a CLI toolchain or a published root-level GodotEn
 
 - `aerobeat-content-core` owns canonical workout-package contracts and the authoritative validation truth.
 - `aerobeat-tool-content-authoring` owns authoring/runtime workflows that operate on those contracts.
-- `.testbed/` owns local verification-only dependency sync, the automated headless test runner, and future human-facing authoring scenes.
+- `.testbed/` owns local verification-only dependency sync, placeholder verification assets under `.testbed/assets/`, the automated headless test runner, and future human-facing authoring scenes.
 
 If a rule changes the meaning of the package contract, it belongs in `aerobeat-content-core`, not here.
 
@@ -38,7 +38,6 @@ aerobeat-tool-content-authoring/
 ├── README.md
 └── src/
     ├── AeroContentAuthoring.gd
-    ├── assets/
     ├── docs/
     ├── editor/
     ├── interfaces/

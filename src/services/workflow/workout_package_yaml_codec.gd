@@ -25,7 +25,7 @@ const PLACEHOLDER_SONG_AUDIO_PATH := "media/audio/blank-song.ogg"
 const PLACEHOLDER_OVERLAY_AUDIO_PATH := "media/coaching/blank-overlay.ogg"
 const PLACEHOLDER_COACH_VIDEO_PATH := "media/coaching/blank-coaching-video.mp4"
 const PLACEHOLDER_ENVIRONMENT_PATH := "media/environments/blank-environment.png"
-const PLACEHOLDER_SOURCE_ROOT := "res://addons/aerobeat-tool-content-authoring/src/assets/placeholders"
+const PLACEHOLDER_SOURCE_ROOT := "res://addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders"
 const DEFAULT_SQL_SCHEMA := "CREATE TABLE IF NOT EXISTS workouts (\n  workout_id TEXT PRIMARY KEY,\n  workout_name TEXT NOT NULL\n);\n\nCREATE INDEX IF NOT EXISTS idx_workouts_name ON workouts(workout_name);\n"
 
 var _yaml_loader: ValidatePackageService = ValidatePackageService.new()
