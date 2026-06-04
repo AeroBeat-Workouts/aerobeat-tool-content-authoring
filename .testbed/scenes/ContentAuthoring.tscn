@@ -134,6 +134,7 @@ horizontal_scroll_mode = 0
 
 [node name="MetadataMargin" type="MarginContainer" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
@@ -158,6 +159,7 @@ text = "Workout ID"
 [node name="WorkoutIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "ab-workout-my-draft"
 
 [node name="WorkoutNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
@@ -167,6 +169,7 @@ text = "Workout Name"
 [node name="WorkoutNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "My Workout Draft"
 
 [node name="PackageVersionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
@@ -176,6 +179,7 @@ text = "Package Version"
 [node name="PackageVersionEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "1.0.0"
 
 [node name="CoachConfigIdLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
@@ -185,6 +189,7 @@ text = "Coach Config ID"
 [node name="CoachConfigIdEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "coach-config-my-draft"
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
@@ -220,6 +225,7 @@ text = "Enable coaching bundle for this workout"
 
 [node name="WarmUpForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
 layout_mode = 2
+size_flags_horizontal = 3
 columns = 2
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 12
@@ -231,6 +237,7 @@ text = "Coach Config Name"
 [node name="CoachConfigNameEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "Neon Boxing Coaching"
 
 [node name="WarmupVideoPathLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
@@ -240,6 +247,7 @@ text = "Warm-Up Video Path"
 [node name="WarmupVideoPathEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "media/coaching/warmup-video.ogv"
 
 [node name="WarmUpHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
@@ -280,6 +288,7 @@ theme_override_constants/separation = 12
 
 [node name="CoolDownForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab"]
 layout_mode = 2
+size_flags_horizontal = 3
 columns = 2
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 12
@@ -291,6 +300,7 @@ text = "Cool-Down Video Path"
 [node name="CooldownVideoPathEdit" type="LineEdit" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab/CoolDownForm"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 placeholder_text = "media/coaching/cooldown-video.ogv"
 
 [node name="CoolDownHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab"]
