@@ -1,8 +1,8 @@
 # AeroBeat Tool Content Authoring Root-to-src Relink
 
 **Date:** 2026-06-04  
-**Status:** In Progress  
-**Last Updated:** 2026-06-04 12:30 EDT  
+**Status:** Complete  
+**Last Updated:** 2026-06-04 12:42 EDT  
 **Blocked Reason:** None  
 **Agent:** `cookie`
 
@@ -69,14 +69,17 @@ Use these IDs later in tasks, audit notes, and final results when work must matc
 **Prompt:** Pending Derrick approval. Claim the bead on start. Independently verify that `.testbed/` still resolves the addon correctly after the root-to-`src/` move using the highest-fidelity repo-local validation available. Capture concrete pass/fail evidence, especially around addon install/symlink wiring and any headless test flow.
 
 **Folders Created/Deleted/Modified:**
-- `.testbed/` runtime artifacts only if validation produces them
+- `.testbed/.headless/` (QA evidence logs only)
 
 **Files Created/Deleted/Modified:**
-- validation artifacts/logs only if intentionally created
+- `.testbed/.headless/qa-root-to-src-20260604T123607-summary.txt`
+- `.testbed/.headless/qa-root-to-src-20260604T123607-godotenv-addons-install.log`
+- `.testbed/.headless/qa-root-to-src-20260604T123607-godot-import.log`
+- `.testbed/.headless/qa-root-to-src-20260604T123607-godot-tests.log`
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Not started.
+**Results:** Claimed bead `aerobeat-tool-content-authoring-bza` and independently verified the repo at implementation commit `289a24d`. Wiring check: `.testbed/addons/aerobeat-tool-content-authoring` resolves to the repo root, `plugin.cfg` inside that addon resolves to the repo-root `plugin.cfg`, and the plugin entrypoint now points to `src/editor/plugins/content_authoring_plugin.gd`, which resolves successfully through the symlinked addon root. Root-layout check: repo-root `editor/`, `interfaces/`, `mappers/`, and `services/` are absent while `src/` remains present, matching the intended normalized layout. High-fidelity validation passed with exit code 0 for all steps: `(cd .testbed && godotenv addons install)`, `godot --headless --path .testbed --import`, and `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`. `godotenv addons install` reported `✅ Addons installed successfully.` and resolved the addon from `addons.jsonc` at `/` on branch `main` of this repo. The test run returned top-level JSON `"passed": true`; the only stderr-style noise was the same pre-existing Godot shutdown warnings about leaked ObjectDB instances and `9 resources still in use at exit`. Evidence logs were captured under `.testbed/.headless/qa-root-to-src-20260604T123607-*`. References checked: `REF-01`, `REF-02`, `REF-03`, `REF-04`. No code changes required.
 
 ---
 
@@ -89,29 +92,32 @@ Use these IDs later in tasks, audit notes, and final results when work must matc
 **Prompt:** Pending Derrick approval. Claim the bead on start. Audit the completed refactor against the plan, repo diff, and validation evidence. Confirm repo-root code in scope now lives under `src/`, `.testbed/` is correctly relinked, and touched docs/configs tell the truth. Close the bead only if the work is actually complete.
 
 **Folders Created/Deleted/Modified:**
-- none expected
+- `.testbed/.headless/` (audit evidence logs only)
 
 **Files Created/Deleted/Modified:**
-- none expected unless the audit requires plan-result updates
+- `.plans/2026-06-04-root-to-src-relink.md`
+- `.testbed/.headless/audit-root-to-src-20260604T1240/godotenv-addons-install.log`
+- `.testbed/.headless/audit-root-to-src-20260604T1240/godot-import.log`
+- `.testbed/.headless/audit-root-to-src-20260604T1240/godot-tests.log`
 
-**Status:** ⏳ Pending
+**Status:** ✅ Complete
 
-**Results:** Not started.
+**Results:** Claimed bead `aerobeat-tool-content-authoring-n5p` and independently audited the finished refactor at `289a24d` against the repo state, plan, and QA evidence. Layout truth check passed: the repo root now contains only metadata/config plus `src/` and `.testbed/`; the legacy root source paths `editor/`, `interfaces/`, `mappers/`, and `services/` are absent while their in-scope code lives under `src/` (`src/editor/`, `src/interfaces/`, `src/mappers/`, `src/services/`). Wiring truth check passed: `plugin.cfg` now points at `src/editor/plugins/content_authoring_plugin.gd`; `.testbed/addons/aerobeat-tool-content-authoring` is a symlink to the repo root; and the plugin script target resolves successfully through that addon boundary. Reference truth check passed for the touched contract files: `README.md`'s repository-shape description matches the current tree, `.testbed/addons.jsonc` still correctly targets the repo root with `subfolder: "/"`, and `.testbed/project.godot` required no path change for this slice. Validation evidence passed twice: QA logs under `.testbed/.headless/qa-root-to-src-20260604T123607-*` show successful addon install/import/tests at `289a24d`, and an independent auditor rerun also passed with exit code 0 for `godotenv addons install`, `godot --headless --path . --import`, and `godot --headless --path . --script scripts/tests/run_tool_tests.gd`, with only the same pre-existing Godot shutdown warnings about leaked ObjectDB instances / `9 resources still in use at exit`. References checked: `REF-01`, `REF-02`, `REF-03`, `REF-04`. Audit verdict: complete; bead may be closed.
 
 ---
 
 ## Final Results
 
-**Status:** ⚠️ Coder pass complete; QA and audit still pending
+**Status:** ✅ Complete
 
-**What We Built:** The repo root no longer carries the leftover source-tree shells; the addon/plugin entrypoint now resolves into `src/`, and the `.testbed/` validation flow still runs successfully against the refactored layout.
+**What We Built:** The repo root is now truthful to the intended addon layout: in-scope source code lives under `src/`, the stale root plugin entrypoint was updated to resolve through `src/`, and the `.testbed/` root-symlinked addon flow continues to install, import, and execute tests successfully.
 
-**Reference Check:** `REF-01`/`REF-04` now match the normalized repo shape; `REF-02`/`REF-03` required no durable edits because the existing `.testbed/` wiring already targeted the repo root symlink correctly once `plugin.cfg` pointed into `src/`.
+**Reference Check:** `REF-01` and `REF-04` match the normalized repository shape (`src/` is the only remaining in-repo source tree and the legacy root source directories are gone). `REF-02` and `REF-03` remained correct without durable edits because the existing `.testbed/` wiring already targeted the repo root via symlink; once `plugin.cfg` pointed to `src/editor/plugins/content_authoring_plugin.gd`, the addon/testbed boundary resolved cleanly. QA evidence plus the independent auditor rerun both passed against those references.
 
 **Commits:**
-- Pending coder commit
+- `289a24d` - Point plugin entry script at `src/` after root cleanup
 
-**Lessons Learned:** The remaining root-layout drift was mostly a truthiness problem: empty ignored `.uid` shells and one stale plugin path were enough to make the repo look half-migrated even though the real source already lived under `src/`.
+**Lessons Learned:** This refactor was mostly about making the repo tell the truth: the real code had already moved, but empty ignored legacy folders and one stale `plugin.cfg` path still made the addon look half-migrated. The important coupling to protect was the repo-root `plugin.cfg` consumed via the `.testbed` root symlink, not a separate addon-local manifest.
 
 ---
 
