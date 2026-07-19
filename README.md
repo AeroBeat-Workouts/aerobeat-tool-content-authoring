@@ -1,6 +1,8 @@
 # aerobeat-tool-content-authoring
 
-`aerobeat-tool-content-authoring` is a **Godot-first runtime package** for AeroBeat workout authoring.
+`aerobeat-tool-content-authoring` is a **Godot-first runtime package** for AeroBeat **manual-authored workout-package** authoring.
+
+> **Scope note:** this repo currently targets the richer authored-package lane. It should not be treated as the default BeatSaver imported-player workflow, which is being simplified away from package-required coaching and package-owned environment selection.
 
 Its root contract is no longer a CLI toolchain or a published root-level GodotEnv manifest. The repo now aims at a runtime-capable singleton surface that can eventually run inside built consumers such as `aerobeat-assembly-community`, while `.testbed/` acts as the local GodotEnv-backed verification project for development and manual testing.
 
@@ -72,10 +74,10 @@ The singleton direction for the next slices is:
 - delegate package validation truth toward `aerobeat-content-core` where the validator is runtime-loadable
 - keep package contract rules centered on canonical authored data
 
-Important contract notes already locked for follow-up implementation:
+Important implementation notes currently locked for this repo's authored-workout lane:
 
-- primary + fallback environments are canonical set data
-- a set without fallback is invalid
+- primary + fallback environments are part of the **current authored-workout implementation seam**, not a universal imported-player rule
+- a set without fallback is currently invalid **for this repo's authored-package flow**
 - fallback may equal primary
 - video/audio preview dependencies are `.testbed` verification concerns, not root package contract dependencies
 

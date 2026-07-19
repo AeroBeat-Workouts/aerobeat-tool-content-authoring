@@ -8,7 +8,9 @@
 
 ## Goal
 
-Define the Godot-first runtime architecture for `aerobeat-tool-content-authoring` so the repo truthfully reflects where creator-facing authoring is going.
+Define the Godot-first runtime architecture for `aerobeat-tool-content-authoring` so the repo truthfully reflects where **manual-authored workout-package** creation is going.
+
+> **Scope note:** this definition is for the authored-package lane. It should not be read as the default BeatSaver imported-player contract, which is being simplified away from package-required coaching and package-owned environment selection.
 
 This document is intentionally narrower than the older CLI-first definition. It records the approved runtime direction for the refactor slices now in progress.
 
@@ -78,8 +80,8 @@ The approved package-direction rules relevant to this refactor are:
 
 - load targets an **unzipped workout folder**
 - save emits an **unzipped workout folder plus a sibling zip archive**
-- primary + fallback environments are canonical authored set data
-- a set without a fallback environment is invalid
+- primary + fallback environments are part of the **current authored-workout implementation seam**, not a universal imported-player rule
+- a set without a fallback environment is currently invalid **for this repo's authored-package flow**
 - fallback may equal primary
 - video/audio previews are `.testbed` verification dependencies, not root package contract dependencies
 - no compatibility layer should preserve the old CLI-first system as an ongoing public surface
