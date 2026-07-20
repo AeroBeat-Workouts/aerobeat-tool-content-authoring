@@ -62,6 +62,18 @@ The only locally generated addon trees that should exist are:
 
 Those are development artifacts, not published package contract files.
 
+## BeatSaver converter foundation
+
+A first staged BeatSaver -> AeroBeat converter foundation now lives in `src/services/importers/beatsaver_stage_conversion_service.gd`.
+
+- staged source acquisition remains owned by `aerobeat-vendor-beatsaver`
+- durable package-contract evolution remains owned by `aerobeat-content-core`
+- this repo owns the runtime/tool workflow that ingests a staged source package and produces authored package state plus `.artifacts/` provenance
+
+Current honest limitation: the Flow direct-4x3 gameplay rules are locked, but the durable authored Flow YAML contract is only frozen for `burst` beats. This repo therefore emits Flow burst beats into the authored chart and preserves ordinary Flow note/bomb/obstacle/slider semantics in `.artifacts/beatsaver/conversion/report.json` rather than inventing a new package contract locally.
+
+See `src/docs/beatsaver-converter-foundation.md` for the foundation slice details.
+
 ## Runtime and validation contract
 
 The intended runtime surface is `AeroContentAuthoring`, not `AeroToolManager` and not a CLI wrapper.

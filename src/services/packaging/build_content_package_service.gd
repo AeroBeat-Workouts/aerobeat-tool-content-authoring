@@ -21,6 +21,9 @@ func build_package(source_dir: String, output_dir: String) -> Dictionary:
 	DirAccess.make_dir_recursive_absolute(output_dir)
 	var copied_files: Array = []
 	_copy_tree(source_dir, output_dir, copied_files)
+	if DirAccess.dir_exists_absolute(source_dir.path_join(".artifacts")):
+		DirAccess.make_dir_recursive_absolute(output_dir.path_join(".artifacts"))
+		_copy_tree(source_dir, output_dir, copied_files, ".artifacts")
 	var zip_path: String = "%s.zip" % output_dir
 	var zip_result: Dictionary = _zip_directory(output_dir, zip_path)
 	return {
@@ -43,7 +46,7 @@ func _copy_tree(source_dir: String, output_dir: String, copied_files: Array, rel
 		var name := dir.get_next()
 		if name.is_empty():
 			break
-		if name == "." or name == ".." or name.begins_with("."):
+		if _should_skip_name(name):
 			continue
 		var child_relative: String = name if relative_path.is_empty() else relative_path.path_join(name)
 		if dir.current_is_dir():
@@ -67,6 +70,8 @@ func _zip_directory(source_dir: String, zip_path: String) -> Dictionary:
 		return {"ok": false, "errorCode": "zip_open_failed", "error": open_error}
 	var files: Array = []
 	var zip_error: int = _zip_directory_recursive(zipper, source_dir, source_dir, files)
+	if zip_error == OK and DirAccess.dir_exists_absolute(source_dir.path_join(".artifacts")):
+		zip_error = _zip_directory_recursive(zipper, source_dir, source_dir.path_join(".artifacts"), files)
 	zipper.close()
 	return {
 		"ok": zip_error == OK,
@@ -84,7 +89,7 @@ func _zip_directory_recursive(zipper: ZIPPacker, root_dir: String, current_dir: 
 		var name := dir.get_next()
 		if name.is_empty():
 			break
-		if name == "." or name == ".." or name.begins_with("."):
+		if _should_skip_name(name):
 			continue
 		var absolute_path: String = current_dir.path_join(name)
 		if dir.current_is_dir():
@@ -101,6 +106,13 @@ func _zip_directory_recursive(zipper: ZIPPacker, root_dir: String, current_dir: 
 		files.append(relative_path)
 	dir.list_dir_end()
 	return OK
+
+func _should_skip_name(name: String) -> bool:
+	if name == "." or name == "..":
+		return true
+	if not name.begins_with("."):
+		return false
+	return name != ".artifacts"
 
 func _remove_tree(path: String) -> void:
 	if not DirAccess.dir_exists_absolute(path):

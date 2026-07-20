@@ -13,6 +13,7 @@ func _initialize() -> void:
 		load(script_dir.path_join("test_aero_content_authoring_workflow.gd")),
 		load(script_dir.path_join("test_blank_new_package_seed_save_reload.gd")),
 		load(script_dir.path_join("test_task6_set_authoring_runtime.gd")),
+		load(script_dir.path_join("test_beatsaver_stage_conversion_service.gd")),
 	]
 	var results: Array = []
 	var has_failures := false

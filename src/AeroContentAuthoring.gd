@@ -7,6 +7,7 @@ const ValidatePackageService = preload("services/validation/validate_package_ser
 const BuildContentPackageService = preload("services/packaging/build_content_package_service.gd")
 const RefreshContentIndexService = preload("services/registry/refresh_content_index_service.gd")
 const SongPackageWorkflowService = preload("services/workflow/song_package_workflow_service.gd")
+const BeatSaverStageConversionService = preload("services/importers/beatsaver_stage_conversion_service.gd")
 
 signal initialized
 signal authoring_state_reset(state)
@@ -46,6 +47,7 @@ static func build_service_registry() -> Dictionary:
 		"build_content_package": BuildContentPackageService.new(),
 		"refresh_content_index": RefreshContentIndexService.new(),
 		"package_workflow": SongPackageWorkflowService.new(),
+		"beatsaver_stage_conversion": BeatSaverStageConversionService.new(),
 	}
 
 func _ready() -> void:
@@ -182,6 +184,21 @@ func get_package_workflow_service() -> SongPackageWorkflowService:
 	if not _is_initialized:
 		_service_registry = build_service_registry()
 	return _service_registry.get("package_workflow") as SongPackageWorkflowService
+
+func get_beatsaver_stage_conversion_service() -> BeatSaverStageConversionService:
+	if not _is_initialized:
+		_service_registry = build_service_registry()
+	return _service_registry.get("beatsaver_stage_conversion") as BeatSaverStageConversionService
+
+func convert_beatsaver_stage_to_current_package(stage_dir: String, options: Dictionary = {}) -> Dictionary:
+	if not _is_initialized:
+		initialize()
+	var result: Dictionary = get_beatsaver_stage_conversion_service().convert_stage(stage_dir, options)
+	if bool(result.get("ok", false)):
+		_current_package_state = _normalize_state_for_authoring(Dictionary(result.get("state", {})).duplicate(true))
+		result["state"] = get_current_package_state()
+		authoring_state_changed.emit(get_current_package_state())
+	return result
 
 func create_set(seed: Dictionary = {}) -> Dictionary:
 	var state := get_current_package_state()
