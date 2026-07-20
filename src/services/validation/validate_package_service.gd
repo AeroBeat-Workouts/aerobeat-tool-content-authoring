@@ -3,7 +3,7 @@ extends RefCounted
 
 const ValidateChartService = preload("validate_chart_service.gd")
 
-const VALID_SUBJECTS := ["package", "workout", "songs", "charts", "sets", "coaches", "environments", "sql"]
+const VALID_SUBJECTS := ["package", "song_package", "songs", "charts", "sets", "coaches", "environments", "sql"]
 const RECORD_FAMILY_ORDER := ["songs", "charts", "sets", "coaches", "environments", "sql"]
 const FAMILY_CONFIG := {
 	"songs": {
@@ -22,7 +22,7 @@ const FAMILY_CONFIG := {
 		"dir": "sets",
 		"extension": ".yaml",
 		"idKey": "setId",
-		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "setId", "setName", "songId", "chartId", "environmentId"],
+		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "setId", "setName", "songId", "chartId"],
 	},
 	"coaches": {
 		"dir": "coaches",
@@ -61,8 +61,8 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 	match subject:
 		"package":
 			return _validate_package(context)
-		"workout":
-			return _validate_workout(context)
+		"song_package":
+			return _validate_song_package(context)
 		"songs":
 			return _validate_songs(context)
 		"charts":
@@ -82,8 +82,8 @@ func _validate_package(context: Dictionary) -> Dictionary:
 	var package_dir: String = String(context.get("packageDir", ""))
 	var sections: Dictionary = {}
 	var all_issues: Array = []
-	sections["workout"] = _validate_workout(context)
-	all_issues.append_array(sections["workout"].get("issues", []))
+	sections["song_package"] = _validate_song_package(context)
+	all_issues.append_array(sections["song_package"].get("issues", []))
 	for family in RECORD_FAMILY_ORDER:
 		var section_report: Dictionary = {}
 		match family:
@@ -108,34 +108,27 @@ func _validate_package(context: Dictionary) -> Dictionary:
 	counts["sectionCount"] = sections.size()
 	return _report("package", package_dir, all_issues, counts, context.get("artifacts", {}), sections)
 
-func _validate_workout(context: Dictionary) -> Dictionary:
+func _validate_song_package(context: Dictionary) -> Dictionary:
 	var package_dir: String = String(context.get("packageDir", ""))
 	var issues: Array = []
-	var workout: Dictionary = context.get("workout", {})
-	var path: String = String(workout.get("path", "workout.yaml"))
-	if not bool(workout.get("exists", false)):
-		issues.append(_issue("workout_missing", "Package root workout.yaml is required.", path, "workout"))
-		return _report("workout", package_dir, issues, {"fileCount": 0}, {"workout": path}, {})
-	if not bool(workout.get("ok", false)):
-		issues.append(_issue("workout_invalid_yaml", "workout.yaml could not be parsed as YAML.", path, "workout", "", "", {"error": workout.get("error", "")}))
-		return _report("workout", package_dir, issues, {"fileCount": 1}, {"workout": path}, {})
-	var data: Dictionary = workout.get("data", {})
-	for field in ["schemaId", "schemaVersion", "recordVersion", "workoutId", "workoutName", "packageVersion", "coachConfigId", "setOrder"]:
+	var song_package: Dictionary = context.get("songPackage", {})
+	var path: String = String(song_package.get("path", "song-package.yaml"))
+	if not bool(song_package.get("exists", false)):
+		issues.append(_issue("song_package_missing", "Package root song-package.yaml is required.", path, "song_package"))
+		return _report("song_package", package_dir, issues, {"fileCount": 0}, {"songPackage": path}, {})
+	if not bool(song_package.get("ok", false)):
+		issues.append(_issue("song_package_invalid_yaml", "%s could not be parsed as YAML." % path, path, "song_package", "", "", {"error": song_package.get("error", "")}))
+		return _report("song_package", package_dir, issues, {"fileCount": 1}, {"songPackage": path}, {})
+	var data: Dictionary = song_package.get("data", {})
+	for field in ["schemaId", "schemaVersion", "recordVersion", "songPackageId", "songPackageName", "packageVersion", "setIds"]:
 		if _is_missing_value(data.get(field, null)):
-			issues.append(_issue("required_field_missing", "Workout is missing required field '%s'." % field, path, "workout", String(data.get("workoutId", "")), field))
-	if data.has("preview"):
-		if not (data.get("preview") is Dictionary):
-			issues.append(_issue("preview_invalid_type", "Workout preview must be a dictionary when present.", path, "workout", String(data.get("workoutId", "")), "preview"))
-		else:
-			var preview: Dictionary = data.get("preview", {})
-			var cover_art_path: String = String(preview.get("coverArtPath", ""))
-			if cover_art_path.is_empty():
-				issues.append(_issue("preview_cover_missing", "Workout preview.coverArtPath is required when preview is present.", path, "workout", String(data.get("workoutId", "")), "preview.coverArtPath"))
-			elif not _package_file_exists(package_dir, cover_art_path):
-				issues.append(_issue("missing_file", "Workout preview.coverArtPath does not resolve inside the package.", path, "workout", String(data.get("workoutId", "")), "preview.coverArtPath", {"pathValue": cover_art_path}))
-	if data.has("setOrder") and not (data.get("setOrder") is Array):
-		issues.append(_issue("set_order_invalid_type", "Workout setOrder must be an array of set ids.", path, "workout", String(data.get("workoutId", "")), "setOrder"))
-	return _report("workout", package_dir, issues, {"fileCount": 1}, {"workout": path}, {})
+			issues.append(_issue("required_field_missing", "Song package is missing required field '%s'." % field, path, "song_package", String(data.get("songPackageId", "")), field))
+	for forbidden_field in ["workoutId", "workoutName", "coachConfigId", "setOrder"]:
+		if data.has(forbidden_field) and not _is_missing_value(data.get(forbidden_field, null)):
+			issues.append(_issue("song_package_forbidden_field", "Song package field '%s' is legacy workout-era data and must not be present." % forbidden_field, path, "song_package", String(data.get("songPackageId", "")), forbidden_field))
+	if data.has("setIds") and not (data.get("setIds") is Array):
+		issues.append(_issue("set_ids_invalid_type", "Song package setIds must be an array of set ids.", path, "song_package", String(data.get("songPackageId", "")), "setIds"))
+	return _report("song_package", package_dir, issues, {"fileCount": 1}, {"songPackage": path}, {})
 
 func _validate_songs(context: Dictionary) -> Dictionary:
 	return _validate_record_family(context, "songs")
@@ -151,74 +144,15 @@ func _validate_coaches(context: Dictionary) -> Dictionary:
 	var issues: Array = []
 	var records: Array = context.get("coaches", [])
 	if records.is_empty():
-		issues.append(_issue("coach_config_missing", "Package must contain coaches/coach-config.yaml.", "coaches/coach-config.yaml", "coaches"))
 		return _report("coaches", package_dir, issues, {"fileCount": 0}, {"files": []}, {})
 	if records.size() != 1 or String(records[0].get("path", "")) != "coaches/coach-config.yaml":
-		issues.append(_issue("coach_config_count_invalid", "Package must contain exactly one coaches/coach-config.yaml and no alternate coach config files.", "coaches/", "coaches"))
+		issues.append(_issue("coach_config_count_invalid", "Optional coaching data must use exactly one coaches/coach-config.yaml file.", "coaches/", "coaches"))
 	var record: Dictionary = records[0]
 	var path: String = String(record.get("path", "coaches/coach-config.yaml"))
 	if not bool(record.get("ok", false)):
 		issues.append(_issue("coach_config_invalid_yaml", "Coach config could not be parsed as YAML.", path, "coaches", "", "", {"error": record.get("error", "")}))
 		return _report("coaches", package_dir, issues, {"fileCount": records.size()}, {"files": _record_paths(records)}, {})
-	var data: Dictionary = record.get("data", {})
-	if not data.has("enabled") or not (data.get("enabled") is bool):
-		issues.append(_issue("coach_config_enabled_missing", "Coach config must declare boolean enabled.", path, "coaches", String(data.get("coachConfigId", "")), "enabled"))
-		return _report("coaches", package_dir, issues, {"fileCount": records.size()}, {"files": _record_paths(records)}, {})
-	if not bool(data.get("enabled", false)):
-		var keys: Array = data.keys()
-		if keys.size() != 1 or not data.has("enabled"):
-			issues.append(_issue("coach_config_disabled_not_minimal", "Disabled coach config must be minimal and contain only enabled: false.", path, "coaches", String(data.get("coachConfigId", ""))))
-		return _report("coaches", package_dir, issues, {"fileCount": records.size()}, {"files": _record_paths(records)}, {})
-	for field in ["schemaId", "schemaVersion", "recordVersion", "coachConfigId", "coachConfigName", "featuredCoaches", "warmupVideo", "cooldownVideo", "overlayAudio"]:
-		if _is_missing_value(data.get(field, null)):
-			issues.append(_issue("required_field_missing", "Coach config is missing required field '%s'." % field, path, "coaches", String(data.get("coachConfigId", "")), field))
-	var featured_coaches: Array = data.get("featuredCoaches", []) if data.get("featuredCoaches") is Array else []
-	if not (data.get("featuredCoaches") is Array):
-		issues.append(_issue("featured_coaches_invalid_type", "Coach config featuredCoaches must be an array.", path, "coaches", String(data.get("coachConfigId", "")), "featuredCoaches"))
-	var coach_ids: Dictionary = {}
-	for index in range(featured_coaches.size()):
-		var coach_value: Variant = featured_coaches[index]
-		if not (coach_value is Dictionary):
-			issues.append(_issue("featured_coach_invalid_type", "featuredCoaches entries must be dictionaries.", path, "coaches", String(data.get("coachConfigId", "")), "featuredCoaches[%d]" % index))
-			continue
-		var coach: Dictionary = coach_value
-		for field in ["coachId", "coachName"]:
-			if _is_missing_value(coach.get(field, null)):
-				issues.append(_issue("required_field_missing", "Featured coach is missing required field '%s'." % field, path, "coaches", String(data.get("coachConfigId", "")), "featuredCoaches[%d].%s" % [index, field]))
-		var coach_id: String = String(coach.get("coachId", ""))
-		if not coach_id.is_empty():
-			if coach_ids.has(coach_id):
-				issues.append(_issue("duplicate_id", "Duplicate featured coach id '%s'." % coach_id, path, "coaches", coach_id, "featuredCoaches"))
-			else:
-				coach_ids[coach_id] = true
-	issues.append_array(_validate_media_reference(package_dir, path, "warmupVideo", data.get("warmupVideo", null), "coaches", String(data.get("coachConfigId", ""))))
-	issues.append_array(_validate_media_reference(package_dir, path, "cooldownVideo", data.get("cooldownVideo", null), "coaches", String(data.get("coachConfigId", ""))))
-	var overlay_audio: Array = data.get("overlayAudio", []) if data.get("overlayAudio") is Array else []
-	if not (data.get("overlayAudio") is Array):
-		issues.append(_issue("overlay_audio_invalid_type", "Coach config overlayAudio must be an array.", path, "coaches", String(data.get("coachConfigId", "")), "overlayAudio"))
-	var overlay_ids: Dictionary = {}
-	for index in range(overlay_audio.size()):
-		var overlay_value: Variant = overlay_audio[index]
-		if not (overlay_value is Dictionary):
-			issues.append(_issue("overlay_audio_entry_invalid_type", "overlayAudio entries must be dictionaries.", path, "coaches", String(data.get("coachConfigId", "")), "overlayAudio[%d]" % index))
-			continue
-		var overlay: Dictionary = overlay_value
-		for field in ["overlayId", "coachId", "mediaId", "path"]:
-			if _is_missing_value(overlay.get(field, null)):
-				issues.append(_issue("required_field_missing", "Coach overlay is missing required field '%s'." % field, path, "coaches", String(data.get("coachConfigId", "")), "overlayAudio[%d].%s" % [index, field]))
-		var overlay_id: String = String(overlay.get("overlayId", ""))
-		if not overlay_id.is_empty():
-			if overlay_ids.has(overlay_id):
-				issues.append(_issue("duplicate_id", "Duplicate coach overlay id '%s'." % overlay_id, path, "coaches", overlay_id, "overlayAudio"))
-			else:
-				overlay_ids[overlay_id] = true
-		var overlay_coach_id: String = String(overlay.get("coachId", ""))
-		if not overlay_coach_id.is_empty() and not coach_ids.has(overlay_coach_id):
-			issues.append(_issue("missing_coach_ref", "Coach overlay references coachId that is not present in featuredCoaches.", path, "coaches", overlay_id, "overlayAudio[%d].coachId" % index, {"coachId": overlay_coach_id}))
-		var media_path: String = String(overlay.get("path", ""))
-		if not media_path.is_empty() and not _package_file_exists(package_dir, media_path):
-			issues.append(_issue("missing_file", "Coach overlay path does not resolve inside the package.", path, "coaches", overlay_id, "overlayAudio[%d].path" % index, {"pathValue": media_path}))
-	return _report("coaches", package_dir, issues, {"fileCount": records.size(), "overlayCount": overlay_audio.size()}, {"files": _record_paths(records)}, {})
+	return _report("coaches", package_dir, issues, {"fileCount": records.size()}, {"files": _record_paths(records)}, {})
 
 func _validate_environments(context: Dictionary) -> Dictionary:
 	return _validate_record_family(context, "environments")
@@ -229,7 +163,6 @@ func _validate_sql(context: Dictionary) -> Dictionary:
 	var issues: Array = []
 	var sql_files: Array = context.get("sql", [])
 	if sql_files.is_empty():
-		issues.append(_issue("sql_schema_missing", "Package must include at least one sql/*.schema.sql file.", "sql/", "sql"))
 		return _report("sql", package_dir, issues, {"fileCount": 0}, {"files": []}, {})
 	for sql_file in sql_files:
 		var path: String = String(sql_file.get("path", ""))
@@ -256,6 +189,8 @@ func _validate_record_family(context: Dictionary, family: String) -> Dictionary:
 	var records: Array = context.get(family, [])
 	var family_dir: String = String(config.get("dir", family))
 	if records.is_empty():
+		if family == "environments":
+			return _report(family, package_dir, issues, {"fileCount": 0}, {"files": []}, {})
 		issues.append(_issue("records_missing", "Package must contain at least one %s YAML file." % family, family_dir.path_join(""), family))
 		return _report(family, package_dir, issues, {"fileCount": 0}, {"files": []}, {})
 	var seen_ids: Dictionary = {}
@@ -279,7 +214,7 @@ func _validate_record_family(context: Dictionary, family: String) -> Dictionary:
 			"songs":
 				issues.append_array(_validate_song_record(package_dir, path, data))
 			"charts":
-				issues.append_array(_chart_validator.validate_chart_record(data, path))
+				issues.append_array(Array(_chart_validator.validate_chart_record(data, path).get("issues", [])))
 				issues.append_array(_validate_forbidden_composition_link_fields(path, "charts", record_id, data, FORBIDDEN_CHART_COMPOSITION_LINK_FIELDS))
 			"sets":
 				issues.append_array(_validate_set_record(path, data))
@@ -298,8 +233,6 @@ func _validate_song_record(package_dir: String, path: String, song: Dictionary) 
 		var file_path: String = String(audio.get("filePath", ""))
 		if file_path.is_empty():
 			issues.append(_issue("song_audio_file_missing", "Song audio.filePath is required.", path, "songs", song_id, "audio.filePath"))
-		elif not _package_file_exists(package_dir, file_path):
-			issues.append(_issue("missing_file", "Song audio.filePath does not resolve inside the package.", path, "songs", song_id, "audio.filePath", {"pathValue": file_path}))
 	issues.append_array(_validate_song_timing(path, song))
 	return issues
 
@@ -327,7 +260,7 @@ func _validate_set_record(path: String, set_data: Dictionary) -> Array:
 	if set_data.has("assetSelections") and not _is_missing_value(set_data.get("assetSelections", null)):
 		issues.append(_issue(
 			"asset_selections_not_supported",
-			"Set assetSelections is no longer part of the v1 workout-package contract; remove package-local asset selection data.",
+			"Set assetSelections is no longer part of the v1 song-package contract; remove package-local asset selection data.",
 			path,
 			"sets",
 			set_id,
@@ -381,34 +314,23 @@ func _validate_media_reference(package_dir: String, path: String, field_name: St
 func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 	var package_dir: String = String(context.get("packageDir", ""))
 	var issues: Array = _legacy_package_contract_issues(context)
-	var workout: Dictionary = context.get("workout", {}).get("data", {}) if bool(context.get("workout", {}).get("ok", false)) else {}
+	var song_package: Dictionary = context.get("songPackage", {}).get("data", {}) if bool(context.get("songPackage", {}).get("ok", false)) else {}
+	var root_path: String = String(context.get("songPackage", {}).get("path", "song-package.yaml"))
 	var songs_by_id: Dictionary = _index_records(context.get("songs", []), "songId")
 	var charts_by_id: Dictionary = _index_records(context.get("charts", []), "chartId")
 	var sets_by_id: Dictionary = _index_records(context.get("sets", []), "setId")
-	var environments_by_id: Dictionary = _index_records(context.get("environments", []), "environmentId")
-	var coach_config: Dictionary = _coach_config_record(context)
-	var coach_data: Dictionary = coach_config.get("data", {}) if bool(coach_config.get("ok", false)) else {}
-	var coach_enabled: bool = bool(coach_data.get("enabled", false)) if not coach_data.is_empty() else false
-	var overlay_ids: Dictionary = {}
-	if coach_enabled:
-		for overlay_value in coach_data.get("overlayAudio", []):
-			if overlay_value is Dictionary:
-				overlay_ids[String(overlay_value.get("overlayId", ""))] = true
-	if not workout.is_empty():
-		if not coach_data.is_empty() and String(workout.get("coachConfigId", "")) != String(coach_data.get("coachConfigId", "")):
-			issues.append(_issue("missing_coach_config_ref", "workout.yaml coachConfigId does not match coaches/coach-config.yaml.", "workout.yaml", "package", String(workout.get("workoutId", "")), "coachConfigId", {"coachConfigId": workout.get("coachConfigId", "")}))
-		if workout.get("setOrder") is Array:
-			var seen_set_order: Dictionary = {}
-			for index in range(workout.get("setOrder", []).size()):
-				var set_id: String = String(workout.get("setOrder", [])[index])
-				if set_id.is_empty():
-					issues.append(_issue("set_order_entry_missing", "workout.yaml setOrder entries must be non-empty set ids.", "workout.yaml", "package", String(workout.get("workoutId", "")), "setOrder[%d]" % index))
-				elif seen_set_order.has(set_id):
-					issues.append(_issue("duplicate_set_order_id", "workout.yaml setOrder contains duplicate set id '%s'." % set_id, "workout.yaml", "package", String(workout.get("workoutId", "")), "setOrder[%d]" % index))
-				else:
-					seen_set_order[set_id] = true
-				if not sets_by_id.has(set_id):
-					issues.append(_issue("missing_set_ref", "workout.yaml setOrder references a setId that is not present in the package.", "workout.yaml", "package", String(workout.get("workoutId", "")), "setOrder[%d]" % index, {"setId": set_id}))
+	if not song_package.is_empty() and song_package.get("setIds") is Array:
+		var seen_set_ids: Dictionary = {}
+		for index in range(song_package.get("setIds", []).size()):
+			var set_id: String = String(song_package.get("setIds", [])[index])
+			if set_id.is_empty():
+				issues.append(_issue("set_ids_entry_missing", "%s setIds entries must be non-empty set ids." % root_path, root_path, "package", String(song_package.get("songPackageId", "")), "setIds[%d]" % index))
+			elif seen_set_ids.has(set_id):
+				issues.append(_issue("duplicate_song_package_set_id", "%s setIds contains duplicate set id '%s'." % [root_path, set_id], root_path, "package", String(song_package.get("songPackageId", "")), "setIds[%d]" % index))
+			else:
+				seen_set_ids[set_id] = true
+			if not sets_by_id.has(set_id):
+				issues.append(_issue("missing_set_ref", "%s setIds references a setId that is not present in the package." % root_path, root_path, "package", String(song_package.get("songPackageId", "")), "setIds[%d]" % index, {"setId": set_id}))
 	for set_record in context.get("sets", []):
 		if not bool(set_record.get("ok", false)):
 			continue
@@ -417,21 +339,13 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 		var set_id: String = String(set_data.get("setId", ""))
 		var song_id: String = String(set_data.get("songId", ""))
 		var chart_id: String = String(set_data.get("chartId", ""))
-		var environment_id: String = String(set_data.get("environmentId", ""))
-		var coaching_overlay_id: String = String(set_data.get("coachingOverlayId", ""))
 		if not song_id.is_empty() and not songs_by_id.has(song_id):
 			issues.append(_issue("missing_song_ref", "Set references a songId that is not present in the package.", path, "package", set_id, "songId", {"songId": song_id}))
 		if not chart_id.is_empty() and not charts_by_id.has(chart_id):
 			issues.append(_issue("missing_chart_ref", "Set references a chartId that is not present in the package.", path, "package", set_id, "chartId", {"chartId": chart_id}))
-		if not environment_id.is_empty() and not environments_by_id.has(environment_id):
-			issues.append(_issue("missing_environment_ref", "Set references an environmentId that is not present in the package.", path, "package", set_id, "environmentId", {"environmentId": environment_id}))
-		if coach_enabled:
-			if coaching_overlay_id.is_empty():
-				issues.append(_issue("missing_required_coaching_overlay_ref", "Set must declare coachingOverlayId when coaching is enabled.", path, "package", set_id, "coachingOverlayId"))
-			elif not overlay_ids.has(coaching_overlay_id):
-				issues.append(_issue("missing_coaching_overlay_ref", "Set references a coachingOverlayId that is not present in coaches/coach-config.yaml.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
-		elif not coaching_overlay_id.is_empty():
-			issues.append(_issue("unexpected_coaching_overlay_ref", "Set references coachingOverlayId while coaching is disabled or unavailable.", path, "package", set_id, "coachingOverlayId", {"coachingOverlayId": coaching_overlay_id}))
+		for forbidden_field in ["environmentId", "coachingOverlayId"]:
+			if set_data.has(forbidden_field) and not _is_missing_value(set_data.get(forbidden_field, null)):
+				issues.append(_issue("set_forbidden_field", "Canonical set field '%s' is retired and must not be present in song-package packages." % forbidden_field, path, "package", set_id, forbidden_field))
 	return _report("package", package_dir, issues, {"crossCheckCount": 1}, context.get("artifacts", {}), {})
 
 func _legacy_package_contract_issues(context: Dictionary) -> Array:
@@ -449,23 +363,24 @@ func _legacy_package_contract_issues(context: Dictionary) -> Array:
 	return issues
 
 func _load_package_context(package_dir: String) -> Dictionary:
-	var workout_path: String = package_dir.path_join("workout.yaml")
-	var workout_record: Dictionary = {
-		"path": "workout.yaml",
-		"absolutePath": workout_path,
-		"exists": FileAccess.file_exists(workout_path),
+	var root_file_name := "song-package.yaml"
+	var root_path: String = package_dir.path_join(root_file_name)
+	var song_package_record: Dictionary = {
+		"path": root_file_name,
+		"absolutePath": root_path,
+		"exists": FileAccess.file_exists(root_path),
 		"ok": false,
 		"data": {},
 		"error": "",
 	}
-	if workout_record["exists"]:
-		var parsed_workout: Dictionary = _load_yaml_file(workout_path)
-		workout_record["ok"] = bool(parsed_workout.get("ok", false))
-		workout_record["data"] = parsed_workout.get("data", {})
-		workout_record["error"] = String(parsed_workout.get("error", ""))
+	if song_package_record["exists"]:
+		var parsed_root: Dictionary = _load_yaml_file(root_path)
+		song_package_record["ok"] = bool(parsed_root.get("ok", false))
+		song_package_record["data"] = _normalize_song_package_root(Dictionary(parsed_root.get("data", {})))
+		song_package_record["error"] = String(parsed_root.get("error", ""))
 	var context: Dictionary = {
 		"packageDir": package_dir,
-		"workout": workout_record,
+		"songPackage": song_package_record,
 		"songs": _load_yaml_records(package_dir, "songs"),
 		"charts": _load_yaml_records(package_dir, "charts"),
 		"sets": _load_yaml_records(package_dir, "sets"),
@@ -475,7 +390,7 @@ func _load_package_context(package_dir: String) -> Dictionary:
 		"legacyAssetsDirExists": DirAccess.dir_exists_absolute(package_dir.path_join("assets")),
 	}
 	context["artifacts"] = {
-		"workout": "workout.yaml",
+		"songPackage": root_file_name,
 		"songs": _record_paths(context.get("songs", [])),
 		"charts": _record_paths(context.get("charts", [])),
 		"sets": _record_paths(context.get("sets", [])),
@@ -484,6 +399,9 @@ func _load_package_context(package_dir: String) -> Dictionary:
 		"sql": _sql_paths(context.get("sql", [])),
 	}
 	return context
+
+func _normalize_song_package_root(data: Dictionary) -> Dictionary:
+	return data.duplicate(true)
 
 func _load_yaml_records(package_dir: String, family: String) -> Array:
 	var config: Dictionary = FAMILY_CONFIG.get(family, {})

@@ -7,8 +7,8 @@ static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
 	var fixture_dir: String = TestSupport.demo_package_dir()
 	var create_result: Dictionary = runtime.create_new_workout_package({
-		"workoutId": "ab-workout-draft",
-		"workoutName": "Draft Workout",
+		"songPackageId": "ab-song-package-draft",
+		"songPackageName": "Draft Song Package",
 		"packageVersion": "1.0.0",
 	})
 	var draft_state: Dictionary = create_result.get("state", {})
@@ -16,18 +16,17 @@ static func run() -> Dictionary:
 	var draft_songs: Array = Array(draft_state.get("songs", []))
 	var draft_charts: Array = Array(draft_state.get("charts", []))
 	var draft_environments: Array = Array(draft_state.get("environments", []))
-	var draft_coach_config: Dictionary = Dictionary(draft_state.get("coachConfig", {}))
+	var draft_song_package: Dictionary = Dictionary(draft_state.get("songPackage", {}))
 	var create_passed := bool(create_result.get("ok", false)) \
-		and String(draft_state.get("workout", {}).get("workoutId", "")) == "ab-workout-draft" \
+		and String(draft_song_package.get("songPackageId", "")) == "ab-song-package-draft" \
 		and draft_sets.size() == 1 \
 		and draft_songs.size() == 1 \
 		and draft_charts.size() == 1 \
-		and draft_environments.size() == 1 \
-		and bool(draft_coach_config.get("enabled", false))
+		and draft_environments.is_empty()
 
 	var load_result: Dictionary = runtime.load_workout_package_folder(fixture_dir)
 	var loaded_state: Dictionary = runtime.get_current_package_state()
-	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("workout", {}).get("workoutId", "")) == "ab-workout-demo-neon-boxing-bootcamp"
+	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("songPackage", {}).get("songPackageId", "")) == "ab-songpkg-splat-demo"
 
 	var validate_result: Dictionary = runtime.validate_current_package()
 	var validate_passed := bool(validate_result.get("valid", false))
@@ -36,18 +35,17 @@ static func run() -> Dictionary:
 	var repaired_validation: Dictionary = validate_result
 	var repaired_passed := bool(repaired_validation.get("valid", false))
 
-	var invalid_state: Dictionary = repaired_state.duplicate(true)
-	if invalid_state.get("sets", []) is Array and invalid_state.get("sets", []).size() > 0:
-		Dictionary(invalid_state.get("sets", [])[0]).erase("fallbackEnvironmentId")
-	runtime.set_current_package_state(invalid_state)
-	var invalid_validation: Dictionary = runtime.validate_current_package()
+	var invalid_fixture_dir: String = TestSupport.tmp_dir("aero_content_authoring_workflow_invalid_fixture")
+	TestSupport.ensure_clean_dir(invalid_fixture_dir)
+	TestSupport.copy_tree(fixture_dir, invalid_fixture_dir)
+	var invalid_set_path: String = invalid_fixture_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
+	TestSupport.write_text(invalid_set_path, TestSupport.read_text(invalid_set_path) + "\nenvironmentId: ab-environment-legacy\n")
+	var invalid_validation: Dictionary = runtime.get_validate_package_service().validate_path(invalid_fixture_dir, "package")
 	var invalid_codes: Array = []
 	for issue in invalid_validation.get("issues", []):
 		invalid_codes.append(String(issue.get("code", "")))
 	invalid_codes.sort()
-	var fallback_rule_passed := not bool(invalid_validation.get("valid", true)) and invalid_codes.has("missing_fallback_environment_ref")
-
-	runtime.set_current_package_state(repaired_state)
+	var legacy_field_rule_passed := not bool(invalid_validation.get("valid", true)) and invalid_codes.has("set_forbidden_field")
 	var save_parent: String = TestSupport.tmp_dir("aero_content_authoring_workflow")
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir: String = String(save_result.get("outputDir", ""))
@@ -57,9 +55,9 @@ static func run() -> Dictionary:
 	runtime.reset_authoring_state()
 	var reset_state: Dictionary = runtime.get_current_package_state()
 	var reset_validation: Dictionary = runtime.validate_current_package()
-	var reset_passed := not String(reset_state.get("workout", {}).get("workoutId", "")).is_empty() and bool(reset_validation.get("valid", false))
+	var reset_passed := not String(reset_state.get("songPackage", {}).get("songPackageId", "")).is_empty() and bool(reset_validation.get("valid", false))
 
-	var passed := create_passed and load_passed and validate_passed and repaired_passed and fallback_rule_passed and save_passed and reset_passed
+	var passed := create_passed and load_passed and validate_passed and repaired_passed and legacy_field_rule_passed and save_passed and reset_passed
 	return {
 		"name": "test_aero_content_authoring_workflow",
 		"passed": passed,

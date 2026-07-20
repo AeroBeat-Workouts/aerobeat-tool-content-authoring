@@ -1,7 +1,7 @@
 extends RefCounted
 
 static func demo_package_dir() -> String:
-	return ProjectSettings.globalize_path("res://../../aerobeat-docs/docs/examples/workout-packages/demo-neon-boxing-bootcamp")
+	return ProjectSettings.globalize_path("res://../../aerobeat-content-core/fixtures/song_package_yaml_valid_splat")
 
 static func tmp_root_dir() -> String:
 	return ProjectSettings.globalize_path("user://content_authoring_testbed")

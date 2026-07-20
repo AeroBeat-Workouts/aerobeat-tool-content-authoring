@@ -8,7 +8,7 @@ static func run() -> Dictionary:
 	var invalid_dir: String = TestSupport.tmp_dir("validate_song_timing_contract_invalid")
 	TestSupport.ensure_clean_dir(invalid_dir)
 	TestSupport.copy_tree(base_fixture_dir, invalid_dir)
-	var song_path: String = invalid_dir.path_join("songs/ab-song-neon-stride.yaml")
+	var song_path: String = invalid_dir.path_join("songs/ab-song-splat-demo.yaml")
 	var song_text: String = TestSupport.read_text(song_path)
 	song_text = song_text.replace("timing:\n  anchorMs: 0\n  tempoSegments:", "timing:\n  anchorMs: 0\n  bpm: 132\n  tempoSegments:")
 	TestSupport.write_text(song_path, song_text)

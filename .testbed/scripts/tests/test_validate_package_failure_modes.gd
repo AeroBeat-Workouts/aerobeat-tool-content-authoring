@@ -10,8 +10,8 @@ static func run() -> Dictionary:
 	var scenarios: Array = [
 		_duplicate_song_id_scenario(base_fixture_dir, base_tmp_dir),
 		_missing_set_reference_scenario(base_fixture_dir, base_tmp_dir),
-		_invalid_coaching_path_scenario(base_fixture_dir, base_tmp_dir),
-		_missing_required_coaching_overlay_scenario(base_fixture_dir, base_tmp_dir),
+		_forbidden_song_package_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
+		_forbidden_set_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
 		_asset_selections_not_supported_scenario(base_fixture_dir, base_tmp_dir),
 		_assets_directory_not_supported_scenario(base_fixture_dir, base_tmp_dir),
 		_dance_chart_rejected_scenario(base_fixture_dir, base_tmp_dir),
@@ -20,11 +20,6 @@ static func run() -> Dictionary:
 		_forbidden_chart_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_environment_type_scenario(base_fixture_dir, base_tmp_dir),
-		_environment_resource_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
-		_missing_environment_config_path_scenario(base_fixture_dir, base_tmp_dir),
-		_environment_config_type_mismatch_scenario(base_fixture_dir, base_tmp_dir),
-		_valid_splat_environment_scenario(base_fixture_dir, base_tmp_dir),
-		_legacy_environment_scene_path_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
 	for scenario in scenarios:
@@ -42,80 +37,60 @@ static func _duplicate_song_id_scenario(base_fixture_dir: String, base_tmp_dir: 
 	var scenario_dir: String = base_tmp_dir.path_join("duplicate_song_id")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var original_path: String = scenario_dir.path_join("songs/ab-song-neon-stride.yaml")
-	var duplicate_path: String = scenario_dir.path_join("songs/ab-song-neon-stride-duplicate.yaml")
-	TestSupport.write_text(duplicate_path, TestSupport.read_text(original_path).replace("songName: Neon Stride", "songName: Neon Stride Duplicate"))
+	var original_path: String = scenario_dir.path_join("songs/ab-song-splat-demo.yaml")
+	var duplicate_path: String = scenario_dir.path_join("songs/ab-song-splat-demo-duplicate.yaml")
+	TestSupport.write_text(duplicate_path, TestSupport.read_text(original_path).replace("songName: Splat Demo Song", "songName: Splat Demo Song Duplicate"))
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "songs")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "duplicate_song_id",
-		"passed": codes.has("duplicate_id"),
-		"codes": codes,
-	}
+	return {"name": "duplicate_song_id", "passed": codes.has("duplicate_id"), "codes": codes}
 
 static func _missing_set_reference_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("missing_set_reference")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-opening-round.yaml")
+	var root_path: String = scenario_dir.path_join("song-package.yaml")
+	var root_text: String = TestSupport.read_text(root_path)
+	root_text = root_text.replace("- ab-set-splat-demo-boxing-hard", "- ab-set-does-not-exist")
+	TestSupport.write_text(root_path, root_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {"name": "missing_set_reference", "passed": codes.has("missing_set_ref"), "codes": codes}
+
+static func _forbidden_song_package_legacy_fields_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_package_legacy_fields")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var root_path: String = scenario_dir.path_join("song-package.yaml")
+	var root_text: String = TestSupport.read_text(root_path)
+	root_text += "\nworkoutId: ab-workout-legacy\ncoachConfigId: ab-coach-config-legacy\n"
+	TestSupport.write_text(root_path, root_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {"name": "forbidden_song_package_legacy_fields", "passed": codes.has("song_package_forbidden_field"), "codes": codes}
+
+static func _forbidden_set_legacy_fields_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("forbidden_set_legacy_fields")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
 	var set_text: String = TestSupport.read_text(set_path)
-	set_text = set_text.replace("chartId: ab-chart-neon-stride-boxing-medium", "chartId: ab-chart-does-not-exist")
+	set_text += "\nenvironmentId: ab-environment-legacy\ncoachingOverlayId: ab-overlay-legacy\n"
 	TestSupport.write_text(set_path, set_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "missing_set_reference",
-		"passed": codes.has("missing_chart_ref"),
-		"codes": codes,
-	}
-
-static func _invalid_coaching_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("invalid_coaching_path")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var coach_path: String = scenario_dir.path_join("coaches/coach-config.yaml")
-	var coach_text: String = TestSupport.read_text(coach_path)
-	coach_text = coach_text.replace("path: media/coaching/warmup-breathing-intro.mp4", "path: media/coaching/missing-warmup.mp4")
-	TestSupport.write_text(coach_path, coach_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "coaches")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "invalid_coaching_path",
-		"passed": codes.has("missing_file"),
-		"codes": codes,
-	}
-
-static func _missing_required_coaching_overlay_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("missing_required_coaching_overlay")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-flow-round.yaml")
-	var set_text: String = TestSupport.read_text(set_path)
-	set_text = set_text.replace("coachingOverlayId: ab-overlay-aria-neon-stride-cue\n", "")
-	TestSupport.write_text(set_path, set_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "missing_required_coaching_overlay",
-		"passed": codes.has("missing_required_coaching_overlay_ref"),
-		"codes": codes,
-	}
+	return {"name": "forbidden_set_legacy_fields", "passed": _count_code(codes, "set_forbidden_field") >= 2, "codes": codes}
 
 static func _asset_selections_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("asset_selections_not_supported")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-neon-stride-opening-round.yaml")
+	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
 	var set_text: String = TestSupport.read_text(set_path)
 	set_text += "\nassetSelections:\n  gloves: ab-asset-gloves-neon-pulse\n"
 	TestSupport.write_text(set_path, set_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "sets")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "asset_selections_not_supported",
-		"passed": codes.has("asset_selections_not_supported"),
-		"codes": codes,
-	}
+	return {"name": "asset_selections_not_supported", "passed": codes.has("asset_selections_not_supported"), "codes": codes}
 
 static func _assets_directory_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("assets_directory_not_supported")
@@ -123,92 +98,82 @@ static func _assets_directory_not_supported_scenario(base_fixture_dir: String, b
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var assets_dir: String = scenario_dir.path_join("assets")
 	DirAccess.make_dir_recursive_absolute(assets_dir)
-	TestSupport.write_text(assets_dir.path_join("ab-asset-gloves-neon-pulse.yaml"), "schemaId: aerobeat.asset.v1\nschemaVersion: 1\nrecordVersion: 1\nassetId: ab-asset-gloves-neon-pulse\nassetName: Neon Pulse Gloves\nassetType: gloves\nresourcePath: media/art/neon-pulse-gloves-thumb.png\n")
+	TestSupport.write_text(assets_dir.path_join("ab-asset-gloves-neon-pulse.yaml"), "schemaId: aerobeat.asset.v1\nschemaVersion: 1\nrecordVersion: 1\nassetId: ab-asset-gloves-neon-pulse\n")
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "assets_directory_not_supported",
-		"passed": codes.has("assets_directory_not_supported"),
-		"codes": codes,
-	}
+	return {"name": "assets_directory_not_supported", "passed": codes.has("assets_directory_not_supported"), "codes": codes}
 
 static func _dance_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("dance_chart_rejected")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-flow-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text = chart_text.replace("feature: flow", "feature: dance")
+	chart_text = chart_text.replace("feature: boxing", "feature: dance")
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "dance_chart_rejected",
-		"passed": codes.has("invalid_feature"),
-		"codes": codes,
-	}
+	return {"name": "dance_chart_rejected", "passed": codes.has("invalid_feature"), "codes": codes}
 
 static func _step_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("step_chart_rejected")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-flow-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text = chart_text.replace("feature: flow", "feature: step")
+	chart_text = chart_text.replace("feature: boxing", "feature: step")
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "step_chart_rejected",
-		"passed": codes.has("invalid_feature"),
-		"codes": codes,
-	}
+	return {"name": "step_chart_rejected", "passed": codes.has("invalid_feature"), "codes": codes}
 
 static func _forbidden_song_composition_links_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_composition_links")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var song_path: String = scenario_dir.path_join("songs/ab-song-neon-stride.yaml")
+	var song_path: String = scenario_dir.path_join("songs/ab-song-splat-demo.yaml")
 	var song_text: String = TestSupport.read_text(song_path)
-	song_text += "\nchartId: ab-chart-neon-stride-boxing-medium\nsetId: ab-set-neon-stride-opening-round\nworkoutId: ab-workout-demo-neon-boxing-bootcamp\n"
+	song_text += "\nchartId: ab-chart-splat-demo-boxing-medium\nsetId: ab-set-splat-demo-boxing-medium\nworkoutId: ab-workout-legacy\n"
 	TestSupport.write_text(song_path, song_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "songs")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "forbidden_song_composition_links",
-		"passed": _count_code(codes, "forbidden_composition_link_field") >= 3,
-		"codes": codes,
-	}
+	return {"name": "forbidden_song_composition_links", "passed": _count_code(codes, "forbidden_composition_link_field") >= 3, "codes": codes}
 
 static func _forbidden_chart_composition_links_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_chart_composition_links")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-neon-stride-boxing-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text += "\nsongId: ab-song-neon-stride\nsetId: ab-set-neon-stride-opening-round\nworkoutId: ab-workout-demo-neon-boxing-bootcamp\n"
+	chart_text += "\nsongId: ab-song-splat-demo\nsetId: ab-set-splat-demo-boxing-medium\nworkoutId: ab-workout-legacy\n"
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "forbidden_chart_composition_links",
-		"passed": _count_code(codes, "forbidden_composition_link_field") >= 3,
-		"codes": codes,
-	}
+	return {"name": "forbidden_chart_composition_links", "passed": _count_code(codes, "forbidden_composition_link_field") >= 3, "codes": codes}
 
 static func _invalid_sql_schema_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("invalid_sql_schema")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var sql_path: String = scenario_dir.path_join("sql/workouts.db.schema.sql")
+	var sql_path: String = scenario_dir.path_join("sql/workouts.schema.sql")
 	TestSupport.write_text(sql_path, "SELECT 1;\n")
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "sql")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "invalid_sql_schema",
-		"passed": codes.has("sql_schema_missing_create_table") and codes.has("sql_schema_missing_create_index"),
-		"codes": codes,
-	}
+	return {"name": "invalid_sql_schema", "passed": codes.has("sql_schema_missing_create_table") and codes.has("sql_schema_missing_create_index"), "codes": codes}
+
+static func _invalid_environment_type_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("invalid_environment_type")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var env_dir: String = scenario_dir.path_join("environments")
+	DirAccess.make_dir_recursive_absolute(env_dir)
+	var environment_path: String = env_dir.path_join("ab-environment-sunrise-studio.yaml")
+	TestSupport.write_text(environment_path, "schemaId: aerobeat.environment.v1\nschemaVersion: 1\nrecordVersion: 1\nenvironmentId: ab-environment-sunrise-studio\nenvironmentName: Sunrise Studio\ntype: godot_scene\nresourcePath: media/environments/sunrise-studio.png\n")
+	DirAccess.make_dir_recursive_absolute(scenario_dir.path_join("media/environments"))
+	TestSupport.write_text(scenario_dir.path_join("media/environments/sunrise-studio.png"), "placeholder\n")
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {"name": "invalid_environment_type", "passed": codes.has("invalid_environment_type"), "codes": codes}
 
 static func _count_code(codes: Array, code: String) -> int:
 	var count: int = 0
@@ -216,107 +181,3 @@ static func _count_code(codes: Array, code: String) -> int:
 		if String(value) == code:
 			count += 1
 	return count
-
-
-static func _invalid_environment_type_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("invalid_environment_type")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text = environment_text.replace("type: image_background", "type: godot_scene")
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "invalid_environment_type",
-		"passed": codes.has("invalid_environment_type"),
-		"codes": codes,
-	}
-
-static func _environment_resource_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("environment_resource_type_mismatch")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var mismatched_resource_path: String = scenario_dir.path_join("media/environments/sunrise-studio.mp4")
-	TestSupport.write_text(mismatched_resource_path, "placeholder video background asset for validator mismatch scenario\n")
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text = environment_text.replace("resourcePath: media/environments/sunrise-studio.png", "resourcePath: media/environments/sunrise-studio.mp4")
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "environment_resource_type_mismatch",
-		"passed": codes.has("environment_resource_type_mismatch"),
-		"codes": codes,
-	}
-
-static func _missing_environment_config_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("missing_environment_config_path")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text += "\nconfigPath: media/environments/missing-neon-rooftop.config.yaml\n"
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "missing_environment_config_path",
-		"passed": codes.has("missing_file"),
-		"codes": codes,
-	}
-
-static func _environment_config_type_mismatch_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("environment_config_type_mismatch")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-rooftop.json"), "{}\n")
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text += "\nconfigPath: media/environments/neon-rooftop.json\n"
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "environment_config_type_mismatch",
-		"passed": codes.has("environment_config_type_mismatch"),
-		"codes": codes,
-	}
-
-static func _valid_splat_environment_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("valid_splat_environment")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-splat.compressed.ply"), "tiny splat placeholder\n")
-	TestSupport.write_text(scenario_dir.path_join("media/environments/neon-splat.config.yaml"), "transform:\n  scale:\n    - 1\n    - 1\n    - 1\n")
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-sunrise-studio.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text = environment_text.replace("type: image_background", "type: splat")
-	environment_text = environment_text.replace("resourcePath: media/environments/sunrise-studio.png", "resourcePath: media/environments/neon-splat.compressed.ply")
-	environment_text += "\nconfigPath: media/environments/neon-splat.config.yaml\n"
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "valid_splat_environment",
-		"passed": codes.is_empty(),
-		"codes": codes,
-	}
-
-static func _legacy_environment_scene_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("legacy_environment_scene_path")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var environment_path: String = scenario_dir.path_join("environments/ab-environment-neon-rooftop.yaml")
-	var environment_text: String = TestSupport.read_text(environment_path)
-	environment_text = environment_text.replace("resourcePath: media/environments/neon-rooftop.glb", "scenePath: media/environments/neon-rooftop.glb")
-	TestSupport.write_text(environment_path, environment_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {
-		"name": "legacy_environment_scene_path",
-		"passed": codes.has("required_field_missing"),
-		"codes": codes,
-	}

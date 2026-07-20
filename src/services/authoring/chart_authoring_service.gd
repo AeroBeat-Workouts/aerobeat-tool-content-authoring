@@ -22,13 +22,13 @@ func upsert_record(record_data: Dictionary) -> Dictionary:
 	if String(chart.get("songId", "")).is_empty():
 		return _error("songId is required for chart upsert.", {"packageDir": package_dir, "record": chart})
 
-	var has_workout_yaml: bool = FileAccess.file_exists(package_dir.path_join("workout.yaml"))
-	if has_workout_yaml:
-		return _error("chart upsert does not support current workout.yaml packages yet; the remaining authoring path is temporary legacy manifest-only compatibility.", {
+	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song-package.yaml"))
+	if has_song_package_yaml:
+		return _error("chart upsert does not support current song-package.yaml packages yet; the remaining authoring path is temporary legacy manifest-only compatibility.", {
 			"packageDir": package_dir,
 			"record": chart,
 			"legacyCompatibilityOnly": true,
-			"expectedPackageContract": "workout.yaml",
+			"expectedPackageContract": "song-package.yaml",
 		})
 
 	var manifest_path: String = package_dir.path_join("manifest.json")
@@ -71,7 +71,7 @@ func _normalize_chart(record_data: Dictionary) -> Dictionary:
 	chart["routineId"] = String(chart.get("routineId", "")).strip_edges()
 	chart["songId"] = String(chart.get("songId", "")).strip_edges()
 	chart["feature"] = _normalize_token(String(chart.get("feature", "boxing")), "boxing")
-	chart["difficulty"] = _normalize_token(String(chart.get("difficulty", "medium")), "medium")
+	chart["difficulty"] = _normalize_token(String(chart.get("difficulty", "Normal")), "Normal")
 	chart["interactionFamily"] = _normalize_token(String(chart.get("interactionFamily", "gesture_2d")), "gesture_2d")
 	chart["events"] = _duplicate_array(chart.get("events", []))
 	chart.erase("timing")
@@ -159,8 +159,8 @@ func _write_json(path: String, data: Dictionary) -> Dictionary:
 
 func _validation_for_package_state(package_dir: String) -> Dictionary:
 	var has_manifest: bool = FileAccess.file_exists(package_dir.path_join("manifest.json"))
-	var has_workout_yaml: bool = FileAccess.file_exists(package_dir.path_join("workout.yaml"))
-	if has_manifest and not has_workout_yaml:
+	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song-package.yaml"))
+	if has_manifest and not has_song_package_yaml:
 		return {
 			"ok": true,
 			"valid": true,
@@ -171,7 +171,7 @@ func _validation_for_package_state(package_dir: String) -> Dictionary:
 			"warnings": [],
 			"packageDir": package_dir,
 			"skipped": true,
-			"note": "Skipped current workout.yaml package validation because this authoring flow is quarantined to temporary legacy manifest-based fixtures only.",
+			"note": "Skipped current song-package.yaml package validation because this authoring flow is quarantined to temporary legacy manifest-based fixtures only.",
 		}
 	return _validate_package_service.validate_path(package_dir)
 

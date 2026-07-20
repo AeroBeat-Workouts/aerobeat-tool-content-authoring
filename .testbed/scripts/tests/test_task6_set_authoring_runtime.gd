@@ -7,14 +7,13 @@ static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
 	var initial_state := runtime.get_current_package_state()
 	var initial_sets: Array = Array(initial_state.get("sets", []))
-	var initial_order: Array = Array(Dictionary(initial_state.get("workout", {})).get("setOrder", []))
+	var initial_order: Array = Array(Dictionary(initial_state.get("songPackage", {})).get("setIds", []))
 
 	var fixture_dir := TestSupport.tmp_dir("task6_runtime_fixture")
 	TestSupport.ensure_clean_dir(fixture_dir)
 	var chart_path := fixture_dir.path_join("sample-chart.yaml")
 	TestSupport.write_text(chart_path, "chartId: ab-chart-preview\nchartName: Preview Chart\nfeature: boxing\ndifficulty: hard\nsongId: ab-song-preview\nbeats:\n  - beat: 1\n")
 	var environment_path := fixture_dir.path_join("preview-environment.ogv")
-	var environment_config_path := fixture_dir.path_join("preview-environment.config.yaml")
 	var audio_path := fixture_dir.path_join("coaching.ogg")
 	var warmup_path := fixture_dir.path_join("warmup.ogv")
 	var cooldown_path := fixture_dir.path_join("cooldown.ogv")
@@ -23,7 +22,6 @@ static func run() -> Dictionary:
 		var file := FileAccess.open(asset_path, FileAccess.WRITE)
 		if file != null:
 			file.store_buffer(audio_bytes)
-	TestSupport.write_text(environment_config_path, "fit_mode: contain\nposition: [0, 0, 0]\n")
 
 	var create_result := runtime.create_set({"setName": "Set 2"})
 	var second_set_id := String(Dictionary(create_result.get("set", {})).get("setId", ""))
@@ -40,13 +38,12 @@ static func run() -> Dictionary:
 	var passed := initial_sets.size() == 1 \
 		and initial_order.size() == 1 \
 		and bool(beatmap_result.get("ok", false)) \
-		and bool(primary_environment_result.get("ok", false)) \
-		and bool(fallback_environment_result.get("ok", false)) \
-		and bool(coaching_audio_result.get("ok", false)) \
-		and bool(warmup_result.get("ok", false)) \
-		and bool(cooldown_result.get("ok", false)) \
-		and bool(preview_request_result.get("ok", false)) \
-		and String(Dictionary(preview_request_result.get("request", {})).get("fit_mode", "")) == "contain" \
+		and String(primary_environment_result.get("errorCode", "")) == "retired_environment_linking_contract" \
+		and String(fallback_environment_result.get("errorCode", "")) == "retired_environment_linking_contract" \
+		and String(coaching_audio_result.get("errorCode", "")) == "retired_coaching_overlay_contract" \
+		and String(warmup_result.get("errorCode", "")) == "retired_coaching_video_contract" \
+		and String(cooldown_result.get("errorCode", "")) == "retired_coaching_video_contract" \
+		and String(preview_request_result.get("errorCode", "")) == "retired_environment_linking_contract" \
 		and Array(post_delete_state.get("sets", [])).size() >= 1
 
 	return {

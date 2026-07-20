@@ -4,27 +4,17 @@ extends RefCounted
 const ValidatePackageService = preload("../validation/validate_package_service.gd")
 
 const AUTHORED_DIRECTORIES := ["songs", "charts", "sets", "coaches", "environments", "sql"]
-const AUTHORED_ROOT_FILES := ["workout.yaml"]
-const DEFAULT_WORKOUT_ID := "ab-workout-draft"
-const DEFAULT_WORKOUT_NAME := "Draft Workout"
+const AUTHORED_ROOT_FILES := ["song-package.yaml"]
+const DEFAULT_SONG_PACKAGE_ID := "ab-song-package-draft"
+const DEFAULT_SONG_PACKAGE_NAME := "Draft Song Package"
 const DEFAULT_SET_ID := "ab-set-001"
 const DEFAULT_SET_NAME := "Set 1"
 const DEFAULT_SONG_ID := "ab-song-001"
 const DEFAULT_SONG_NAME := "Placeholder Song"
 const DEFAULT_CHART_ID := "ab-chart-001"
 const DEFAULT_CHART_NAME := "Placeholder Boxing Chart"
-const DEFAULT_ENVIRONMENT_ID := "ab-environment-001"
-const DEFAULT_ENVIRONMENT_NAME := "Placeholder Environment"
-const DEFAULT_COACH_CONFIG_ID := "ab-coach-config-draft"
-const DEFAULT_COACH_CONFIG_NAME := "Draft Workout Coaching"
-const DEFAULT_COACH_ID := "ab-coach-default"
-const DEFAULT_COACH_NAME := "Coach Default"
-const DEFAULT_OVERLAY_ID := "ab-overlay-001"
 const DEFAULT_SQL_PATH := "sql/workouts.schema.sql"
 const PLACEHOLDER_SONG_AUDIO_PATH := "media/audio/blank-song.ogg"
-const PLACEHOLDER_OVERLAY_AUDIO_PATH := "media/coaching/blank-overlay.ogg"
-const PLACEHOLDER_COACH_VIDEO_PATH := "media/coaching/blank-coaching-video.mp4"
-const PLACEHOLDER_ENVIRONMENT_PATH := "media/environments/blank-environment.png"
 const PLACEHOLDER_SOURCE_ROOT := "res://addons/aerobeat-tool-content-authoring/.testbed/assets/placeholders"
 const DEFAULT_SQL_SCHEMA := "CREATE TABLE IF NOT EXISTS workouts (\n  workout_id TEXT PRIMARY KEY,\n  workout_name TEXT NOT NULL\n);\n\nCREATE INDEX IF NOT EXISTS idx_workouts_name ON workouts(workout_name);\n"
 
@@ -32,12 +22,12 @@ var _yaml_loader: ValidatePackageService = ValidatePackageService.new()
 
 func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 	var package_version: String = String(seed.get("packageVersion", "1.0.0")).strip_edges()
-	var workout_id: String = _token(seed.get("workoutId", seed.get("packageId", DEFAULT_WORKOUT_ID)))
-	if workout_id.is_empty():
-		workout_id = DEFAULT_WORKOUT_ID
-	var workout_name: String = String(seed.get("workoutName", DEFAULT_WORKOUT_NAME)).strip_edges()
-	if workout_name.is_empty():
-		workout_name = DEFAULT_WORKOUT_NAME
+	var song_package_id: String = _token(seed.get("songPackageId", seed.get("packageId", DEFAULT_SONG_PACKAGE_ID)))
+	if song_package_id.is_empty():
+		song_package_id = DEFAULT_SONG_PACKAGE_ID
+	var song_package_name: String = String(seed.get("songPackageName", DEFAULT_SONG_PACKAGE_NAME)).strip_edges()
+	if song_package_name.is_empty():
+		song_package_name = DEFAULT_SONG_PACKAGE_NAME
 	var description: String = String(seed.get("description", "")).strip_edges()
 	var set_id: String = _token(seed.get("setId", DEFAULT_SET_ID))
 	var set_name: String = String(seed.get("setName", DEFAULT_SET_NAME)).strip_edges()
@@ -45,18 +35,7 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 	var song_name: String = String(seed.get("songName", DEFAULT_SONG_NAME)).strip_edges()
 	var chart_id: String = _token(seed.get("chartId", DEFAULT_CHART_ID))
 	var chart_name: String = String(seed.get("chartName", DEFAULT_CHART_NAME)).strip_edges()
-	var environment_id: String = _token(seed.get("environmentId", DEFAULT_ENVIRONMENT_ID))
-	var environment_name: String = String(seed.get("environmentName", DEFAULT_ENVIRONMENT_NAME)).strip_edges()
-	var coach_config_id: String = _token(seed.get("coachConfigId", "ab-coach-config-%s" % workout_id))
-	if coach_config_id.is_empty():
-		coach_config_id = DEFAULT_COACH_CONFIG_ID
-	var coach_config_name: String = String(seed.get("coachConfigName", DEFAULT_COACH_CONFIG_NAME)).strip_edges()
-	if coach_config_name.is_empty():
-		coach_config_name = DEFAULT_COACH_CONFIG_NAME
-	var coach_id: String = _token(seed.get("coachId", DEFAULT_COACH_ID))
-	var coach_name: String = String(seed.get("coachName", DEFAULT_COACH_NAME)).strip_edges()
-	var overlay_id: String = _token(seed.get("overlayId", DEFAULT_OVERLAY_ID))
-	var state := {
+	return {
 		"packageVersion": package_version,
 		"sourcePackageDir": "",
 		"loadedPackageDir": "",
@@ -64,49 +43,19 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 		"passthroughFiles": [],
 		"draftAssetSources": {
 			PLACEHOLDER_SONG_AUDIO_PATH: _placeholder_source_path("blank-song.ogg"),
-			PLACEHOLDER_OVERLAY_AUDIO_PATH: _placeholder_source_path("blank-overlay.ogg"),
-			PLACEHOLDER_COACH_VIDEO_PATH: _placeholder_source_path("blank-coaching-video.mp4"),
-			PLACEHOLDER_ENVIRONMENT_PATH: _placeholder_source_path("blank-environment.png"),
 		},
 		"draftTextSources": {
 			DEFAULT_SQL_PATH: String(seed.get("sqlSchemaText", DEFAULT_SQL_SCHEMA)),
 		},
-		"workout": {
-			"schemaId": "aerobeat.workout-package.v1",
+		"songPackage": {
+			"schemaId": "aerobeat.song-package.v1",
 			"schemaVersion": 1,
 			"recordVersion": 1,
-			"workoutId": workout_id,
-			"workoutName": workout_name,
+			"songPackageId": song_package_id,
+			"songPackageName": song_package_name,
 			"description": description,
 			"packageVersion": package_version,
-			"coachConfigId": coach_config_id,
-			"setOrder": [set_id],
-		},
-		"coachConfig": {
-			"schemaId": "aerobeat.coach-config.v1",
-			"schemaVersion": 1,
-			"recordVersion": 1,
-			"enabled": true,
-			"coachConfigId": coach_config_id,
-			"coachConfigName": coach_config_name,
-			"featuredCoaches": [{
-				"coachId": coach_id,
-				"coachName": coach_name,
-			}],
-			"warmupVideo": {
-				"mediaId": "ab-warmup-video-001",
-				"path": PLACEHOLDER_COACH_VIDEO_PATH,
-			},
-			"cooldownVideo": {
-				"mediaId": "ab-cooldown-video-001",
-				"path": PLACEHOLDER_COACH_VIDEO_PATH,
-			},
-			"overlayAudio": [{
-				"overlayId": overlay_id,
-				"coachId": coach_id,
-				"mediaId": "ab-overlay-audio-001",
-				"path": PLACEHOLDER_OVERLAY_AUDIO_PATH,
-			}],
+			"setIds": [set_id],
 		},
 		"songs": [{
 			"schemaId": "aerobeat.song.v1",
@@ -138,10 +87,10 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 			"chartId": chart_id,
 			"chartName": chart_name,
 			"feature": "boxing",
-			"difficulty": "medium",
+			"difficulty": "Normal",
 			"beats": [{
 				"start": 1.0,
-				"type": "punch_left",
+				"type": "straight_left",
 			}],
 		}],
 		"sets": [{
@@ -152,23 +101,11 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 			"setName": set_name,
 			"songId": song_id,
 			"chartId": chart_id,
-			"preferredEnvironmentId": environment_id,
-			"fallbackEnvironmentId": environment_id,
-			"environmentId": environment_id,
-			"coachingOverlayId": overlay_id,
 		}],
-		"environments": [{
-			"schemaId": "aerobeat.environment.v1",
-			"schemaVersion": 1,
-			"recordVersion": 1,
-			"environmentId": environment_id,
-			"environmentName": environment_name,
-			"type": "image_background",
-			"resourcePath": PLACEHOLDER_ENVIRONMENT_PATH,
-		}],
+		"environments": [],
+		"coachConfig": {},
 		"sqlFiles": [DEFAULT_SQL_PATH],
 	}
-	return state
 
 func _placeholder_source_path(file_name: String) -> String:
 	return ProjectSettings.globalize_path(PLACEHOLDER_SOURCE_ROOT.path_join(file_name))
@@ -182,30 +119,30 @@ func load_package_state(package_dir: String) -> Dictionary:
 			"packageDir": absolute_dir,
 		}
 	var context: Dictionary = _yaml_loader._load_package_context(absolute_dir)
-	var workout_record: Dictionary = Dictionary(context.get("workout", {}))
-	if not bool(workout_record.get("ok", false)):
+	var root_record: Dictionary = Dictionary(context.get("songPackage", {}))
+	if not bool(root_record.get("ok", false)):
 		return {
 			"ok": false,
-			"errorCode": "workout_yaml_missing_or_invalid",
+			"errorCode": "song_package_yaml_missing_or_invalid",
 			"packageDir": absolute_dir,
-			"details": workout_record,
+			"details": root_record,
 		}
-	var workout: Dictionary = _normalize_workout_record(Dictionary(workout_record.get("data", {})))
+	var song_package: Dictionary = _normalize_song_package_record(Dictionary(root_record.get("data", {})))
 	return {
 		"ok": true,
 		"packageDir": absolute_dir,
 		"state": {
-			"packageVersion": String(workout.get("packageVersion", "1.0.0")).strip_edges(),
+			"packageVersion": String(song_package.get("packageVersion", "1.0.0")).strip_edges(),
 			"sourcePackageDir": absolute_dir,
 			"loadedPackageDir": absolute_dir,
 			"passthroughDirectories": _discover_passthrough_directories(absolute_dir),
 			"passthroughFiles": _discover_passthrough_files(absolute_dir),
-			"workout": workout,
-			"coachConfig": _normalize_coach_config_record(_single_record_data(context.get("coaches", []))),
+			"songPackage": song_package,
 			"songs": _extract_records(context.get("songs", []), "song"),
 			"charts": _extract_records(context.get("charts", []), "chart"),
 			"sets": _extract_records(context.get("sets", []), "set"),
 			"environments": _extract_records(context.get("environments", []), "environment"),
+			"coachConfig": _single_record_data(context.get("coaches", [])),
 			"sqlFiles": _extract_sql_files(context.get("sql", [])),
 		},
 	}
@@ -215,20 +152,17 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 	_remove_tree(absolute_dir)
 	DirAccess.make_dir_recursive_absolute(absolute_dir)
 
-	var workout: Dictionary = _normalize_workout_record(Dictionary(state.get("workout", {})))
-	var coach_config: Dictionary = _normalize_coach_config_record(Dictionary(state.get("coachConfig", {})))
+	var song_package: Dictionary = _normalize_song_package_record(Dictionary(state.get("songPackage", state.get("workout", {}))))
 	var songs: Array = _normalize_record_list(state.get("songs", []), "song")
 	var charts: Array = _normalize_record_list(state.get("charts", []), "chart")
 	var sets: Array = _normalize_record_list(state.get("sets", []), "set")
 	var environments: Array = _normalize_record_list(state.get("environments", []), "environment")
+	var coach_config: Dictionary = _normalize_dictionary(state.get("coachConfig", {}))
 
 	var written_files: Array = []
-	if not _write_yaml_file(absolute_dir.path_join("workout.yaml"), workout):
-		return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("workout.yaml")}
-	written_files.append("workout.yaml")
-	if not _write_yaml_file(absolute_dir.path_join("coaches/coach-config.yaml"), coach_config):
-		return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("coaches/coach-config.yaml")}
-	written_files.append("coaches/coach-config.yaml")
+	if not _write_yaml_file(absolute_dir.path_join("song-package.yaml"), song_package):
+		return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("song-package.yaml")}
+	written_files.append("song-package.yaml")
 
 	for record in songs:
 		var path: String = "songs/%s.yaml" % String(record.get("songId", "song"))
@@ -250,6 +184,10 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 		if not _write_yaml_file(absolute_dir.path_join(path), record):
 			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
 		written_files.append(path)
+	if not coach_config.is_empty():
+		if not _write_yaml_file(absolute_dir.path_join("coaches/coach-config.yaml"), coach_config):
+			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("coaches/coach-config.yaml")}
+		written_files.append("coaches/coach-config.yaml")
 
 	var written_text_files: Array = _write_draft_text_sources(state, absolute_dir)
 	written_files.append_array(written_text_files)
@@ -310,33 +248,20 @@ func _normalize_record(record: Dictionary, kind: String) -> Dictionary:
 		_:
 			return record
 
-func _normalize_workout_record(record: Dictionary) -> Dictionary:
+func _normalize_song_package_record(record: Dictionary) -> Dictionary:
 	var normalized: Dictionary = record.duplicate(true)
-	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.workout-package.v1")).strip_edges()
+	normalized.erase("workoutId")
+	normalized.erase("workoutName")
+	normalized.erase("coachConfigId")
+	normalized.erase("setOrder")
+	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.song-package.v1")).strip_edges()
 	normalized["schemaVersion"] = int(normalized.get("schemaVersion", 1))
 	normalized["recordVersion"] = int(normalized.get("recordVersion", 1))
-	normalized["workoutId"] = _token(normalized.get("workoutId", ""))
-	normalized["workoutName"] = String(normalized.get("workoutName", "")).strip_edges()
+	normalized["songPackageId"] = _token(normalized.get("songPackageId", ""))
+	normalized["songPackageName"] = String(normalized.get("songPackageName", "")).strip_edges()
 	normalized["description"] = String(normalized.get("description", "")).strip_edges()
 	normalized["packageVersion"] = String(normalized.get("packageVersion", "1.0.0")).strip_edges()
-	normalized["coachConfigId"] = _token(normalized.get("coachConfigId", ""))
-	normalized["setOrder"] = _normalize_token_array(normalized.get("setOrder", []))
-	return normalized
-
-func _normalize_coach_config_record(record: Dictionary) -> Dictionary:
-	var normalized: Dictionary = record.duplicate(true)
-	if not bool(normalized.get("enabled", false)):
-		return {"enabled": false}
-	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.coach-config.v1")).strip_edges()
-	normalized["schemaVersion"] = int(normalized.get("schemaVersion", 1))
-	normalized["recordVersion"] = int(normalized.get("recordVersion", 1))
-	normalized["enabled"] = true
-	normalized["coachConfigId"] = _token(normalized.get("coachConfigId", ""))
-	normalized["coachConfigName"] = String(normalized.get("coachConfigName", "")).strip_edges()
-	normalized["featuredCoaches"] = _normalize_dictionary_array(normalized.get("featuredCoaches", []))
-	normalized["warmupVideo"] = _normalize_dictionary(normalized.get("warmupVideo", {}))
-	normalized["cooldownVideo"] = _normalize_dictionary(normalized.get("cooldownVideo", {}))
-	normalized["overlayAudio"] = _normalize_dictionary_array(normalized.get("overlayAudio", []))
+	normalized["setIds"] = _normalize_token_array(normalized.get("setIds", []))
 	return normalized
 
 func _normalize_song_record(record: Dictionary) -> Dictionary:
@@ -358,15 +283,31 @@ func _normalize_chart_record(record: Dictionary) -> Dictionary:
 	normalized["chartId"] = _token(normalized.get("chartId", ""))
 	normalized["chartName"] = String(normalized.get("chartName", "")).strip_edges()
 	normalized["feature"] = String(normalized.get("feature", "boxing")).strip_edges()
-	normalized["difficulty"] = String(normalized.get("difficulty", "medium")).strip_edges()
-	if normalized.get("beats") is Array:
-		normalized["beats"] = normalized.get("beats", [])
-	else:
-		normalized["beats"] = []
+	normalized["difficulty"] = _normalize_difficulty_label(String(normalized.get("difficulty", "Normal")).strip_edges())
+	normalized["beats"] = Array(normalized.get("beats", [])).duplicate(true) if normalized.get("beats") is Array else []
 	return normalized
+
+func _normalize_difficulty_label(value: String) -> String:
+	match value:
+		"easy":
+			return "Easy"
+		"medium", "normal":
+			return "Normal"
+		"hard":
+			return "Hard"
+		"pro", "expert":
+			return "Expert"
+		"expertplus", "expert_plus":
+			return "ExpertPlus"
+		_:
+			return value
 
 func _normalize_set_record(record: Dictionary) -> Dictionary:
 	var normalized: Dictionary = record.duplicate(true)
+	normalized.erase("preferredEnvironmentId")
+	normalized.erase("fallbackEnvironmentId")
+	normalized.erase("environmentId")
+	normalized.erase("coachingOverlayId")
 	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.set.v1")).strip_edges()
 	normalized["schemaVersion"] = int(normalized.get("schemaVersion", 1))
 	normalized["recordVersion"] = int(normalized.get("recordVersion", 1))
@@ -374,15 +315,6 @@ func _normalize_set_record(record: Dictionary) -> Dictionary:
 	normalized["setName"] = String(normalized.get("setName", "")).strip_edges()
 	normalized["songId"] = _token(normalized.get("songId", ""))
 	normalized["chartId"] = _token(normalized.get("chartId", ""))
-	var preferred_environment_id: String = _token(normalized.get("preferredEnvironmentId", normalized.get("environmentId", "")))
-	var fallback_environment_id: String = _token(normalized.get("fallbackEnvironmentId", ""))
-	normalized["preferredEnvironmentId"] = preferred_environment_id
-	normalized["fallbackEnvironmentId"] = fallback_environment_id
-	if not preferred_environment_id.is_empty():
-		normalized["environmentId"] = preferred_environment_id
-	normalized["coachingOverlayId"] = _token(normalized.get("coachingOverlayId", ""))
-	if String(normalized.get("coachingOverlayId", "")).is_empty():
-		normalized.erase("coachingOverlayId")
 	return normalized
 
 func _normalize_environment_record(record: Dictionary) -> Dictionary:
@@ -610,15 +542,6 @@ func _serialize_scalar(value: Variant) -> String:
 
 func _normalize_dictionary(value: Variant) -> Dictionary:
 	return Dictionary(value).duplicate(true) if value is Dictionary else {}
-
-func _normalize_dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if not (value is Array):
-		return result
-	for item in value:
-		if item is Dictionary:
-			result.append(Dictionary(item).duplicate(true))
-	return result
 
 func _normalize_token_array(value: Variant) -> Array:
 	var result: Array = []

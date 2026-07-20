@@ -186,8 +186,8 @@ func get_package_workflow_service() -> WorkoutPackageWorkflowService:
 func create_set(seed: Dictionary = {}) -> Dictionary:
 	var state := get_current_package_state()
 	var sets: Array = Array(state.get("sets", [])).duplicate(true)
-	var workout: Dictionary = Dictionary(state.get("workout", {})).duplicate(true)
-	var set_order: Array = Array(workout.get("setOrder", [])).duplicate(true)
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {})).duplicate(true)
+	var set_ids: Array = Array(song_package.get("setIds", [])).duplicate(true)
 	var next_index := max(sets.size() + 1, 1)
 	var set_id: String = _unique_set_id(String(seed.get("setId", "")).strip_edges(), state, next_index)
 	var set_record := {
@@ -198,18 +198,12 @@ func create_set(seed: Dictionary = {}) -> Dictionary:
 		"setName": String(seed.get("setName", "Set %d" % next_index)).strip_edges(),
 		"songId": String(seed.get("songId", "")).strip_edges(),
 		"chartId": String(seed.get("chartId", "")).strip_edges(),
-		"preferredEnvironmentId": String(seed.get("preferredEnvironmentId", seed.get("environmentId", ""))).strip_edges(),
-		"fallbackEnvironmentId": String(seed.get("fallbackEnvironmentId", "")).strip_edges(),
 	}
-	if not String(set_record.get("preferredEnvironmentId", "")).is_empty():
-		set_record["environmentId"] = set_record["preferredEnvironmentId"]
-	if not String(seed.get("coachingOverlayId", "")).strip_edges().is_empty():
-		set_record["coachingOverlayId"] = String(seed.get("coachingOverlayId", "")).strip_edges()
 	sets.append(set_record)
-	if not set_order.has(set_id):
-		set_order.append(set_id)
-	workout["setOrder"] = set_order
-	state["workout"] = workout
+	if not set_ids.has(set_id):
+		set_ids.append(set_id)
+	song_package["setIds"] = set_ids
+	state["songPackage"] = song_package
 	state["sets"] = sets
 	set_current_package_state(state)
 	return {"ok": true, "set": set_record, "state": get_current_package_state()}
@@ -227,13 +221,13 @@ func delete_set(set_id: String) -> Dictionary:
 			removed_set = set_record
 			continue
 		sets.append(set_record)
-	var workout: Dictionary = Dictionary(state.get("workout", {})).duplicate(true)
-	var set_order: Array = []
-	for ordered_set_id in Array(workout.get("setOrder", [])):
+	var song_package: Dictionary = Dictionary(state.get("songPackage", state.get("workout", {}))).duplicate(true)
+	var set_ids: Array = []
+	for ordered_set_id in Array(song_package.get("setIds", [])):
 		if String(ordered_set_id) != normalized_set_id:
-			set_order.append(String(ordered_set_id))
-	workout["setOrder"] = set_order
-	state["workout"] = workout
+			set_ids.append(String(ordered_set_id))
+	song_package["setIds"] = set_ids
+	state["songPackage"] = song_package
 	state["sets"] = sets
 	_cleanup_overlay_for_deleted_set(state, removed_set)
 	if sets.is_empty():
@@ -259,12 +253,9 @@ func update_set_record(set_id: String, patch: Dictionary) -> Dictionary:
 			continue
 		for key in patch.keys():
 			set_record[String(key)] = patch.get(key)
-		if String(set_record.get("preferredEnvironmentId", "")).strip_edges().is_empty():
-			set_record.erase("environmentId")
-		else:
-			set_record["environmentId"] = String(set_record.get("preferredEnvironmentId", "")).strip_edges()
-		if String(set_record.get("coachingOverlayId", "")).strip_edges().is_empty():
-			set_record.erase("coachingOverlayId")
+		for retired_field in ["preferredEnvironmentId", "fallbackEnvironmentId", "environmentId", "coachingOverlayId"]:
+			if set_record.has(retired_field):
+				set_record.erase(retired_field)
 		sets[index] = set_record
 		updated_set = set_record
 		break
@@ -293,7 +284,7 @@ func import_beatmap_for_set(set_id: String, source_path: String) -> Dictionary:
 		chart_id = _tokenized_id(normalized_path.get_file().get_basename(), "ab-chart")
 	var chart_name := String(metadata.get("chartName", normalized_path.get_file().get_basename().capitalize())).strip_edges()
 	var feature := String(metadata.get("feature", "boxing")).strip_edges()
-	var difficulty := String(metadata.get("difficulty", "medium")).strip_edges()
+	var difficulty := String(metadata.get("difficulty", "Normal")).strip_edges()
 	var chart_record := {
 		"schemaId": "aerobeat.chart.boxing.v1",
 		"schemaVersion": 1,
@@ -317,105 +308,36 @@ func import_beatmap_for_set(set_id: String, source_path: String) -> Dictionary:
 	return {"ok": true, "chart": chart_record, "metadata": metadata, "state": get_current_package_state()}
 
 func assign_environment_to_set(set_id: String, role: String, source_path: String) -> Dictionary:
-	var normalized_role := role.strip_edges().to_lower()
-	var normalized_path := source_path.strip_edges()
-	if normalized_role != "preferred" and normalized_role != "fallback":
-		return {"ok": false, "errorCode": "invalid_environment_role", "role": normalized_role}
-	if normalized_path.is_empty() or not FileAccess.file_exists(normalized_path):
-		return {"ok": false, "errorCode": "environment_missing", "sourcePath": normalized_path}
-	var state := get_current_package_state()
-	var current_set := get_set_record(set_id)
-	if current_set.is_empty():
-		return {"ok": false, "errorCode": "set_not_found"}
-	var package_path := _materialize_asset_reference(state, normalized_path, "media/environments")
-	var config_source := _find_environment_config_source(normalized_path)
-	var config_package_path := ""
-	if not config_source.is_empty():
-		config_package_path = _materialize_asset_reference(state, config_source, "media/environments")
-	var environment_id := _tokenized_id("%s-%s" % [String(current_set.get("setId", "set")), normalized_role], "ab-environment")
-	var environment_record := {
-		"schemaId": "aerobeat.environment.v1",
-		"schemaVersion": 1,
-		"recordVersion": 1,
-		"environmentId": environment_id,
-		"environmentName": normalized_path.get_file().get_basename().capitalize(),
-		"type": _environment_type_for_path(normalized_path),
-		"resourcePath": package_path,
-		"sourcePath": normalized_path,
+	return {
+		"ok": false,
+		"errorCode": "retired_environment_linking_contract",
+		"setId": set_id,
+		"role": role,
+		"sourcePath": source_path.strip_edges(),
 	}
-	if not config_package_path.is_empty():
-		environment_record["configPath"] = config_package_path
-		environment_record["configSourcePath"] = config_source
-	state["environments"] = _upsert_record(Array(state.get("environments", [])).duplicate(true), environment_record, "environmentId")
-	var patch := {}
-	if normalized_role == "preferred":
-		patch["preferredEnvironmentId"] = environment_id
-	else:
-		patch["fallbackEnvironmentId"] = environment_id
-	set_current_package_state(state)
-	update_set_record(set_id, patch)
-	return {"ok": true, "environment": environment_record, "state": get_current_package_state()}
 
 func assign_coaching_audio_to_set(set_id: String, source_path: String) -> Dictionary:
-	var normalized_path := source_path.strip_edges()
-	if normalized_path.is_empty() or not FileAccess.file_exists(normalized_path):
-		return {"ok": false, "errorCode": "coaching_audio_missing", "sourcePath": normalized_path}
-	var state := get_current_package_state()
-	var current_set := get_set_record(set_id)
-	if current_set.is_empty():
-		return {"ok": false, "errorCode": "set_not_found"}
-	var coach_config := _ensure_coach_config(Dictionary(state.get("coachConfig", {})).duplicate(true), state)
-	var overlay_id := _tokenized_id("overlay-%s" % String(current_set.get("setId", "set")), "ab-overlay")
-	var media_id := "%s-media" % overlay_id
-	var package_path := _materialize_asset_reference(state, normalized_path, "media/coaching")
-	var overlay_record := {
-		"overlayId": overlay_id,
-		"coachId": _default_featured_coach_id(coach_config),
-		"mediaId": media_id,
-		"path": package_path,
-		"sourcePath": normalized_path,
+	return {
+		"ok": false,
+		"errorCode": "retired_coaching_overlay_contract",
+		"setId": set_id,
+		"sourcePath": source_path.strip_edges(),
 	}
-	coach_config["overlayAudio"] = _upsert_record(Array(coach_config.get("overlayAudio", [])).duplicate(true), overlay_record, "overlayId")
-	state["coachConfig"] = coach_config
-	set_current_package_state(state)
-	update_set_record(set_id, {"coachingOverlayId": overlay_id})
-	return {"ok": true, "overlayAudio": overlay_record, "state": get_current_package_state()}
 
 func set_coach_video_source(slot_name: String, source_path: String) -> Dictionary:
-	var normalized_path := source_path.strip_edges()
-	if normalized_path.is_empty() or not FileAccess.file_exists(normalized_path):
-		return {"ok": false, "errorCode": "coach_video_missing", "sourcePath": normalized_path}
-	var slot_key := slot_name.strip_edges().to_lower()
-	if slot_key != "warmup" and slot_key != "cooldown":
-		return {"ok": false, "errorCode": "invalid_coach_video_slot", "slot": slot_key}
-	var state := get_current_package_state()
-	var coach_config := _ensure_coach_config(Dictionary(state.get("coachConfig", {})).duplicate(true), state)
-	var package_path := _materialize_asset_reference(state, normalized_path, "media/coaching")
-	var media_id := _tokenized_id("%s-%s" % [slot_key, normalized_path.get_file().get_basename()], "ab-%s" % slot_key)
-	var payload := {
-		"mediaId": media_id,
-		"path": package_path,
-		"sourcePath": normalized_path,
+	return {
+		"ok": false,
+		"errorCode": "retired_coaching_video_contract",
+		"slot": slot_name.strip_edges().to_lower(),
+		"sourcePath": source_path.strip_edges(),
 	}
-	if slot_key == "warmup":
-		coach_config["warmupVideo"] = payload
-	else:
-		coach_config["cooldownVideo"] = payload
-	state["coachConfig"] = coach_config
-	set_current_package_state(state)
-	return {"ok": true, "video": payload, "state": get_current_package_state()}
 
 func clear_coach_video_source(slot_name: String) -> Dictionary:
-	var slot_key := slot_name.strip_edges().to_lower()
-	var state := get_current_package_state()
-	var coach_config := Dictionary(state.get("coachConfig", {})).duplicate(true)
-	if slot_key == "warmup":
-		coach_config["warmupVideo"] = {}
-	elif slot_key == "cooldown":
-		coach_config["cooldownVideo"] = {}
-	state["coachConfig"] = coach_config
-	set_current_package_state(state)
-	return {"ok": true, "state": get_current_package_state()}
+	return {
+		"ok": false,
+		"errorCode": "retired_coaching_video_contract",
+		"slot": slot_name.strip_edges().to_lower(),
+	}
 
 func get_set_record(set_id: String) -> Dictionary:
 	var normalized_set_id := set_id.strip_edges()
@@ -433,27 +355,9 @@ func get_record_by_id(collection_name: String, id_field: String, record_id: Stri
 	return {}
 
 func get_set_environment_record(set_id: String, role: String) -> Dictionary:
-	var set_record := get_set_record(set_id)
-	if set_record.is_empty():
-		return {}
-	var field_name := "preferredEnvironmentId" if role.strip_edges().to_lower() == "preferred" else "fallbackEnvironmentId"
-	var environment_id := String(set_record.get(field_name, "")).strip_edges()
-	if environment_id.is_empty():
-		return {}
-	return get_record_by_id("environments", "environmentId", environment_id)
+	return {}
 
 func get_set_coaching_overlay_record(set_id: String) -> Dictionary:
-	var set_record := get_set_record(set_id)
-	if set_record.is_empty():
-		return {}
-	var overlay_id := String(set_record.get("coachingOverlayId", "")).strip_edges()
-	if overlay_id.is_empty():
-		return {}
-	var coach_config := Dictionary(get_current_package_state().get("coachConfig", {}))
-	for overlay_variant in Array(coach_config.get("overlayAudio", [])):
-		var overlay_record := Dictionary(overlay_variant)
-		if String(overlay_record.get("overlayId", "")) == overlay_id:
-			return overlay_record.duplicate(true)
 	return {}
 
 func resolve_preview_path(path_value: String) -> String:
@@ -481,29 +385,11 @@ func resolve_preview_path(path_value: String) -> String:
 	return ""
 
 func resolve_environment_preview_request(set_id: String, role: String = "preferred") -> Dictionary:
-	var environment_record := get_set_environment_record(set_id, role)
-	if environment_record.is_empty():
-		return {"ok": false, "errorCode": "environment_not_linked", "role": role}
-	var asset_path := resolve_preview_path(String(environment_record.get("resourcePath", environment_record.get("sourcePath", ""))))
-	if asset_path.is_empty():
-		return {"ok": false, "errorCode": "environment_asset_missing", "environment": environment_record}
-	var config_path := resolve_preview_path(String(environment_record.get("configPath", environment_record.get("configSourcePath", ""))))
 	return {
-		"ok": true,
-		"request": {
-			"request_id": "%s-%s-preview" % [String(environment_record.get("environmentId", "environment")), role],
-			"kind": _loader_kind_for_environment_type(String(environment_record.get("type", ""))),
-			"asset_path": asset_path,
-			"config_path": config_path,
-			"fit_mode": _fit_mode_from_config(config_path),
-			"context": {
-				"source": "content_authoring",
-				"setId": set_id,
-				"role": role,
-			},
-			"metadata": environment_record.duplicate(true),
-		},
-		"environment": environment_record,
+		"ok": false,
+		"errorCode": "retired_environment_linking_contract",
+		"setId": set_id,
+		"role": role,
 	}
 
 func get_file_metadata(source_path: String) -> Dictionary:
@@ -521,9 +407,9 @@ func _staging_dir(kind: String) -> String:
 	return OS.get_user_data_dir().path_join("aerobeat_tool_content_authoring/%s_%s" % [kind, Time.get_unix_time_from_system()])
 
 func _package_folder_name(state: Dictionary) -> String:
-	var workout: Dictionary = Dictionary(state.get("workout", {}))
-	var workout_id: String = String(workout.get("workoutId", "")).strip_edges()
-	return workout_id if not workout_id.is_empty() else "workout-package"
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {}))
+	var song_package_id: String = String(song_package.get("songPackageId", "")).strip_edges()
+	return song_package_id if not song_package_id.is_empty() else "song-package"
 
 func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 	var normalized := state.duplicate(true)
@@ -533,15 +419,10 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 		normalized["draftTextSources"] = {}
 	if not normalized.has("draftBeatmapSources") or not (normalized.get("draftBeatmapSources") is Dictionary):
 		normalized["draftBeatmapSources"] = {}
-	var coach_config := Dictionary(normalized.get("coachConfig", {})).duplicate(true)
-	if bool(coach_config.get("enabled", false)):
-		coach_config = _ensure_coach_config(coach_config, normalized)
-	else:
-		coach_config["enabled"] = false
-	normalized["coachConfig"] = coach_config
-	var workout := Dictionary(normalized.get("workout", {})).duplicate(true)
+	normalized["coachConfig"] = Dictionary(normalized.get("coachConfig", {})).duplicate(true)
+	var song_package := Dictionary(normalized.get("songPackage", {})).duplicate(true)
 	var sets: Array = Array(normalized.get("sets", [])).duplicate(true)
-	var set_order: Array = Array(workout.get("setOrder", [])).duplicate(true)
+	var set_ids: Array = Array(song_package.get("setIds", [])).duplicate(true)
 	if sets.is_empty():
 		var default_set := {
 			"schemaId": "aerobeat.set.v1",
@@ -551,11 +432,9 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 			"setName": DEFAULT_SET_NAME,
 			"songId": "",
 			"chartId": "",
-			"preferredEnvironmentId": "",
-			"fallbackEnvironmentId": "",
 		}
 		sets.append(default_set)
-		set_order = [DEFAULT_SET_ID]
+		set_ids = [DEFAULT_SET_ID]
 	else:
 		var normalized_sets: Array = []
 		for set_variant in sets:
@@ -566,20 +445,28 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 				set_record["schemaVersion"] = 1
 			if not set_record.has("recordVersion"):
 				set_record["recordVersion"] = 1
-			if not set_record.has("preferredEnvironmentId") and set_record.has("environmentId"):
-				set_record["preferredEnvironmentId"] = String(set_record.get("environmentId", ""))
-			if not set_record.has("fallbackEnvironmentId"):
-				set_record["fallbackEnvironmentId"] = String(set_record.get("fallbackEnvironmentId", ""))
-			if not String(set_record.get("preferredEnvironmentId", "")).is_empty():
-				set_record["environmentId"] = String(set_record.get("preferredEnvironmentId", ""))
+			for retired_field in ["preferredEnvironmentId", "fallbackEnvironmentId", "environmentId", "coachingOverlayId"]:
+				if set_record.has(retired_field):
+					set_record.erase(retired_field)
 			normalized_sets.append(set_record)
 		sets = normalized_sets
 		for set_record_variant in sets:
 			var set_id := String(Dictionary(set_record_variant).get("setId", "")).strip_edges()
-			if not set_id.is_empty() and not set_order.has(set_id):
-				set_order.append(set_id)
-	workout["setOrder"] = set_order
-	normalized["workout"] = workout
+			if not set_id.is_empty() and not set_ids.has(set_id):
+				set_ids.append(set_id)
+	song_package.erase("workoutId")
+	song_package.erase("workoutName")
+	song_package.erase("coachConfigId")
+	song_package.erase("setOrder")
+	if not song_package.has("schemaId"):
+		song_package["schemaId"] = "aerobeat.song-package.v1"
+	if not song_package.has("schemaVersion"):
+		song_package["schemaVersion"] = 1
+	if not song_package.has("recordVersion"):
+		song_package["recordVersion"] = 1
+	song_package["setIds"] = set_ids
+	normalized["songPackage"] = song_package
+	normalized.erase("workout")
 	normalized["sets"] = sets
 	return normalized
 
@@ -588,10 +475,8 @@ func _ensure_coach_config(coach_config: Dictionary, state: Dictionary) -> Dictio
 	coach_config["schemaId"] = String(coach_config.get("schemaId", "aerobeat.coach-config.v1")).strip_edges()
 	coach_config["schemaVersion"] = int(coach_config.get("schemaVersion", 1))
 	coach_config["recordVersion"] = int(coach_config.get("recordVersion", 1))
-	var workout := Dictionary(state.get("workout", {}))
 	if String(coach_config.get("coachConfigId", "")).strip_edges().is_empty():
-		var workout_id := String(workout.get("workoutId", "")).strip_edges()
-		coach_config["coachConfigId"] = "ab-coach-config" if workout_id.is_empty() else "ab-coach-config-%s" % workout_id
+		coach_config["coachConfigId"] = "ab-coach-config"
 	if String(coach_config.get("coachConfigName", "")).strip_edges().is_empty():
 		coach_config["coachConfigName"] = "Workout Coaching"
 	if not (coach_config.get("featuredCoaches") is Array) or Array(coach_config.get("featuredCoaches", [])).is_empty():
