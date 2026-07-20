@@ -2,8 +2,8 @@
 
 **Date:** 2026-07-20  
 **Status:** In Progress  
-**Last Updated:** 2026-07-20 16:00 EDT  
-**Blocked Reason:** None — the shared Flow v1 contract landed in `aerobeat-content-core` (`18db07e`), so the next step is downstream converter expansion in this repo against that new shared shape.  
+**Last Updated:** 2026-07-20 19:47 EDT  
+**Blocked Reason:** Session wrap-up stop point: next session should execute the approved legacy compatibility order and also verify whether the `aerobeat-input-camera-tracking` regression seam was worked on.  
 **Agent:** `pico`
 
 ---
@@ -222,7 +222,7 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 
 **Status:** ✅ Complete  
 
-**Results:** Coder expanded the Flow converter to emit the full shared Flow v1 contract and pushed commit `8bb7c80` (`Emit full Flow v1 BeatSaver conversion output`). `BeatSaverStageConversionService` now emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects from staged BeatSaver source, including `note.angleOffset`, occupancy-based `obstacle.cells`, and source-semantic `arc` fields plus optional `startNoteRef` / `endNoteRef` when exact endpoint note matches exist. The repo-local Flow validator mirror was updated to match the landed shared contract surface, the synthetic staged fixture/test now proves full shared-contract Flow emission instead of burst-only behavior, and docs were updated to remove the stale burst-only limitation. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`. Remaining caveat: this repo still mirrors chart-shape truth locally instead of directly delegating runtime chart validation to `aerobeat-content-core`. References validated: `REF-02`, `REF-04`, `REF-05`.
+**Results:** Coder expanded the Flow converter to emit the full shared Flow v1 contract and pushed commit `8bb7c80` (`Emit full Flow v1 BeatSaver conversion output`). `BeatSaverStageConversionService` now emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects from staged BeatSaver source, including `note.angleOffset`, occupancy-based `obstacle.cells`, and source-semantic `arc` fields plus optional `startNoteRef` / `endNoteRef` when exact endpoint note matches exist. The synthetic staged fixture/test now proves full shared-contract Flow emission instead of burst-only behavior, and docs were updated to remove the stale burst-only limitation. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`. QA then independently verified the saved package output, artifact preservation, and direct field truth against the shared contract from `aerobeat-content-core@18db07e`, including real emitted `note`, `burst`, `bomb`, `obstacle`, and `arc` objects plus `delegatedValidator: "aerobeat-content-core"` on the good delegated path. Remaining non-blocking cautions from QA: evidence is still mostly synthetic and v3-oriented, and broader real-world/v4 map coverage is still pending. References validated: `REF-02`, `REF-04`, `REF-05`.
 
 ---
 
@@ -321,13 +321,141 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 
 ---
 
+### Task 5A: Audit full shared-contract Flow emission
+
+**Bead ID:** `aerobeat-tool-content-authoring-5nm`  
+**SubAgent:** `primary` (for `auditor`)  
+**Role:** `auditor`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** Independently audit bead `aerobeat-tool-content-authoring-5nm` in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`. Verify that the BeatSaver Flow converter now truthfully emits canonical shared-contract `note`, `burst`, `bomb`, `obstacle`, and `arc` objects from staged source, that the emitted fields align with `aerobeat-content-core` commit `18db07e`, that provenance/debug artifacts remain preserved under `.artifacts/beatsaver/...`, and that repo boundaries stayed clean. Pay attention to the remaining non-blocking cautions: synthetic/v3-heavy evidence and the need for broader real-world/v4 coverage. If the work passes, close the bead with `bd close aerobeat-tool-content-authoring-5nm --reason "Full Flow v1 BeatSaver conversion output implemented, verified, and audited" --json`. If it fails, do not close it; report the exact gap and evidence.  
+
+**Folders Created/Deleted/Modified:**
+- audit-only if needed
+
+**Files Created/Deleted/Modified:**
+- audit notes only if needed
+
+**Status:** ✅ Complete  
+
+**Results:** Auditor independently verified that the BeatSaver Flow converter now truthfully emits canonical shared-contract `note`, `burst`, `bomb`, `obstacle`, and `arc` objects from staged source, that emitted fields align with `aerobeat-content-core` commit `18db07e`, that provenance/debug artifacts remain preserved under `.artifacts/beatsaver/...`, and that repo boundaries stayed clean. The auditor then closed bead `aerobeat-tool-content-authoring-5nm` with reason `Full Flow v1 BeatSaver conversion output implemented, verified, and audited`. Remaining non-blocking risks for this seam: evidence is still mostly synthetic and v3-heavy, broader real-world BeatSaver coverage is still pending, and explicit v4-focused normalization confidence still needs stronger fixtures. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 7: Broaden real-world BeatSaver coverage and v4 normalization evidence
+
+**Bead ID:** `aerobeat-tool-content-authoring-gc1`  
+**SubAgent:** `primary` (for `coder`)  
+**Role:** `coder`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** In `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`, broaden BeatSaver conversion confidence against bead `aerobeat-tool-content-authoring-gc1`. Claim it on start with `bd update aerobeat-tool-content-authoring-gc1 --status in_progress --json`. Focus on the two approved next seams: (1) broader real-world BeatSaver map coverage and (2) explicit v4-oriented normalization coverage. Add the smallest honest set of additional fixtures/tests/probes needed to prove the converter and shared-validator path across more realistic BeatSaver inputs, including meaningful v4 object normalization checks for Flow/Boxing where applicable. Preserve repo boundaries, keep raw source/conversion artifacts truthful, run the strongest repo-local validation, commit, and push to `main` before handoff. Do not close the bead; report exact files changed, what new coverage was added, validation evidence, and any remaining compatibility gaps.  
+
+**Folders Created/Deleted/Modified:**
+- `.testbed/assets/fixtures/`
+- `.testbed/scripts/tests/`
+- `src/docs/`
+
+**Files Created/Deleted/Modified:**
+- new BeatSaver fixtures/tests/probes as needed
+- `README.md` / `src/docs/beatsaver-converter-foundation.md` only if coverage truth changes
+- tightly related converter files only if required by legit normalization fixes
+
+**Status:** ✅ Complete  
+
+**Results:** Coder broadened BeatSaver conversion confidence and pushed commit `b90859d` (`Add BeatSaver v4 and real-world conversion coverage`). The converter now supports normalized v4 beat object payloads for `colorNotes/colorNotesData`, `bombNotes/bombNotesData`, `obstacles/obstaclesData`, `arcs/arcsData`, and `chains/chainsData`. A new synthetic staged v4 fixture and automated test now prove both Flow shared-validator behavior and Boxing authored output, and a focused real-world probe against the staged BeatSaver `524b6` Starlight artifact from `aerobeat-vendor-beatsaver` adds broader map coverage. That real-world probe exposed a legitimate normalization bug: some off-grid BeatSaver obstacles normalized into empty Flow obstacle cell lists; coder fixed this by clamping obstacle occupancy to the nearest playable grid edge instead of emitting invalid empty obstacles. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` and the real-world probe `godot --headless --path .testbed --script scripts/tests/probe_beatsaver_stage_conversion_real_world_v3.gd`. QA then independently verified that the v4 normalization families are real, the synthetic v4 fixture is meaningful, the Starlight probe truly runs through the shared-contract validation path, and the obstacle fix eliminated empty `cells: []` output in inspected synthetic-v4 and Starlight flow charts. Remaining non-blocking gaps: v4 sidecar/info/audio ecosystem handling is still not broad, and real-world coverage still centers on one substantial staged v3 artifact. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 7A: Audit broader real-world/v4 coverage slice
+
+**Bead ID:** `aerobeat-tool-content-authoring-gc1`  
+**SubAgent:** `primary` (for `auditor`)  
+**Role:** `auditor`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** Independently audit bead `aerobeat-tool-content-authoring-gc1` in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`. Verify that broader real-world BeatSaver coverage and explicit v4 normalization evidence are now truthful: v4 object families are genuinely normalized, the synthetic v4 fixture proves meaningful Flow/Boxing outcomes, the staged Starlight `524b6` probe truly runs through the shared-contract path, and the off-grid obstacle normalization fix prevents invalid empty Flow obstacle cells. Treat broader real-world v4 diversity and v4 sidecar/info/audio ecosystem coverage as potential non-blocking risks unless they invalidate the claimed slice. If the work passes, close the bead with `bd close aerobeat-tool-content-authoring-gc1 --reason "Real-world BeatSaver and v4 normalization coverage implemented, verified, and audited" --json`. If it fails, do not close it; report the exact gap and evidence.  
+
+**Folders Created/Deleted/Modified:**
+- audit-only if needed
+
+**Files Created/Deleted/Modified:**
+- audit notes only if needed
+
+**Status:** ✅ Complete  
+
+**Results:** Auditor independently verified that v4 object-family normalization is truly wired for `colorNotes/colorNotesData`, `bombNotes/bombNotesData`, `obstacles/obstaclesData`, `arcs/arcsData`, and `chains/chainsData`; that the synthetic v4 fixture/test proves meaningful Flow and Boxing outcomes rather than serving as a smoke test; that the staged Starlight `524b6` probe is real and validates through the shared-contract path; and that the off-grid obstacle normalization fix prevents invalid empty Flow obstacle cells. Auditor then closed bead `aerobeat-tool-content-authoring-gc1` with reason `Real-world BeatSaver and v4 normalization coverage implemented, verified, and audited`. Remaining non-blocking risks: real-world coverage is still centered on one substantial staged v3 map, v4 ecosystem breadth beyond core beat-object families is still limited, and Godot headless runs still emit known shutdown warnings. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 8: Broaden BeatSaver map-family diversity and v4 ecosystem coverage
+
+**Bead ID:** `aerobeat-tool-content-authoring-djk`  
+**SubAgent:** `primary` (for `coder`)  
+**Role:** `coder`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** In `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`, continue the approved BeatSaver conversion hardening path against bead `aerobeat-tool-content-authoring-djk`. Claim it on start with `bd update aerobeat-tool-content-authoring-djk --status in_progress --json`. Focus on the next explicit risk-reduction seams exposed by Task 7 audit: (1) broaden real-world BeatSaver map-family diversity beyond the single staged Starlight probe, and (2) broaden v4 ecosystem coverage beyond core beat-object normalization, including meaningful sidecar/custom-data/audio-info permutations when they affect truthful conversion/package validation. Add the smallest honest fixtures/probes/tests needed, preserve repo boundaries and raw source/conversion artifacts, and only change converter logic if new coverage reveals a real issue worth fixing now. Run the strongest repo-local validation, commit, and push to `main` before handoff. Do not close the bead; report exact files changed, what new diversity/coverage was added, validation evidence, and any still-open compatibility gaps.  
+
+**Folders Created/Deleted/Modified:**
+- `.testbed/assets/fixtures/`
+- `.testbed/scripts/tests/`
+- `src/docs/`
+
+**Files Created/Deleted/Modified:**
+- new fixtures/tests/probes as needed
+- `README.md` / `src/docs/beatsaver-converter-foundation.md` only if coverage truth changes
+- tightly related converter files only if required by legit compatibility fixes
+
+**Status:** ✅ Complete  
+
+**Results:** Coder broadened BeatSaver map-family diversity and v4 ecosystem coverage and pushed commit `fe0fd68` (`Broaden BeatSaver v4 and map-family coverage`). New real-world map-family coverage now includes a staged real legacy v2 BeatSaver map (`succducc - me & u`) that proves honest unsupported-v2 rejection via `unsupported_beatmap_version` rather than fake support claims. New v4 ecosystem coverage now includes an actual-v4 `Info.dat` fixture proving nested `song` / `audio` / `difficultyBeatmaps` parsing, primary-vs-preview audio handling, and non-Standard sidecar/custom-data permutations without widening support dishonestly. The new coverage revealed a real gap, so the converter gained v4-aware helpers for `song.title`, `audio.bpm`, `audio.songFilename`, and Standard difficulty selection from v4 `difficultyBeatmaps`, while preserving existing v2/v3-style paths and fallback behavior. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` and `godot --headless --path .testbed --script scripts/tests/probe_beatsaver_stage_conversion_real_world_v3.gd`. QA then independently verified that the real legacy v2 staged map is genuine and truthfully rejected, that the actual-v4 `Info.dat` fixture really proves nested metadata/audio/difficultyBeatmaps parsing plus bounded non-Standard sidecar behavior, that the new v4-aware helpers are real and preserve existing v2/v3-style behavior, and that docs/tests do not overclaim support. Remaining honest gaps: legacy v2 conversion remains unsupported by design, real-world successful coverage is still centered on staged v3 Starlight, and v4 sidecars are still only covered where they affect truthful package selection/validation rather than preserved as first-class authored artifacts. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 9: Plan legacy-audio and legacy-beatmap support expansion
+
+**Bead ID:** `aerobeat-tool-content-authoring-433`  
+**SubAgent:** `primary` (for `research`)  
+**Role:** `research`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** In `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`, plan the next compatibility expansion path against bead `aerobeat-tool-content-authoring-433`. Claim it on start with `bd update aerobeat-tool-content-authoring-433 --status in_progress --json`. Produce the smallest honest implementation plan for the newly approved seams: (1) support `.jpg`/`.jpeg` cover-art import, (2) preserve/import preview audio into AeroBeat packages for menu preview use, (3) design the legacy `.egg` -> `.ogg` conversion seam, likely via a new `aerobeat-vendor-ffmpeg` repo with pinned ffmpeg assets under `/assets/` and a root singleton script under `/src/` exposing a function like `convert_egg_to_ogg_audio`, and (4) assess/support legacy BeatSaver/Beat Saber v1/v2 payloads so the conversion lane aims for blanket BeatSaver package coverage where practical. Also determine whether lowercase `info.dat` is merely a case-tolerant archive lookup gap, whether v1 can fall out of a v2 parser path or needs separate treatment, and what should remain explicitly unsupported even after this expansion. Keep the plan bounded and truthful before coding.  
+
+**Folders Created/Deleted/Modified:**
+- planning/docs only for now
+
+**Files Created/Deleted/Modified:**
+- to be determined by the planning result
+
+**Status:** ✅ Complete  
+
+**Results:** Research/planning completed on bead `aerobeat-tool-content-authoring-433` and left a concrete handoff in the bead notes. Main conclusions: lowercase `info.dat` is already effectively handled via case-tolerant archive lookup and is not a major new architecture seam; `.jpg/.jpeg` cover-art import is a small next implementation slice; preview-audio preservation/import is a real open seam that may need a small `aerobeat-content-core` contract decision first; legacy `.egg` -> `.ogg` conversion should likely live in a new `aerobeat-vendor-ffmpeg` repo with pinned ffmpeg assets and a singleton wrapper API; and legacy v1/v2 support should be treated as an explicit legacy normalization adapter path rather than assumed to fall out of current v3/v4 handling. Recommended implementation order from the planning pass: (1) cover-art import from staged archives, (2) preview-audio preservation/import, (3) legacy v2/v1 metadata+difficulty normalization, (4) legacy v2/v1 beat-object normalization into the current internal source summary, then (5) the `aerobeat-vendor-ffmpeg` seam once exact legacy audio requirements are proven. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 8A: Audit map-family diversity and v4 ecosystem coverage slice
+
+**Bead ID:** `aerobeat-tool-content-authoring-djk`  
+**SubAgent:** `primary` (for `auditor`)  
+**Role:** `auditor`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** Independently audit bead `aerobeat-tool-content-authoring-djk` in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`. Verify that the real legacy v2 staged map is genuine and truthfully rejected as unsupported, that the actual-v4 `Info.dat` fixture really proves nested `song` / `audio` / `difficultyBeatmaps` parsing plus bounded primary-vs-preview audio and non-Standard sidecar/custom-data behavior, that the new v4-aware helpers are real and preserve existing v2/v3-style behavior, and that repo boundaries/docs/tests remain honest and bounded. Treat the remaining legacy-v2 unsupported status, limited real-world successful v4 diversity, and limited sidecar preservation as non-blocking risks unless they invalidate the claimed slice. If the work passes, close the bead with `bd close aerobeat-tool-content-authoring-djk --reason "BeatSaver map-family diversity and v4 ecosystem coverage implemented, verified, and audited" --json`. If it fails, do not close it; report the exact gap and evidence.  
+
+**Folders Created/Deleted/Modified:**
+- audit-only if needed
+
+**Files Created/Deleted/Modified:**
+- audit notes only if needed
+
+**Status:** ✅ Complete  
+
+**Results:** Auditor independently verified that the real legacy v2 staged map is genuine and truthfully rejected as unsupported, that the actual-v4 `Info.dat` fixture really proves nested `song` / `audio` / `difficultyBeatmaps` parsing plus bounded primary-vs-preview audio and non-Standard sidecar/custom-data behavior, that the new v4-aware helpers are real and preserve existing v2/v3-style behavior, and that repo boundaries/docs/tests remained honest and bounded. Auditor then closed bead `aerobeat-tool-content-authoring-djk` with reason `BeatSaver map-family diversity and v4 ecosystem coverage implemented, verified, and audited`. Remaining non-blocking risks: legacy v2 conversion is still unsupported by design, successful real-world conversion breadth is still narrow, v4 sidecars/custom-data are only handled where needed for truthful selection/validation, and Godot headless runs still emit known shutdown warnings. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
 ## Final Results
 
 **Status:** ⚠️ Partial
 
-**What We Built:** The converter foundation in `aerobeat-tool-content-authoring` is now structurally sound for staged source ingestion, provenance preservation, Boxing mapping truth, full shared-contract Flow object emission, and direct delegation of Flow validation to shared `aerobeat-content-core` truth without silent package-level fallback. The remaining continuation seam is broader audit/coverage work for the Flow emission bead and then continued real-world BeatSaver map conversion hardening.
+**What We Built:** The converter foundation in `aerobeat-tool-content-authoring` is now structurally sound for staged source ingestion, provenance preservation, Boxing mapping truth, full shared-contract Flow object emission, direct delegation of Flow validation to shared `aerobeat-content-core` truth without silent package-level fallback, broader real-world BeatSaver coverage, and broader v4 normalization/info-sidecar evidence. The next seam is no longer implementation hardening of the current surface; it is planning support expansion for legacy audio, lowercase `info.dat`, and legacy v2 beatmaps.
 
-**Reference Check:** `REF-01` satisfied for handoff recovery and next-slice selection. `REF-02`..`REF-05` were used across implementation, QA, audit, the downstream contract freeze, and the validator-delegation follow-up. Boxing mapping defects found against `REF-03` were fixed, the shared Flow contract exists under `aerobeat-content-core` commit `18db07e`, and the delegation fix bead `aerobeat-tool-content-authoring-96r` is now audited closed.
+**Reference Check:** `REF-01` satisfied for handoff recovery and next-slice selection. `REF-02`..`REF-05` were used across implementation, QA, audit, the downstream contract freeze, validator-delegation follow-up, and broader coverage hardening. Boxing mapping defects found against `REF-03` were fixed, the shared Flow contract exists under `aerobeat-content-core` commit `18db07e`, and the follow-on beads `aerobeat-tool-content-authoring-5nm`, `aerobeat-tool-content-authoring-96r`, `aerobeat-tool-content-authoring-gc1`, and `aerobeat-tool-content-authoring-djk` are now audited closed.
 
 **Commits:**
 - `b367e68` - Add BeatSaver conversion foundation
