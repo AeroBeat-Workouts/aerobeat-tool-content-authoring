@@ -9,6 +9,7 @@ const CORE_VALIDATOR_PATHS := [
 	"res://../../aerobeat-content-core/validators/content_package_validator.gd",
 ]
 
+var _core_validator_paths: Array = CORE_VALIDATOR_PATHS.duplicate()
 var _local_validate_package_service: ValidatePackageService = ValidatePackageService.new()
 var _codec: SongPackageYamlCodec = SongPackageYamlCodec.new()
 
@@ -26,12 +27,16 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 	report["valid"] = merged_issues.is_empty()
 	report["issues"] = merged_issues
 	report["issueCount"] = merged_issues.size()
-	report["delegatedValidator"] = String(core_report.get("validator", bridge.get("validator", "local")))
+	report["delegatedValidator"] = String(core_report.get("delegatedValidator", "unavailable"))
 	report["validationPath"] = validation_path
-	if not core_report.is_empty():
-		report["coreValidation"] = core_report
+	report["validationBridgeMode"] = String(bridge.get("pathMode", "direct"))
+	report["coreValidation"] = core_report
 	_cleanup_bridge(bridge)
 	return report
+
+func set_core_validator_paths(paths: Array) -> SongPackageValidationService:
+	_core_validator_paths = paths.duplicate()
+	return self
 
 func _bridge_package_dir(package_dir: String) -> Dictionary:
 	var context: Dictionary = _local_validate_package_service._load_package_context(package_dir)
@@ -47,13 +52,13 @@ func _bridge_package_dir(package_dir: String) -> Dictionary:
 	if not requires_bridge:
 		return {
 			"validationPath": package_dir,
-			"validator": "local",
+			"pathMode": "direct",
 		}
 	var loaded: Dictionary = _codec.load_package_state(package_dir)
 	if not bool(loaded.get("ok", false)):
 		return {
 			"validationPath": package_dir,
-			"validator": "local",
+			"pathMode": "direct",
 		}
 	var bridge_dir: String = OS.get_user_data_dir().path_join("aerobeat_tool_content_authoring/validation_bridge_%s" % Time.get_unix_time_from_system())
 	var write_result: Dictionary = _codec.write_package_state(Dictionary(loaded.get("state", {})), bridge_dir)
@@ -61,12 +66,12 @@ func _bridge_package_dir(package_dir: String) -> Dictionary:
 		_cleanup_path(bridge_dir)
 		return {
 			"validationPath": package_dir,
-			"validator": "local",
+			"pathMode": "direct",
 		}
 	return {
 		"validationPath": bridge_dir,
 		"bridgeDir": bridge_dir,
-		"validator": "local+bridge",
+		"pathMode": "bridge",
 	}
 
 func _preferred_fallback_environment_issues(package_dir: String) -> Array:
@@ -89,13 +94,29 @@ func _preferred_fallback_environment_issues(package_dir: String) -> Array:
 func _validate_with_content_core(package_dir: String) -> Dictionary:
 	var script: Variant = _load_core_validator_script()
 	if script == null:
-		return {}
+		return {
+			"validator": "aerobeat-content-core",
+			"delegatedValidator": "unavailable",
+			"valid": false,
+			"issueCount": 1,
+			"issues": [
+				_issue(
+					"content_core_package_validator_unavailable",
+					"Package validation requires the shared aerobeat-content-core validator to be runtime-loadable.",
+					package_dir,
+					"",
+					"",
+					{"validator": "aerobeat-content-core"}
+				)
+			],
+			"raw": {},
+		}
 	var validator = script.new()
 	var result = validator.validate_fixture_package(package_dir)
 	return _normalize_core_result(result)
 
 func _load_core_validator_script():
-	for candidate_path in CORE_VALIDATOR_PATHS:
+	for candidate_path in _core_validator_paths:
 		if ResourceLoader.exists(candidate_path):
 			var script: Variant = load(candidate_path)
 			if script != null and script.has_method("new"):
@@ -114,6 +135,7 @@ func _normalize_core_result(result) -> Dictionary:
 			issues.append(_normalize_core_issue(issue))
 	return {
 		"validator": "aerobeat-content-core",
+		"delegatedValidator": "aerobeat-content-core",
 		"valid": issues.is_empty(),
 		"issueCount": issues.size(),
 		"issues": issues,
@@ -152,7 +174,13 @@ func _append_issue(target: Array, seen: Dictionary, issue: Variant) -> void:
 	seen[key] = true
 	target.append(data.duplicate(true))
 
-func _issue(code: String, message: String, path: String, record_id: String, field: String) -> Dictionary:
+func _issue(code: String, message: String, path: String, record_id: String, field: String, reference: Dictionary = {}) -> Dictionary:
+	var issue_reference: Dictionary = {
+		"field": field,
+		"id": record_id,
+	}
+	for key in reference.keys():
+		issue_reference[key] = reference.get(key)
 	return {
 		"code": code,
 		"message": message,
@@ -160,10 +188,7 @@ func _issue(code: String, message: String, path: String, record_id: String, fiel
 		"subject": "package",
 		"recordId": record_id,
 		"field": field,
-		"reference": {
-			"field": field,
-			"id": record_id,
-		},
+		"reference": issue_reference,
 	}
 
 func _cleanup_bridge(bridge: Dictionary) -> void:

@@ -70,7 +70,7 @@ A first staged BeatSaver -> AeroBeat converter foundation now lives in `src/serv
 - durable package-contract evolution remains owned by `aerobeat-content-core`
 - this repo owns the runtime/tool workflow that ingests a staged source package and produces authored package state plus `.artifacts/` provenance
 
-Current Flow posture: the shared Flow v1 authored contract is now frozen in `aerobeat-content-core`, this repo emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects, and Flow chart validation now delegates directly to the shared `aerobeat-content-core` chart contract while still preserving raw source plus conversion traces under `.artifacts/beatsaver/conversion/report.json`.
+Current Flow posture: the shared Flow v1 authored contract is now frozen in `aerobeat-content-core`, this repo emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects, Flow chart validation delegates directly to the shared `aerobeat-content-core` chart contract, and higher-level package validation now fails explicitly when that shared validator is unavailable instead of silently passing through a local fallback. Raw source plus conversion traces still remain under `.artifacts/beatsaver/conversion/report.json`.
 
 See `src/docs/beatsaver-converter-foundation.md` for the foundation slice details.
 

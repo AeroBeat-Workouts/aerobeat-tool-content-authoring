@@ -1,6 +1,7 @@
 extends RefCounted
 
 const ADDON_VALIDATE_PACKAGE_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/validation/validate_package_service.gd"
+const ADDON_SONG_PACKAGE_VALIDATION_SERVICE_PATH := "res://addons/aerobeat-tool-content-authoring/src/services/validation/song_package_validation_service.gd"
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -20,6 +21,7 @@ static func run() -> Dictionary:
 		_forbidden_chart_composition_links_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_sql_schema_scenario(base_fixture_dir, base_tmp_dir),
 		_invalid_environment_type_scenario(base_fixture_dir, base_tmp_dir),
+		_content_core_package_validator_unavailable_scenario(base_fixture_dir, base_tmp_dir),
 	]
 	var passed: bool = true
 	for scenario in scenarios:
@@ -174,6 +176,24 @@ static func _invalid_environment_type_scenario(base_fixture_dir: String, base_tm
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "environments")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {"name": "invalid_environment_type", "passed": codes.has("invalid_environment_type"), "codes": codes}
+
+static func _content_core_package_validator_unavailable_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("content_core_package_validator_unavailable")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var service = load(ADDON_SONG_PACKAGE_VALIDATION_SERVICE_PATH).new().set_core_validator_paths([
+		"res://addons/does-not-exist/validators/content_package_validator.gd",
+	])
+	var report: Dictionary = service.validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {
+		"name": "content_core_package_validator_unavailable",
+		"passed": not bool(report.get("valid", true)) \
+			and String(report.get("delegatedValidator", "")) == "unavailable" \
+			and codes.has("content_core_package_validator_unavailable"),
+		"codes": codes,
+		"delegatedValidator": report.get("delegatedValidator", ""),
+	}
 
 static func _count_code(codes: Array, code: String) -> int:
 	var count: int = 0
