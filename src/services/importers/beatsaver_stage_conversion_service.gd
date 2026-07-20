@@ -326,6 +326,15 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 	}
 
 func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
+	var version_text := _beatmap_version(beatmap)
+	if version_text.begins_with("4"):
+		return {
+			"colorNotes": _normalize_v4_color_notes(beatmap),
+			"bombNotes": _normalize_v4_bomb_notes(beatmap),
+			"obstacles": _normalize_v4_obstacles(beatmap),
+			"sliders": _normalize_v4_arcs(beatmap),
+			"burstSliders": _normalize_v4_chains(beatmap),
+		}
 	return {
 		"colorNotes": _normalize_color_notes(beatmap),
 		"bombNotes": _normalize_bomb_notes(beatmap),
@@ -333,6 +342,112 @@ func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
 		"sliders": _normalize_sliders(beatmap),
 		"burstSliders": _normalize_burst_sliders(beatmap),
 	}
+
+func _normalize_v4_color_notes(beatmap: Dictionary) -> Array:
+	var notes: Array = []
+	var note_data: Array = _array_value(beatmap, ["colorNotesData"])
+	var source_index := 0
+	for note_variant in _array_value(beatmap, ["colorNotes"]):
+		var note: Dictionary = Dictionary(note_variant)
+		var metadata := _v4_metadata_entry(note_data, int(note.get("i", -1)))
+		var x := _v4_int_field(note, metadata, "x", 0)
+		var y := _v4_int_field(note, metadata, "y", 0)
+		var color := _v4_int_field(note, metadata, "c", 0)
+		var direction := _v4_int_field(note, metadata, "d", 8)
+		var angle_offset := _v4_float_field(note, metadata, "a", 0.0)
+		notes.append({
+			"sourceIndex": source_index,
+			"start": _variant_to_float(note.get("b", 0.0)),
+			"x": x,
+			"y": y,
+			"cell": _cell_from_xy(x, y),
+			"color": color,
+			"hand": _hand_from_color(color),
+			"direction": direction,
+			"angleOffset": angle_offset,
+			"hasAngleOffset": note.has("a") or metadata.has("a"),
+		})
+		source_index += 1
+	return notes
+
+func _normalize_v4_bomb_notes(beatmap: Dictionary) -> Array:
+	var bombs: Array = []
+	var bomb_data: Array = _array_value(beatmap, ["bombNotesData"])
+	for bomb_variant in _array_value(beatmap, ["bombNotes"]):
+		var bomb: Dictionary = Dictionary(bomb_variant)
+		var metadata := _v4_metadata_entry(bomb_data, int(bomb.get("i", -1)))
+		var x := _v4_int_field(bomb, metadata, "x", 0)
+		var y := _v4_int_field(bomb, metadata, "y", 0)
+		bombs.append({
+			"start": _variant_to_float(bomb.get("b", 0.0)),
+			"x": x,
+			"y": y,
+			"cell": _cell_from_xy(x, y),
+		})
+	return bombs
+
+func _normalize_v4_obstacles(beatmap: Dictionary) -> Array:
+	var obstacles: Array = []
+	var obstacle_data: Array = _array_value(beatmap, ["obstaclesData"])
+	for obstacle_variant in _array_value(beatmap, ["obstacles"]):
+		var obstacle: Dictionary = Dictionary(obstacle_variant)
+		var metadata := _v4_metadata_entry(obstacle_data, int(obstacle.get("i", -1)))
+		obstacles.append({
+			"start": _variant_to_float(obstacle.get("b", 0.0)),
+			"duration": _v4_float_field(obstacle, metadata, "d", 0.0),
+			"x": _v4_int_field(obstacle, metadata, "x", 0),
+			"y": _v4_int_field(obstacle, metadata, "y", 0),
+			"width": _v4_int_field(obstacle, metadata, "w", 1),
+			"height": _v4_int_field(obstacle, metadata, "h", 1),
+		})
+	return obstacles
+
+func _normalize_v4_arcs(beatmap: Dictionary) -> Array:
+	var arcs: Array = []
+	var note_data: Array = _array_value(beatmap, ["colorNotesData"])
+	var arc_data: Array = _array_value(beatmap, ["arcsData"])
+	for arc_variant in _array_value(beatmap, ["arcs"]):
+		var arc: Dictionary = Dictionary(arc_variant)
+		var head_metadata := _v4_metadata_entry(note_data, int(arc.get("hi", -1)))
+		var tail_metadata := _v4_metadata_entry(note_data, int(arc.get("ti", -1)))
+		var metadata := _v4_metadata_entry(arc_data, int(arc.get("ai", -1)))
+		var color := _v4_int_field(head_metadata, {}, "c", 0)
+		arcs.append({
+			"start": _variant_to_float(arc.get("hb", 0.0)),
+			"end": _variant_to_float(arc.get("tb", arc.get("hb", 0.0))),
+			"cell": _cell_from_xy(_v4_int_field(head_metadata, {}, "x", 0), _v4_int_field(head_metadata, {}, "y", 0)),
+			"tailCell": _cell_from_xy(_v4_int_field(tail_metadata, {}, "x", 0), _v4_int_field(tail_metadata, {}, "y", 0)),
+			"hand": _hand_from_color(color),
+			"direction": _v4_int_field(head_metadata, {}, "d", 8),
+			"tailDirection": _v4_int_field(tail_metadata, {}, "d", 8),
+			"headCurveMultiplier": _v4_float_field(metadata, {}, "m", 1.0),
+			"tailCurveMultiplier": _v4_float_field(metadata, {}, "tm", 1.0),
+			"midAnchorMode": _v4_int_field(metadata, {}, "a", 0),
+		})
+	return arcs
+
+func _normalize_v4_chains(beatmap: Dictionary) -> Array:
+	var bursts: Array = []
+	var note_data: Array = _array_value(beatmap, ["colorNotesData"])
+	var chain_data: Array = _array_value(beatmap, ["chainsData"])
+	for chain_variant in _array_value(beatmap, ["chains"]):
+		var chain: Dictionary = Dictionary(chain_variant)
+		var head_metadata := _v4_metadata_entry(note_data, int(chain.get("i", -1)))
+		var metadata := _v4_metadata_entry(chain_data, int(chain.get("ci", -1)))
+		var color := _v4_int_field(head_metadata, {}, "c", 0)
+		var normalized := {
+			"start": _variant_to_float(chain.get("hb", 0.0)),
+			"end": _variant_to_float(chain.get("tb", chain.get("hb", 0.0))),
+			"cell": _cell_from_xy(_v4_int_field(head_metadata, {}, "x", 0), _v4_int_field(head_metadata, {}, "y", 0)),
+			"tailCell": _cell_from_xy(_v4_int_field(metadata, {}, "tx", 0), _v4_int_field(metadata, {}, "ty", 0)),
+			"hand": _hand_from_color(color),
+			"direction": _v4_int_field(head_metadata, {}, "d", 8),
+			"sliceCount": max(_v4_int_field(metadata, {}, "c", 1), 1),
+		}
+		if metadata.has("s"):
+			normalized["spacingBias"] = _variant_to_float(metadata.get("s"))
+		bursts.append(normalized)
+	return bursts
 
 func _normalize_color_notes(beatmap: Dictionary) -> Array:
 	var notes: Array = []
@@ -680,14 +795,41 @@ func _cell_from_xy(x: int, y: int) -> int:
 func _cell_y(cell: int) -> int:
 	return int(cell / 4)
 
+func _v4_metadata_entry(entries: Array, index: int) -> Dictionary:
+	if index < 0 or index >= entries.size():
+		return {}
+	return Dictionary(entries[index])
+
+func _v4_int_field(primary: Dictionary, fallback: Dictionary, key: String, default_value: int) -> int:
+	if primary.has(key):
+		return int(primary.get(key, default_value))
+	if fallback.has(key):
+		return int(fallback.get(key, default_value))
+	return default_value
+
+func _v4_float_field(primary: Dictionary, fallback: Dictionary, key: String, default_value: float) -> float:
+	if primary.has(key):
+		return _variant_to_float(primary.get(key), default_value)
+	if fallback.has(key):
+		return _variant_to_float(fallback.get(key), default_value)
+	return default_value
+
 func _cells_for_obstacle(obstacle: Dictionary) -> Dictionary:
 	var cells := {}
 	var x0 := int(obstacle.get("x", 0))
 	var y0 := int(obstacle.get("y", 0))
 	var width := max(int(obstacle.get("width", 1)), 1)
 	var height := max(int(obstacle.get("height", 1)), 1)
-	for x in range(x0, min(x0 + width, 4)):
-		for y in range(y0, min(y0 + height, 3)):
+	var x_start := clampi(x0, 0, 3)
+	var x_end := clampi(x0 + width, 0, 4)
+	if x_end <= x_start:
+		x_end = min(x_start + 1, 4)
+	var y_start := clampi(y0, 0, 2)
+	var y_end := clampi(y0 + height, 0, 3)
+	if y_end <= y_start:
+		y_end = min(y_start + 1, 3)
+	for x in range(x_start, x_end):
+		for y in range(y_start, y_end):
 			cells[_cell_from_xy(x, y)] = true
 	return cells
 
