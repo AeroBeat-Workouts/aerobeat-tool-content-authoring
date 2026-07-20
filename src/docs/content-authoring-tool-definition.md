@@ -8,7 +8,7 @@
 
 ## Goal
 
-Define the Godot-first runtime architecture for `aerobeat-tool-content-authoring` so the repo truthfully reflects where **manual-authored workout-package** creation is going.
+Define the Godot-first runtime architecture for `aerobeat-tool-content-authoring` so the repo truthfully reflects where **manual-authored song-package** creation is going.
 
 > **Scope note:** this definition is for the authored-package lane. It should not be read as the default BeatSaver imported-player contract, which is being simplified away from package-required coaching and package-owned environment selection.
 
@@ -18,7 +18,7 @@ This document is intentionally narrower than the older CLI-first definition. It 
 
 ## 1. Product stance
 
-`aerobeat-tool-content-authoring` is a **runtime-capable Godot authoring package** for canonical AeroBeat workout content.
+`aerobeat-tool-content-authoring` is a **runtime-capable Godot authoring package** for canonical AeroBeat song-package content.
 
 It is not the schema authority and it is not a CLI product anymore.
 
@@ -78,9 +78,9 @@ This repo may orchestrate validation and surface reports, but it should not beco
 
 The approved package-direction rules relevant to this refactor are:
 
-- load targets an **unzipped workout folder**
-- save emits an **unzipped workout folder plus a sibling zip archive**
-- primary + fallback environments are part of the **current authored-workout implementation seam**, not a universal imported-player rule
+- load targets an **unzipped song-package folder**
+- save emits an **unzipped song-package folder plus a sibling zip archive**
+- primary + fallback environments are part of the **current authored-song-package implementation seam**, not a universal imported-player rule
 - a set without a fallback environment is currently invalid **for this repo's authored-package flow**
 - fallback may equal primary
 - video/audio previews are `.testbed` verification dependencies, not root package contract dependencies
@@ -115,7 +115,7 @@ That means the repo can truthfully move to the new runtime direction now, while 
 
 - some legacy authoring behavior still exists in `services/authoring/chart_authoring_service.gd`
 
-That seam is temporary and should be replaced by real `AeroContentAuthoring` workout-folder workflows in the next implementation slice rather than hidden behind compatibility language.
+That seam is temporary and should be replaced by real `AeroContentAuthoring` song-package-folder workflows in the next implementation slice rather than hidden behind compatibility language.
 
 ---
 
@@ -123,9 +123,9 @@ That seam is temporary and should be replaced by real `AeroContentAuthoring` wor
 
 The next implementation slice should make `AeroContentAuthoring` able to:
 
-1. create a new workout package state
+1. create a new song package state
 2. reset current authoring state
-3. load an unzipped workout package folder
+3. load an unzipped song-package folder
 4. validate that package through `aerobeat-content-core`
 5. save authored output as a folder plus sibling zip archive
 

@@ -1,8 +1,8 @@
-class_name WorkoutPackageValidationService
+class_name SongPackageValidationService
 extends RefCounted
 
 const ValidatePackageService = preload("validate_package_service.gd")
-const WorkoutPackageYamlCodec = preload("../workflow/workout_package_yaml_codec.gd")
+const SongPackageYamlCodec = preload("../workflow/song_package_yaml_codec.gd")
 
 const CORE_VALIDATOR_PATHS := [
 	"res://addons/aerobeat-content-core/validators/content_package_validator.gd",
@@ -10,7 +10,7 @@ const CORE_VALIDATOR_PATHS := [
 ]
 
 var _local_validate_package_service: ValidatePackageService = ValidatePackageService.new()
-var _codec: WorkoutPackageYamlCodec = WorkoutPackageYamlCodec.new()
+var _codec: SongPackageYamlCodec = SongPackageYamlCodec.new()
 
 func validate_path(package_dir: String, subject: String = "package") -> Dictionary:
 	if subject != "package":

@@ -23,14 +23,14 @@ func _run() -> void:
 	var workout_id_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/WorkoutIdEdit")
 	var workout_name_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/WorkoutNameEdit")
 	var package_version_edit: LineEdit = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm/PackageVersionEdit")
-	workout_id_edit.text = "ab-workout-scene-smoke"
+	workout_id_edit.text = "ab-song-package-scene-smoke"
 	workout_name_edit.text = "Scene Smoke Draft"
 	package_version_edit.text = "9.9.9"
 	scene._commit_metadata_state()
 	var committed_state: Dictionary = runtime.get_current_package_state()
 
 	var fixture_dir: String = TestSupport.demo_package_dir()
-	var load_result: Dictionary = runtime.load_workout_package_folder(fixture_dir)
+	var load_result: Dictionary = runtime.load_song_package_folder(fixture_dir)
 	await process_frame
 	var loaded_state: Dictionary = runtime.get_current_package_state()
 	var sets_list: ItemList = scene.get_node("MarginContainer/RootVBox/WorkflowTabs/SetsTab/SetOrderList")
@@ -46,8 +46,8 @@ func _run() -> void:
 		"tab_titles": tab_titles == ["Metadata", "Warm-Up Coaching", "Sets", "Cool-Down Coaching"],
 		"buttons_present": save_button != null and load_button != null,
 		"metadata_scroll_present": metadata_scroll != null,
-		"metadata_binding": String(Dictionary(committed_state.get("workout", {})).get("workoutId", "")) == "ab-workout-scene-smoke" and String(committed_state.get("workout", {}).get("packageVersion", "")) == "9.9.9",
-		"fixture_loaded": bool(load_result.get("ok", false)) and String(Dictionary(loaded_state.get("workout", {})).get("workoutId", "")) == "ab-workout-demo-neon-boxing-bootcamp",
+		"metadata_binding": String(Dictionary(committed_state.get("songPackage", {})).get("songPackageId", "")) == "ab-song-package-scene-smoke" and String(committed_state.get("songPackage", {}).get("packageVersion", "")) == "9.9.9",
+		"fixture_loaded": bool(load_result.get("ok", false)) and String(Dictionary(loaded_state.get("songPackage", {})).get("songPackageId", "")) == "ab-songpkg-splat-demo",
 		"default_one_set_exists": Array(runtime.get_current_package_state().get("sets", [])).size() >= 1,
 		"sets_reflected": sets_list.item_count > 0,
 		"set_editor_present": create_set_button != null and set_editor_panel != null,

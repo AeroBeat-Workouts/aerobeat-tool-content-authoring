@@ -6,7 +6,7 @@ const TestSupport = preload("test_support.gd")
 static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
 	var fixture_dir: String = TestSupport.demo_package_dir()
-	var create_result: Dictionary = runtime.create_new_workout_package({
+	var create_result: Dictionary = runtime.create_new_song_package({
 		"songPackageId": "ab-song-package-draft",
 		"songPackageName": "Draft Song Package",
 		"packageVersion": "1.0.0",
@@ -24,7 +24,7 @@ static func run() -> Dictionary:
 		and draft_charts.size() == 1 \
 		and draft_environments.is_empty()
 
-	var load_result: Dictionary = runtime.load_workout_package_folder(fixture_dir)
+	var load_result: Dictionary = runtime.load_song_package_folder(fixture_dir)
 	var loaded_state: Dictionary = runtime.get_current_package_state()
 	var load_passed := bool(load_result.get("ok", false)) and String(loaded_state.get("songPackage", {}).get("songPackageId", "")) == "ab-songpkg-splat-demo"
 
@@ -38,7 +38,7 @@ static func run() -> Dictionary:
 	var invalid_fixture_dir: String = TestSupport.tmp_dir("aero_content_authoring_workflow_invalid_fixture")
 	TestSupport.ensure_clean_dir(invalid_fixture_dir)
 	TestSupport.copy_tree(fixture_dir, invalid_fixture_dir)
-	var invalid_set_path: String = invalid_fixture_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
+	var invalid_set_path: String = invalid_fixture_dir.path_join("sets/ab-set-splat-demo-boxing-normal.yaml")
 	TestSupport.write_text(invalid_set_path, TestSupport.read_text(invalid_set_path) + "\nenvironmentId: ab-environment-legacy\n")
 	var invalid_validation: Dictionary = runtime.get_validate_package_service().validate_path(invalid_fixture_dir, "package")
 	var invalid_codes: Array = []

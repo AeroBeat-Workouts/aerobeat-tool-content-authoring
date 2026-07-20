@@ -72,7 +72,7 @@ static func _forbidden_set_legacy_fields_scenario(base_fixture_dir: String, base
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_set_legacy_fields")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
+	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-normal.yaml")
 	var set_text: String = TestSupport.read_text(set_path)
 	set_text += "\nenvironmentId: ab-environment-legacy\ncoachingOverlayId: ab-overlay-legacy\n"
 	TestSupport.write_text(set_path, set_text)
@@ -84,7 +84,7 @@ static func _asset_selections_not_supported_scenario(base_fixture_dir: String, b
 	var scenario_dir: String = base_tmp_dir.path_join("asset_selections_not_supported")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-medium.yaml")
+	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-normal.yaml")
 	var set_text: String = TestSupport.read_text(set_path)
 	set_text += "\nassetSelections:\n  gloves: ab-asset-gloves-neon-pulse\n"
 	TestSupport.write_text(set_path, set_text)
@@ -107,7 +107,7 @@ static func _dance_chart_rejected_scenario(base_fixture_dir: String, base_tmp_di
 	var scenario_dir: String = base_tmp_dir.path_join("dance_chart_rejected")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-normal.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
 	chart_text = chart_text.replace("feature: boxing", "feature: dance")
 	TestSupport.write_text(chart_path, chart_text)
@@ -119,7 +119,7 @@ static func _step_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir
 	var scenario_dir: String = base_tmp_dir.path_join("step_chart_rejected")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-normal.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
 	chart_text = chart_text.replace("feature: boxing", "feature: step")
 	TestSupport.write_text(chart_path, chart_text)
@@ -133,7 +133,7 @@ static func _forbidden_song_composition_links_scenario(base_fixture_dir: String,
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var song_path: String = scenario_dir.path_join("songs/ab-song-splat-demo.yaml")
 	var song_text: String = TestSupport.read_text(song_path)
-	song_text += "\nchartId: ab-chart-splat-demo-boxing-medium\nsetId: ab-set-splat-demo-boxing-medium\nworkoutId: ab-workout-legacy\n"
+	song_text += "\nchartId: ab-chart-splat-demo-boxing-normal\nsetId: ab-set-splat-demo-boxing-normal\nworkoutId: ab-workout-legacy\n"
 	TestSupport.write_text(song_path, song_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "songs")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
@@ -143,9 +143,9 @@ static func _forbidden_chart_composition_links_scenario(base_fixture_dir: String
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_chart_composition_links")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-medium.yaml")
+	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-normal.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text += "\nsongId: ab-song-splat-demo\nsetId: ab-set-splat-demo-boxing-medium\nworkoutId: ab-workout-legacy\n"
+	chart_text += "\nsongId: ab-song-splat-demo\nsetId: ab-set-splat-demo-boxing-normal\nworkoutId: ab-workout-legacy\n"
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))

@@ -5,7 +5,7 @@ func _initialize() -> void:
 	var test_scripts: Array = [
 		load(script_dir.path_join("test_build_content_package_service.gd")),
 		load(script_dir.path_join("test_chart_authoring_service.gd")),
-		load(script_dir.path_join("test_workout_authoring_service.gd")),
+		load(script_dir.path_join("test_song_package_authoring_service.gd")),
 		load(script_dir.path_join("test_audio_metadata_import_service.gd")),
 		load(script_dir.path_join("test_validate_song_timing_contract.gd")),
 		load(script_dir.path_join("test_validate_package_failure_modes.gd")),

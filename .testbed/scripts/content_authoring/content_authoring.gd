@@ -123,16 +123,16 @@ func _connect_ui() -> void:
 
 func _apply_state(state: Dictionary) -> void:
 	_is_syncing_ui = true
-	var workout: Dictionary = Dictionary(state.get("workout", {}))
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {}))
 	var coach_config: Dictionary = Dictionary(state.get("coachConfig", {}))
 	var warmup_video: Dictionary = Dictionary(coach_config.get("warmupVideo", {}))
 	var cooldown_video: Dictionary = Dictionary(coach_config.get("cooldownVideo", {}))
 
-	_workout_id_edit.text = String(workout.get("workoutId", ""))
-	_workout_name_edit.text = String(workout.get("workoutName", ""))
-	_package_version_edit.text = String(state.get("packageVersion", workout.get("packageVersion", "1.0.0")))
-	_coach_config_id_edit.text = String(workout.get("coachConfigId", coach_config.get("coachConfigId", "")))
-	_description_edit.text = String(workout.get("description", ""))
+	_workout_id_edit.text = String(song_package.get("songPackageId", ""))
+	_workout_name_edit.text = String(song_package.get("songPackageName", ""))
+	_package_version_edit.text = String(state.get("packageVersion", song_package.get("packageVersion", "1.0.0")))
+	_coach_config_id_edit.text = String(coach_config.get("coachConfigId", ""))
+	_description_edit.text = String(song_package.get("description", ""))
 	_coach_enabled_check.button_pressed = bool(coach_config.get("enabled", false))
 	_coach_config_name_edit.text = String(coach_config.get("coachConfigName", ""))
 	_warmup_video_path_edit.text = String(warmup_video.get("path", warmup_video.get("resourcePath", "")))
@@ -158,8 +158,8 @@ func _validation_summary_for_state(state: Dictionary) -> String:
 
 func _refresh_sets_summary(state: Dictionary) -> void:
 	_set_order_list.clear()
-	var workout: Dictionary = Dictionary(state.get("workout", {}))
-	var set_order: Array = Array(workout.get("setOrder", []))
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {}))
+	var set_order: Array = Array(song_package.get("setIds", []))
 	var set_records: Array = Array(state.get("sets", []))
 	var set_lookup: Dictionary = {}
 	for set_record_variant in set_records:
@@ -281,14 +281,13 @@ func _commit_metadata_state() -> void:
 	if _is_syncing_ui:
 		return
 	var state: Dictionary = _runtime.get_current_package_state()
-	var workout: Dictionary = Dictionary(state.get("workout", {})).duplicate(true)
-	workout["workoutId"] = _workout_id_edit.text.strip_edges()
-	workout["workoutName"] = _workout_name_edit.text.strip_edges()
-	workout["description"] = _description_edit.text.strip_edges()
-	workout["packageVersion"] = _package_version_edit.text.strip_edges()
-	workout["coachConfigId"] = _coach_config_id_edit.text.strip_edges()
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {})).duplicate(true)
+	song_package["songPackageId"] = _workout_id_edit.text.strip_edges()
+	song_package["songPackageName"] = _workout_name_edit.text.strip_edges()
+	song_package["description"] = _description_edit.text.strip_edges()
+	song_package["packageVersion"] = _package_version_edit.text.strip_edges()
 	state["packageVersion"] = _package_version_edit.text.strip_edges()
-	state["workout"] = workout
+	state["songPackage"] = song_package
 
 	var coach_config: Dictionary = Dictionary(state.get("coachConfig", {})).duplicate(true)
 	var should_enable_coach_config: bool = _coach_enabled_check.button_pressed \
@@ -332,31 +331,31 @@ func _on_coach_config_text_changed(_value: String) -> void:
 	_commit_metadata_state()
 
 func _on_save_pressed() -> void:
-	_set_status("Choose a destination folder for the authored workout export.")
+	_set_status("Choose a destination folder for the authored song package export.")
 	_save_dialog.popup_centered_ratio(0.75)
 
 func _on_load_pressed() -> void:
-	_set_status("Choose an unzipped workout folder to load.")
+	_set_status("Choose an unzipped song package folder to load.")
 	_load_dialog.popup_centered_ratio(0.75)
 
 func _on_save_dir_selected(destination_dir: String) -> void:
-	_set_status("Saving workout package…")
+	_set_status("Saving song package…")
 	var result: Dictionary = _runtime.save_current_package(destination_dir)
 	if bool(result.get("ok", false)):
 		var output_dir: String = String(result.get("outputDir", destination_dir))
 		var zip_path: String = String(result.get("zipPath", ""))
-		_set_status("Saved workout folder to %s and sibling zip to %s." % [output_dir, zip_path])
+		_set_status("Saved song package folder to %s and sibling zip to %s." % [output_dir, zip_path])
 		_apply_validation_report(_runtime.validate_current_package())
 	else:
 		_set_status("Save failed: %s" % String(result.get("errorCode", "unknown_error")))
 
 func _on_load_dir_selected(package_dir: String) -> void:
-	_set_status("Loading workout package…")
-	var result: Dictionary = _runtime.load_workout_package_folder(package_dir)
+	_set_status("Loading song package…")
+	var result: Dictionary = _runtime.load_song_package_folder(package_dir)
 	if bool(result.get("ok", false)):
 		_apply_state(_runtime.get_current_package_state())
 		_apply_validation_report(_runtime.validate_current_package())
-		_set_status("Loaded workout package from %s." % package_dir)
+		_set_status("Loaded song package from %s." % package_dir)
 	else:
 		_set_status("Load failed: %s" % String(result.get("errorCode", "unknown_error")))
 
@@ -715,12 +714,12 @@ func _on_delete_selected_set_pressed() -> void:
 	if _selected_set_id.is_empty():
 		return
 	var state_before := _runtime.get_current_package_state()
-	var order_before: Array = Array(Dictionary(state_before.get("workout", {})).get("setOrder", []))
+	var order_before: Array = Array(Dictionary(state_before.get("songPackage", {})).get("setIds", []))
 	var deleted_id := _selected_set_id
 	var result := _runtime.delete_set(deleted_id)
 	if bool(result.get("ok", false)):
 		var state_after := Dictionary(result.get("state", {}))
-		var order_after: Array = Array(Dictionary(state_after.get("workout", {})).get("setOrder", []))
+		var order_after: Array = Array(Dictionary(state_after.get("songPackage", {})).get("setIds", []))
 		_selected_set_id = String(order_after[0]) if not order_after.is_empty() else ""
 		_set_status("Deleted %s." % deleted_id)
 
@@ -878,7 +877,7 @@ func _format_beatmap_metadata(chart_record: Dictionary) -> String:
 	var bits: Array[String] = []
 	bits.append("Beatmap: %s" % String(chart_record.get("chartName", chart_record.get("chartId", "(unnamed)"))))
 	bits.append("feature=%s" % String(chart_record.get("feature", "boxing")))
-	bits.append("difficulty=%s" % String(chart_record.get("difficulty", "medium")))
+	bits.append("difficulty=%s" % String(chart_record.get("difficulty", "Normal")))
 	bits.append("events=%d" % Array(chart_record.get("beats", [])).size())
 	if chart_record.has("songId") and not String(chart_record.get("songId", "")).is_empty():
 		bits.append("songId=%s" % String(chart_record.get("songId", "")))

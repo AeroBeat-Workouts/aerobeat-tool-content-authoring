@@ -1,6 +1,6 @@
 # aerobeat-tool-content-authoring
 
-`aerobeat-tool-content-authoring` is a **Godot-first runtime package** for AeroBeat **manual-authored workout-package** authoring.
+`aerobeat-tool-content-authoring` is a **Godot-first runtime package** for AeroBeat **manual-authored song-package** authoring.
 
 > **Scope note:** this repo currently targets the richer authored-package lane. It should not be treated as the default BeatSaver imported-player workflow, which is being simplified away from package-required coaching and package-owned environment selection.
 
@@ -8,7 +8,7 @@ Its root contract is no longer a CLI toolchain or a published root-level GodotEn
 
 ## Responsibility boundary
 
-- `aerobeat-content-core` owns canonical workout-package contracts and the authoritative validation truth.
+- `aerobeat-content-core` owns canonical song-package contracts and the authoritative validation truth.
 - `aerobeat-tool-content-authoring` owns authoring/runtime workflows that operate on those contracts.
 - `.testbed/` owns local verification-only dependency sync, placeholder verification assets under `.testbed/assets/`, the automated headless test runner, and future human-facing authoring scenes.
 
@@ -69,21 +69,21 @@ The intended runtime surface is `AeroContentAuthoring`, not `AeroToolManager` an
 The singleton direction for the next slices is:
 
 - create/reset runtime authoring state
-- load an authored workout from an **unzipped folder**
+- load an authored song package from an **unzipped folder**
 - save authored output as an **unzipped folder plus sibling zip archive**
 - delegate package validation truth toward `aerobeat-content-core` where the validator is runtime-loadable
 - keep package contract rules centered on canonical authored data
 
-Important implementation notes currently locked for this repo's authored-workout lane:
+Important implementation notes currently locked for this repo's authored-song-package lane:
 
-- primary + fallback environments are part of the **current authored-workout implementation seam**, not a universal imported-player rule
+- primary + fallback environments are part of the **current authored-song-package implementation seam**, not a universal imported-player rule
 - a set without fallback is currently invalid **for this repo's authored-package flow**
 - fallback may equal primary
 - video/audio preview dependencies are `.testbed` verification concerns, not root package contract dependencies
 
 ## Current open seam
 
-Task 3 removes the repo's legacy singleton drift and establishes a workout-folder workflow surface, but two follow-up seams remain:
+Task 3 removes the repo's legacy singleton drift and establishes a song-package-folder workflow surface, but two follow-up seams remain:
 
 - `src/services/authoring/chart_authoring_service.gd` still contains quarantined legacy manifest/routine behavior
 - `aerobeat-content-core` validation is only directly delegatable once that repo exposes a runtime-loadable addon/root-safe validator script

@@ -1,9 +1,9 @@
-class_name WorkoutPackageWorkflowService
+class_name SongPackageWorkflowService
 extends RefCounted
 
-const WorkoutPackageYamlCodec = preload("workout_package_yaml_codec.gd")
+const SongPackageYamlCodec = preload("song_package_yaml_codec.gd")
 
-var _codec: WorkoutPackageYamlCodec = WorkoutPackageYamlCodec.new()
+var _codec: SongPackageYamlCodec = SongPackageYamlCodec.new()
 
 func create_new_package_state(seed: Dictionary = {}) -> Dictionary:
 	return {

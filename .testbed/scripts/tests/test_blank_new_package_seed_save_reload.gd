@@ -5,7 +5,7 @@ const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
-	var create_result: Dictionary = runtime.create_new_workout_package({
+	var create_result: Dictionary = runtime.create_new_song_package({
 		"songPackageId": "ab-song-package-seeded-smoke",
 		"songPackageName": "Seeded Smoke Song Package",
 		"packageVersion": "2.0.0",
@@ -55,7 +55,7 @@ static func run() -> Dictionary:
 	var sql_passed := sql_text.contains("CREATE TABLE") and sql_text.contains("CREATE INDEX")
 
 	var reloaded_runtime := AeroContentAuthoring.new()
-	var load_result: Dictionary = reloaded_runtime.load_workout_package_folder(output_dir)
+	var load_result: Dictionary = reloaded_runtime.load_song_package_folder(output_dir)
 	var reloaded_state: Dictionary = reloaded_runtime.get_current_package_state()
 	var reload_validation: Dictionary = reloaded_runtime.validate_current_package()
 	var package_validation: Dictionary = reloaded_runtime.get_validate_package_service().validate_path(output_dir, "package")

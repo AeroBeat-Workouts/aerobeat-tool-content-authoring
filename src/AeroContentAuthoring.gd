@@ -2,11 +2,11 @@
 class_name AeroContentAuthoring
 extends Node
 
-const WorkoutPackageValidationService = preload("services/validation/workout_package_validation_service.gd")
+const SongPackageValidationService = preload("services/validation/song_package_validation_service.gd")
 const ValidatePackageService = preload("services/validation/validate_package_service.gd")
 const BuildContentPackageService = preload("services/packaging/build_content_package_service.gd")
 const RefreshContentIndexService = preload("services/registry/refresh_content_index_service.gd")
-const WorkoutPackageWorkflowService = preload("services/workflow/workout_package_workflow_service.gd")
+const SongPackageWorkflowService = preload("services/workflow/song_package_workflow_service.gd")
 
 signal initialized
 signal authoring_state_reset(state)
@@ -42,10 +42,10 @@ var _yaml_helper := ValidatePackageService.new()
 
 static func build_service_registry() -> Dictionary:
 	return {
-		"validate_package": WorkoutPackageValidationService.new(),
+		"validate_package": SongPackageValidationService.new(),
 		"build_content_package": BuildContentPackageService.new(),
 		"refresh_content_index": RefreshContentIndexService.new(),
-		"package_workflow": WorkoutPackageWorkflowService.new(),
+		"package_workflow": SongPackageWorkflowService.new(),
 	}
 
 func _ready() -> void:
@@ -76,10 +76,10 @@ func reset_authoring_state(seed: Dictionary = {}) -> Dictionary:
 		result["state"] = get_current_package_state()
 	return result
 
-func create_new_workout_package(seed: Dictionary = {}) -> Dictionary:
+func create_new_song_package(seed: Dictionary = {}) -> Dictionary:
 	return reset_authoring_state(seed)
 
-func load_workout_package_folder(package_dir: String) -> Dictionary:
+func load_song_package_folder(package_dir: String) -> Dictionary:
 	if not _is_initialized:
 		initialize()
 	var result: Dictionary = get_package_workflow_service().load_package_folder(package_dir)
@@ -163,10 +163,10 @@ func get_service_registry() -> Dictionary:
 		initialize()
 	return _service_registry.duplicate(false)
 
-func get_validate_package_service() -> WorkoutPackageValidationService:
+func get_validate_package_service() -> SongPackageValidationService:
 	if not _is_initialized:
 		initialize()
-	return _service_registry.get("validate_package") as WorkoutPackageValidationService
+	return _service_registry.get("validate_package") as SongPackageValidationService
 
 func get_build_content_package_service() -> BuildContentPackageService:
 	if not _is_initialized:
@@ -178,10 +178,10 @@ func get_refresh_content_index_service() -> RefreshContentIndexService:
 		initialize()
 	return _service_registry.get("refresh_content_index") as RefreshContentIndexService
 
-func get_package_workflow_service() -> WorkoutPackageWorkflowService:
+func get_package_workflow_service() -> SongPackageWorkflowService:
 	if not _is_initialized:
 		_service_registry = build_service_registry()
-	return _service_registry.get("package_workflow") as WorkoutPackageWorkflowService
+	return _service_registry.get("package_workflow") as SongPackageWorkflowService
 
 func create_set(seed: Dictionary = {}) -> Dictionary:
 	var state := get_current_package_state()
@@ -221,7 +221,7 @@ func delete_set(set_id: String) -> Dictionary:
 			removed_set = set_record
 			continue
 		sets.append(set_record)
-	var song_package: Dictionary = Dictionary(state.get("songPackage", state.get("workout", {}))).duplicate(true)
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {})).duplicate(true)
 	var set_ids: Array = []
 	for ordered_set_id in Array(song_package.get("setIds", [])):
 		if String(ordered_set_id) != normalized_set_id:

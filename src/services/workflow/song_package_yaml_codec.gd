@@ -1,4 +1,4 @@
-class_name WorkoutPackageYamlCodec
+class_name SongPackageYamlCodec
 extends RefCounted
 
 const ValidatePackageService = preload("../validation/validate_package_service.gd")
@@ -152,7 +152,7 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 	_remove_tree(absolute_dir)
 	DirAccess.make_dir_recursive_absolute(absolute_dir)
 
-	var song_package: Dictionary = _normalize_song_package_record(Dictionary(state.get("songPackage", state.get("workout", {}))))
+	var song_package: Dictionary = _normalize_song_package_record(Dictionary(state.get("songPackage", {})))
 	var songs: Array = _normalize_record_list(state.get("songs", []), "song")
 	var charts: Array = _normalize_record_list(state.get("charts", []), "chart")
 	var sets: Array = _normalize_record_list(state.get("sets", []), "set")

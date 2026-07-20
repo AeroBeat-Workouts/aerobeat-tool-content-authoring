@@ -160,7 +160,7 @@ text = "Workout ID"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "ab-workout-my-draft"
+placeholder_text = "ab-song-package-my-draft"
 
 [node name="WorkoutNameLabel" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/MetadataTab/MetadataScroll/MetadataMargin/MetadataStack/MetadataForm"]
 layout_mode = 2
@@ -221,7 +221,7 @@ layout_mode = 2
 [node name="CoachEnabledCheck" type="CheckButton" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab/WarmUpCoachEnabledRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Enable coaching bundle for this workout"
+text = "Enable coaching bundle for this song package"
 
 [node name="WarmUpForm" type="GridContainer" parent="MarginContainer/RootVBox/WorkflowTabs/WarmUpCoachingTab"]
 layout_mode = 2
@@ -277,7 +277,7 @@ select_mode = 0
 
 [node name="SetsHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/SetsTab"]
 layout_mode = 2
-text = "The shell already reflects current workout setOrder and authored set ids so Task 6 can attach editors, pickers, and previews without replacing the scene frame."
+text = "The shell already reflects current song-package setIds and authored set ids so Task 6 can attach editors, pickers, and previews without replacing the scene frame."
 autowrap_mode = 3
 
 [node name="CoolDownCoachingTab" type="VBoxContainer" parent="MarginContainer/RootVBox/WorkflowTabs"]
@@ -305,7 +305,7 @@ placeholder_text = "media/coaching/cooldown-video.ogv"
 
 [node name="CoolDownHint" type="Label" parent="MarginContainer/RootVBox/WorkflowTabs/CoolDownCoachingTab"]
 layout_mode = 2
-text = "This shell keeps cool-down coaching wired into the workout package state while leaving preview/media UX for the next slice."
+text = "This shell keeps cool-down coaching wired into the song package state while leaving preview/media UX for the next slice."
 autowrap_mode = 3
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/RootVBox"]

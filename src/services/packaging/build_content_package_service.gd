@@ -1,9 +1,9 @@
 class_name BuildContentPackageService
 extends "../../interfaces/package_build_service.gd"
 
-const WorkoutPackageValidationService = preload("../validation/workout_package_validation_service.gd")
+const SongPackageValidationService = preload("../validation/song_package_validation_service.gd")
 
-var _validate_package_service: WorkoutPackageValidationService = WorkoutPackageValidationService.new()
+var _validate_package_service: SongPackageValidationService = SongPackageValidationService.new()
 
 func build_package(source_dir: String, output_dir: String) -> Dictionary:
 	var validation: Dictionary = _validate_package_service.validate_path(source_dir, "package")

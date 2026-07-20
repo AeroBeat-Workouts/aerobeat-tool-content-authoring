@@ -354,7 +354,7 @@ func _legacy_package_contract_issues(context: Dictionary) -> Array:
 	if bool(context.get("legacyAssetsDirExists", false)):
 		issues.append(_issue(
 			"assets_directory_not_supported",
-			"Package assets/ is no longer an accepted authored package family in the v1 workout-package contract.",
+			"Package assets/ is no longer an accepted authored package family in the v1 song-package contract.",
 			package_dir.path_join("assets"),
 			"package",
 			"",
