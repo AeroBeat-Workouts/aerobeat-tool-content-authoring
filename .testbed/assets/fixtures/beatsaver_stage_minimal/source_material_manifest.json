@@ -10,7 +10,7 @@
   "stage_directory_path": ".",
   "archive_path": "demo-beatsaver-stage.zip",
   "archive_file_name": "demo-beatsaver-stage.zip",
-  "archive_size_bytes": 1043090,
+  "archive_size_bytes": 1050743,
   "archive_entry_count": 4,
   "archive_entries": [
     {
@@ -22,7 +22,7 @@
       "is_audio_candidate": false,
       "is_cover_image_candidate": false,
       "is_difficulty_candidate": false,
-      "size_bytes": 480
+      "size_bytes": 451
     },
     {
       "path": "HardStandard.dat",
@@ -33,7 +33,7 @@
       "is_audio_candidate": false,
       "is_cover_image_candidate": false,
       "is_difficulty_candidate": true,
-      "size_bytes": 735
+      "size_bytes": 702
     },
     {
       "path": "demo-song.ogg",

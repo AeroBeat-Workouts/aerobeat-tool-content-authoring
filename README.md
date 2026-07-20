@@ -70,7 +70,7 @@ A first staged BeatSaver -> AeroBeat converter foundation now lives in `src/serv
 - durable package-contract evolution remains owned by `aerobeat-content-core`
 - this repo owns the runtime/tool workflow that ingests a staged source package and produces authored package state plus `.artifacts/` provenance
 
-Current honest limitation: the Flow direct-4x3 gameplay rules are locked, but the durable authored Flow YAML contract is only frozen for `burst` beats. This repo therefore emits Flow burst beats into the authored chart and preserves ordinary Flow note/bomb/obstacle/slider semantics in `.artifacts/beatsaver/conversion/report.json` rather than inventing a new package contract locally.
+Current Flow posture: the shared Flow v1 authored contract is now frozen in `aerobeat-content-core`, and this repo emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects while still preserving raw source plus conversion traces under `.artifacts/beatsaver/conversion/report.json`.
 
 See `src/docs/beatsaver-converter-foundation.md` for the foundation slice details.
 

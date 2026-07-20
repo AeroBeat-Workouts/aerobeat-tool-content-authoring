@@ -7,12 +7,12 @@ Current scope:
 - support BeatSaver Standard difficulty files in v3/v4 object form
 - emit canonical song-package-shaped authored output in repo-local runtime state
 - convert Boxing v1 source semantics into canonical Boxing chart beats
-- convert Flow v1 frozen burst-slider semantics into canonical Flow burst beats
+- convert Flow v1 Standard-map semantics into canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` beats
 - preserve source/provenance/debug material under package-local `.artifacts/beatsaver/`
 
 Important seam kept honest:
-- Flow's direct 4x3 gameplay rules are locked, but the durable authored YAML contract is only frozen for `burst` beats right now
-- ordinary Flow notes, bombs, obstacles, and sliders therefore stay in `.artifacts/beatsaver/conversion/report.json` and source snapshots instead of being smuggled into an invented chart schema here
+- Flow's direct 4x3 gameplay rules and the minimum shared authored contract now align across this repo and `aerobeat-content-core`
+- raw BeatSaver source plus conversion traces still stay in `.artifacts/beatsaver/conversion/report.json` and source snapshots so package output remains AeroBeat-native without losing provenance
 
 This keeps repo boundaries truthful:
 - BeatSaver fetching/staging still belongs in `aerobeat-vendor-beatsaver`

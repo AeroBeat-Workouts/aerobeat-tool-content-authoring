@@ -29,16 +29,41 @@ static func run() -> Dictionary:
 	for beat_variant in Array(boxing_chart.get("beats", [])):
 		boxing_types.append(String(Dictionary(beat_variant).get("type", "")))
 	var flow_beats: Array = Array(flow_chart.get("beats", []))
+	var flow_types: Array = []
+	for beat_variant in flow_beats:
+		flow_types.append(String(Dictionary(beat_variant).get("type", "")))
+	var first_note := _find_flow_beat(flow_beats, "note", 1.0)
+	var dot_note := _find_flow_beat(flow_beats, "note", 3.0, "right")
+	var bomb_beat := _find_flow_beat(flow_beats, "bomb", 7.0)
+	var first_obstacle := _find_flow_beat(flow_beats, "obstacle", 5.0)
+	var arc_beat := _find_flow_beat(flow_beats, "arc", 8.0)
+	var burst_beat := _find_flow_beat(flow_beats, "burst", 9.0)
 	var passed := bool(convert_result.get("ok", false)) \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
 		and bool(package_validation.get("valid", false)) \
 		and chart_ids == ["ab-chart-synthetic-beatsaver-demo-boxing-hard", "ab-chart-synthetic-beatsaver-demo-flow-hard"] \
-		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "hook_left", "straight_right", "uppercut_left"] \
-		and flow_beats.size() == 1 \
-		and String(flow_beats[0].get("type", "")) == "burst" \
-		and report_text.contains("artifact_only_contract_gap") \
-		and report_text.contains("burstSlider") \
+		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "straight_left", "hook_left", "hook_left", "straight_right", "uppercut_left"] \
+		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "arc", "note", "burst"] \
+		and float(first_note.get("angleOffset", 0.0)) == 15.5 \
+		and bool(first_note.get("requiresDirection", false)) \
+		and not bool(dot_note.get("requiresDirection", true)) \
+		and not dot_note.has("direction") \
+		and int(bomb_beat.get("placement", -1)) == 5 \
+		and Array(first_obstacle.get("cells", [])) == [0, 1, 4, 5, 8, 9] \
+		and String(arc_beat.get("startNoteRef", "")).begins_with("flow-note-") \
+		and String(arc_beat.get("endNoteRef", "")).begins_with("flow-note-") \
+		and int(arc_beat.get("startPlacement", -1)) == 4 \
+		and int(arc_beat.get("endPlacement", -1)) == 11 \
+		and int(arc_beat.get("startDirection", -1)) == 1 \
+		and int(arc_beat.get("endDirection", -1)) == 5 \
+		and int(arc_beat.get("midAnchorMode", -1)) == 2 \
+		and is_equal_approx(float(arc_beat.get("headCurveMultiplier", 0.0)), 1.25) \
+		and is_equal_approx(float(arc_beat.get("tailCurveMultiplier", 0.0)), 0.8) \
+		and int(burst_beat.get("checkpointCount", 0)) == 4 \
+		and report_text.contains('"sourceFamily": "slider"') \
+		and report_text.contains('"startNoteRef"') \
+		and not report_text.contains("artifact_only_contract_gap") \
 		and int(summary.get("chartCount", 0)) == 2
 	return {
 		"name": "test_beatsaver_stage_conversion_service",
@@ -60,4 +85,17 @@ static func _find_chart(charts: Array, feature: String) -> Dictionary:
 		var chart: Dictionary = Dictionary(chart_variant)
 		if String(chart.get("feature", "")) == feature:
 			return chart
+	return {}
+
+
+static func _find_flow_beat(flow_beats: Array, beat_type: String, start: float, hand: String = "") -> Dictionary:
+	for beat_variant in flow_beats:
+		var beat: Dictionary = Dictionary(beat_variant)
+		if String(beat.get("type", "")) != beat_type:
+			continue
+		if not is_equal_approx(float(beat.get("start", -9999.0)), start):
+			continue
+		if not hand.is_empty() and String(beat.get("hand", "")) != hand:
+			continue
+		return beat
 	return {}

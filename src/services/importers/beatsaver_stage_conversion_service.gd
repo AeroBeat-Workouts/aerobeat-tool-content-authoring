@@ -16,7 +16,6 @@ const CENTER_GUARD_CELL_SETS := {
 }
 const LEFT_SIDE_CELLS := {0: true, 1: true, 4: true, 5: true, 8: true, 9: true}
 const RIGHT_SIDE_CELLS := {2: true, 3: true, 6: true, 7: true, 10: true, 11: true}
-const FLOW_CHART_CONTRACT_WARNING := "Flow v1 direct 4x3 gameplay rules are locked, but the durable authored YAML contract is only frozen for burst beats. Ordinary notes, bombs, obstacles, and guidance objects remain preserved in provenance/debug artifacts instead of the authored Flow chart."
 
 func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var absolute_stage_dir := ProjectSettings.globalize_path(stage_dir).simplify_path()
@@ -81,7 +80,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var set_ids: Array = []
 	var boxing_trace: Array = []
 	var flow_trace: Array = []
-	var conversion_warnings: Array = [FLOW_CHART_CONTRACT_WARNING]
+	var conversion_warnings: Array = []
 
 	for difficulty_entry_variant in standard_difficulties:
 		var difficulty_entry: Dictionary = Dictionary(difficulty_entry_variant)
@@ -178,7 +177,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 				"recordVersion": 1,
 				"songPackageId": "ab-songpkg-%s-beatsaver-import" % package_token,
 				"songPackageName": "%s BeatSaver Import" % song_state.get("songName"),
-				"description": "Imported from staged BeatSaver source with authored Boxing output, Flow burst output, and preserved provenance artifacts.",
+				"description": "Imported from staged BeatSaver source with authored Boxing output, shared-contract Flow output, and preserved provenance artifacts.",
 				"packageVersion": "1.0.0",
 				"setIds": set_ids,
 			},
@@ -264,14 +263,33 @@ func _convert_boxing_chart(source_summary: Dictionary, difficulty_label: String,
 func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, song_token: String) -> Dictionary:
 	var beats: Array = []
 	var trace_events: Array = []
+	var note_ref_lookup := _build_flow_note_ref_lookup(Array(source_summary.get("colorNotes", [])))
 	for note in Array(source_summary.get("colorNotes", [])):
-		trace_events.append({"start": float(note.get("start", 0.0)), "sourceFamily": "note", "result": {"action": "artifact_only_contract_gap"}, "note": note.duplicate(true)})
+		var note_beat := _emit_flow_note(note)
+		beats.append(note_beat)
+		trace_events.append({"start": float(note.get("start", 0.0)), "sourceFamily": "note", "result": {"action": "emit", "beat": note_beat.duplicate(true), "noteRef": _flow_note_ref(note)}, "note": note.duplicate(true)})
 	for bomb in Array(source_summary.get("bombNotes", [])):
-		trace_events.append({"start": float(bomb.get("start", 0.0)), "sourceFamily": "bomb", "result": {"action": "artifact_only_hazard"}, "bomb": bomb.duplicate(true)})
+		var bomb_beat := {
+			"start": float(bomb.get("start", 0.0)),
+			"type": "bomb",
+			"placement": int(bomb.get("cell", 0)),
+		}
+		beats.append(bomb_beat)
+		trace_events.append({"start": float(bomb.get("start", 0.0)), "sourceFamily": "bomb", "result": {"action": "emit", "beat": bomb_beat.duplicate(true)}, "bomb": bomb.duplicate(true)})
 	for obstacle in Array(source_summary.get("obstacles", [])):
-		trace_events.append({"start": float(obstacle.get("start", 0.0)), "sourceFamily": "obstacle", "result": {"action": "artifact_only_nose_window"}, "obstacle": obstacle.duplicate(true)})
+		var cells := _sorted_cell_list(_cells_for_obstacle(obstacle))
+		var obstacle_beat := {
+			"start": float(obstacle.get("start", 0.0)),
+			"end": float(obstacle.get("start", 0.0)) + float(obstacle.get("duration", 0.0)),
+			"type": "obstacle",
+			"cells": cells,
+		}
+		beats.append(obstacle_beat)
+		trace_events.append({"start": float(obstacle.get("start", 0.0)), "sourceFamily": "obstacle", "result": {"action": "emit", "beat": obstacle_beat.duplicate(true)}, "obstacle": obstacle.duplicate(true)})
 	for slider in Array(source_summary.get("sliders", [])):
-		trace_events.append({"start": float(slider.get("start", 0.0)), "sourceFamily": "slider", "result": {"action": "artifact_only_guidance"}, "slider": slider.duplicate(true)})
+		var arc_beat := _emit_flow_arc(slider, note_ref_lookup)
+		beats.append(arc_beat)
+		trace_events.append({"start": float(slider.get("start", 0.0)), "sourceFamily": "slider", "result": {"action": "emit", "beat": arc_beat.duplicate(true)}, "slider": slider.duplicate(true)})
 	for burst in Array(source_summary.get("burstSliders", [])):
 		var burst_beat := {
 			"start": float(burst.get("start", 0.0)),
@@ -287,6 +305,7 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 			burst_beat["spacingBias"] = float(burst.get("spacingBias"))
 		beats.append(burst_beat)
 		trace_events.append({"start": float(burst.get("start", 0.0)), "sourceFamily": "burstSlider", "result": {"action": "emit", "beat": burst_beat.duplicate(true)}, "source": burst.duplicate(true)})
+	_sort_flow_beats(beats)
 	return {
 		"chart": {
 			"schemaId": "aerobeat.chart.flow.v1",
@@ -300,7 +319,6 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 		},
 		"trace": {
 			"difficulty": difficulty_label,
-			"warning": FLOW_CHART_CONTRACT_WARNING,
 			"events": trace_events,
 		},
 	}
@@ -316,10 +334,12 @@ func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
 
 func _normalize_color_notes(beatmap: Dictionary) -> Array:
 	var notes: Array = []
+	var source_index := 0
 	for note_variant in _array_value(beatmap, ["colorNotes"]):
 		var note: Dictionary = Dictionary(note_variant)
 		var cell := _cell_from_xy(int(note.get("x", 0)), int(note.get("y", 0)))
 		notes.append({
+			"sourceIndex": source_index,
 			"start": _variant_to_float(note.get("b", 0.0)),
 			"x": int(note.get("x", 0)),
 			"y": int(note.get("y", 0)),
@@ -328,7 +348,9 @@ func _normalize_color_notes(beatmap: Dictionary) -> Array:
 			"hand": _hand_from_color(int(note.get("c", 0))),
 			"direction": int(note.get("d", 8)),
 			"angleOffset": _variant_to_float(note.get("a", 0.0)),
+			"hasAngleOffset": note.has("a"),
 		})
+		source_index += 1
 	return notes
 
 func _normalize_bomb_notes(beatmap: Dictionary) -> Array:
@@ -368,6 +390,10 @@ func _normalize_sliders(beatmap: Dictionary) -> Array:
 			"tailCell": _cell_from_xy(int(slider.get("tx", 0)), int(slider.get("ty", 0))),
 			"hand": _hand_from_color(int(slider.get("c", 0))),
 			"direction": int(slider.get("d", 8)),
+			"tailDirection": int(slider.get("tc", slider.get("d", 8))),
+			"headCurveMultiplier": _variant_to_float(slider.get("mu", 1.0), 1.0),
+			"tailCurveMultiplier": _variant_to_float(slider.get("tmu", 1.0), 1.0),
+			"midAnchorMode": int(slider.get("m", 0)),
 		})
 	return sliders
 
@@ -455,6 +481,78 @@ func _emit_boxing_burst(burst: Dictionary, difficulty_label: String) -> Dictiona
 		emitted_hand = "right" if emitted_hand == "left" else "left"
 		time += interval_beats
 	return {"beats": beats}
+
+func _emit_flow_note(note: Dictionary) -> Dictionary:
+	var direction := int(note.get("direction", 8))
+	var beat := {
+		"start": float(note.get("start", 0.0)),
+		"type": "note",
+		"hand": String(note.get("hand", "left")),
+		"placement": int(note.get("cell", 0)),
+		"requiresDirection": direction != 8,
+		"angleOffset": float(note.get("angleOffset", 0.0)),
+	}
+	if direction != 8:
+		beat["direction"] = direction
+	return beat
+
+func _emit_flow_arc(slider: Dictionary, note_ref_lookup: Dictionary) -> Dictionary:
+	var arc := {
+		"start": float(slider.get("start", 0.0)),
+		"end": float(slider.get("end", slider.get("start", 0.0))),
+		"type": "arc",
+		"hand": String(slider.get("hand", "left")),
+		"startPlacement": int(slider.get("cell", 0)),
+		"endPlacement": int(slider.get("tailCell", slider.get("cell", 0))),
+		"startDirection": int(slider.get("direction", 8)),
+		"endDirection": int(slider.get("tailDirection", slider.get("direction", 8))),
+		"headCurveMultiplier": float(slider.get("headCurveMultiplier", 1.0)),
+		"tailCurveMultiplier": float(slider.get("tailCurveMultiplier", 1.0)),
+		"midAnchorMode": int(slider.get("midAnchorMode", 0)),
+	}
+	var start_key := _flow_note_lookup_key(float(slider.get("start", 0.0)), String(slider.get("hand", "left")), int(slider.get("cell", 0)))
+	if note_ref_lookup.has(start_key):
+		arc["startNoteRef"] = String(note_ref_lookup[start_key])
+	var end_key := _flow_note_lookup_key(float(slider.get("end", slider.get("start", 0.0))), String(slider.get("hand", "left")), int(slider.get("tailCell", slider.get("cell", 0))))
+	if note_ref_lookup.has(end_key):
+		arc["endNoteRef"] = String(note_ref_lookup[end_key])
+	return arc
+
+func _build_flow_note_ref_lookup(notes: Array) -> Dictionary:
+	var lookup := {}
+	for note_variant in notes:
+		var note: Dictionary = Dictionary(note_variant)
+		var key := _flow_note_lookup_key(float(note.get("start", 0.0)), String(note.get("hand", "left")), int(note.get("cell", 0)))
+		if not lookup.has(key):
+			lookup[key] = _flow_note_ref(note)
+	return lookup
+
+func _flow_note_lookup_key(start: float, hand: String, cell: int) -> String:
+	return "%s|%0.3f|%d" % [hand, snappedf(start, 0.001), cell]
+
+func _flow_note_ref(note: Dictionary) -> String:
+	return "flow-note-%03d-%s-%d-%0.3f" % [int(note.get("sourceIndex", 0)), String(note.get("hand", "left")), int(note.get("cell", 0)), snappedf(float(note.get("start", 0.0)), 0.001)]
+
+func _sorted_cell_list(cells_by_key: Dictionary) -> Array:
+	var cells: Array = []
+	for cell_key in cells_by_key.keys():
+		cells.append(int(cell_key))
+	cells.sort()
+	return cells
+
+func _sort_flow_beats(beats: Array) -> void:
+	var order := {"note": 0, "bomb": 1, "obstacle": 2, "arc": 3, "burst": 4}
+	beats.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_start := float(a.get("start", 0.0))
+		var b_start := float(b.get("start", 0.0))
+		if not is_equal_approx(a_start, b_start):
+			return a_start < b_start
+		var a_order := int(order.get(String(a.get("type", "")), 99))
+		var b_order := int(order.get(String(b.get("type", "")), 99))
+		if a_order != b_order:
+			return a_order < b_order
+		return JSON.stringify(a, "") < JSON.stringify(b, "")
+	)
 
 func _group_notes_by_start(notes: Array) -> Dictionary:
 	var grouped := {}
