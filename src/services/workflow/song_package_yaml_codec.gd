@@ -63,6 +63,7 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 			"recordVersion": 1,
 			"songId": song_id,
 			"songName": song_name,
+			"durationSec": int(seed.get("durationSec", 1)),
 			"audio": {
 				"filePath": PLACEHOLDER_SONG_AUDIO_PATH,
 			},

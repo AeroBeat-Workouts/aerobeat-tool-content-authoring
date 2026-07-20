@@ -95,13 +95,6 @@ func _validate_with_content_core(package_dir: String) -> Dictionary:
 	return _normalize_core_result(result)
 
 func _load_core_validator_script():
-	# aerobeat-content-core's validator currently assumes it is the project root.
-	# Prefer it only when that layout is actually available; otherwise stay on the
-	# local validator bridge without trying to parse an unsupported addon path.
-	if not FileAccess.file_exists(ProjectSettings.globalize_path("res://validators/content_package_validator.gd")):
-		return null
-	if not FileAccess.file_exists(ProjectSettings.globalize_path("res://globals/aero_content_schema.gd")):
-		return null
 	for candidate_path in CORE_VALIDATOR_PATHS:
 		if ResourceLoader.exists(candidate_path):
 			var script: Variant = load(candidate_path)

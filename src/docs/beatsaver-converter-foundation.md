@@ -12,6 +12,7 @@ Current scope:
 
 Important seam kept honest:
 - Flow's direct 4x3 gameplay rules and the minimum shared authored contract now align across this repo and `aerobeat-content-core`
+- Flow chart validation now delegates directly to the shared `aerobeat-content-core` chart validator instead of mirroring the Flow beat contract locally
 - raw BeatSaver source plus conversion traces still stay in `.artifacts/beatsaver/conversion/report.json` and source snapshots so package output remains AeroBeat-native without losing provenance
 
 This keeps repo boundaries truthful:

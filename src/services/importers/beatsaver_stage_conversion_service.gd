@@ -147,12 +147,14 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	archive.close()
 
 	var bpm := _info_number(info_dat, ["_beatsPerMinute", "beatsPerMinute"], 120.0)
+	var duration_sec := _estimate_song_duration_sec_from_charts(charts, bpm)
 	var song_state := {
 		"schemaId": "aerobeat.song.v1",
 		"schemaVersion": 1,
 		"recordVersion": 1,
 		"songId": "ab-song-%s" % song_token,
 		"songName": String(info_dat.get("_songName", info_dat.get("songName", manifest.get("map_name", "Imported BeatSaver Song")))).strip_edges(),
+		"durationSec": duration_sec,
 		"audio": {"filePath": authored_audio_relative_path},
 		"timing": {
 			"anchorMs": 0,
@@ -829,6 +831,19 @@ func _info_number(data: Dictionary, keys: Array, fallback: float) -> float:
 		if data.has(key):
 			return _variant_to_float(data.get(key), fallback)
 	return fallback
+
+func _estimate_song_duration_sec_from_charts(charts: Array, bpm: float) -> int:
+	var max_beat := 0.0
+	for chart_variant in charts:
+		var chart: Dictionary = Dictionary(chart_variant)
+		for beat_variant in Array(chart.get("beats", [])):
+			var beat: Dictionary = Dictionary(beat_variant)
+			var beat_end := _variant_to_float(beat.get("end", beat.get("start", 0.0)))
+			max_beat = max(max_beat, beat_end)
+	if bpm <= 0.0:
+		return max(int(ceili(max_beat)), 1)
+	var duration_sec := max_beat * (60.0 / bpm)
+	return max(int(ceili(duration_sec)), 1)
 
 func _variant_to_float(value: Variant, fallback: float = 0.0) -> float:
 	if value is int or value is float:

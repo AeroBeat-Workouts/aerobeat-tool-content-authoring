@@ -1,6 +1,7 @@
 extends RefCounted
 
 const AeroContentAuthoring = preload("res://addons/aerobeat-tool-content-authoring/src/AeroContentAuthoring.gd")
+const ValidateChartService = preload("res://addons/aerobeat-tool-content-authoring/src/services/validation/validate_chart_service.gd")
 const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
@@ -32,6 +33,7 @@ static func run() -> Dictionary:
 	var flow_types: Array = []
 	for beat_variant in flow_beats:
 		flow_types.append(String(Dictionary(beat_variant).get("type", "")))
+	var flow_chart_validation: Dictionary = ValidateChartService.new().validate_chart_record(flow_chart, "state://charts/flow")
 	var first_note := _find_flow_beat(flow_beats, "note", 1.0)
 	var dot_note := _find_flow_beat(flow_beats, "note", 3.0, "right")
 	var bomb_beat := _find_flow_beat(flow_beats, "bomb", 7.0)
@@ -42,6 +44,9 @@ static func run() -> Dictionary:
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
 		and bool(package_validation.get("valid", false)) \
+		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
+		and bool(flow_chart_validation.get("valid", false)) \
+		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and chart_ids == ["ab-chart-synthetic-beatsaver-demo-boxing-hard", "ab-chart-synthetic-beatsaver-demo-flow-hard"] \
 		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "straight_left", "hook_left", "hook_left", "straight_right", "uppercut_left"] \
 		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "arc", "note", "burst"] \
@@ -73,6 +78,7 @@ static func run() -> Dictionary:
 			"validation": validation,
 			"saveResult": save_result,
 			"packageValidation": package_validation,
+			"flowChartValidation": flow_chart_validation,
 			"chartIds": chart_ids,
 			"boxingTypes": boxing_types,
 			"flowBeats": flow_beats,

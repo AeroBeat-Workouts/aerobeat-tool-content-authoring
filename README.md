@@ -70,7 +70,7 @@ A first staged BeatSaver -> AeroBeat converter foundation now lives in `src/serv
 - durable package-contract evolution remains owned by `aerobeat-content-core`
 - this repo owns the runtime/tool workflow that ingests a staged source package and produces authored package state plus `.artifacts/` provenance
 
-Current Flow posture: the shared Flow v1 authored contract is now frozen in `aerobeat-content-core`, and this repo emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects while still preserving raw source plus conversion traces under `.artifacts/beatsaver/conversion/report.json`.
+Current Flow posture: the shared Flow v1 authored contract is now frozen in `aerobeat-content-core`, this repo emits canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` objects, and Flow chart validation now delegates directly to the shared `aerobeat-content-core` chart contract while still preserving raw source plus conversion traces under `.artifacts/beatsaver/conversion/report.json`.
 
 See `src/docs/beatsaver-converter-foundation.md` for the foundation slice details.
 
@@ -83,7 +83,7 @@ The singleton direction for the next slices is:
 - create/reset runtime authoring state
 - load an authored song package from an **unzipped folder**
 - save authored output as an **unzipped folder plus sibling zip archive**
-- delegate package validation truth toward `aerobeat-content-core` where the validator is runtime-loadable
+- delegate package validation truth toward `aerobeat-content-core`, including direct Flow chart-contract validation against the shared chart validator
 - keep package contract rules centered on canonical authored data
 
 Important implementation notes currently locked for this repo's authored-song-package lane:
@@ -95,10 +95,9 @@ Important implementation notes currently locked for this repo's authored-song-pa
 
 ## Current open seam
 
-Task 3 removes the repo's legacy singleton drift and establishes a song-package-folder workflow surface, but two follow-up seams remain:
+Task 3 removes the repo's legacy singleton drift and establishes a song-package-folder workflow surface, but one notable follow-up seam remains:
 
 - `src/services/authoring/chart_authoring_service.gd` still contains quarantined legacy manifest/routine behavior
-- `aerobeat-content-core` validation is only directly delegatable once that repo exposes a runtime-loadable addon/root-safe validator script
 
 ## Local development
 
