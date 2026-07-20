@@ -1,0 +1,66 @@
+{
+  "provider": "beatsaver",
+  "map_id": "1",
+  "map_key": "1",
+  "map_name": "succducc - me & u",
+  "version_hash": "fda568fc27c20d21f8dc6f3709b49b5cc96723be",
+  "version_download_url": "https://r2cdn.beatsaver.com/fda568fc27c20d21f8dc6f3709b49b5cc96723be.zip",
+  "archive_path": "1-fda568fc27c2-real.zip",
+  "archive_file_name": "1-fda568fc27c2-real.zip",
+  "archive_entries": [
+    {
+      "basename": "cover.jpg",
+      "extension": "jpg",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "cover.jpg",
+      "size_bytes": 7166
+    },
+    {
+      "basename": "Hard.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "Hard.dat",
+      "size_bytes": 30722
+    },
+    {
+      "basename": "me & u.egg",
+      "extension": "egg",
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "me & u.egg",
+      "size_bytes": 2465472
+    },
+    {
+      "basename": "info.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": true,
+      "path": "info.dat",
+      "size_bytes": 1114
+    }
+  ],
+  "archive_entry_count": 4,
+  "audio_files": [
+    {
+      "path": "me & u.egg",
+      "extension": "egg",
+      "referenced_by_info_dat": true
+    }
+  ],
+  "difficulty_files": [],
+  "schema": "legacy-v2-real-world"
+}

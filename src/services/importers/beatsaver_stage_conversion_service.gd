@@ -52,7 +52,8 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var package_token := _slug(String(manifest.get("map_key", manifest.get("map_id", "beatsaver-stage"))))
 	if package_token.is_empty():
 		package_token = "beatsaver-stage"
-	var song_token := _slug(String(info_dat.get("_songName", info_dat.get("songName", manifest.get("map_name", package_token)))))
+	var song_name := _resolve_song_name(manifest, info_dat)
+	var song_token := _slug(song_name if not song_name.is_empty() else package_token)
 	if song_token.is_empty():
 		song_token = package_token
 	var extraction_root := _prepare_conversion_workspace(package_token)
@@ -146,14 +147,16 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		draft_text_sources[".artifacts/beatsaver/source/%s" % difficulty_path] = raw_text + ("\n" if not raw_text.ends_with("\n") else "")
 	archive.close()
 
-	var bpm := _info_number(info_dat, ["_beatsPerMinute", "beatsPerMinute"], 120.0)
+	var bpm := _resolve_bpm(info_dat, manifest)
 	var duration_sec := _estimate_song_duration_sec_from_charts(charts, bpm)
+	if song_name.is_empty():
+		song_name = "Imported BeatSaver Song"
 	var song_state := {
 		"schemaId": "aerobeat.song.v1",
 		"schemaVersion": 1,
 		"recordVersion": 1,
 		"songId": "ab-song-%s" % song_token,
-		"songName": String(info_dat.get("_songName", info_dat.get("songName", manifest.get("map_name", "Imported BeatSaver Song")))).strip_edges(),
+		"songName": song_name,
 		"durationSec": duration_sec,
 		"audio": {"filePath": authored_audio_relative_path},
 		"timing": {
@@ -851,10 +854,34 @@ func _resolve_info_dat_path(manifest: Dictionary, archive: ZIPReader) -> String:
 			return path
 	return ""
 
+func _resolve_song_name(manifest: Dictionary, info_dat: Dictionary) -> String:
+	var v2_name := String(info_dat.get("_songName", info_dat.get("songName", ""))).strip_edges()
+	if not v2_name.is_empty():
+		return v2_name
+	var song_info: Dictionary = Dictionary(info_dat.get("song", {}))
+	var v4_name := String(song_info.get("title", manifest.get("map_name", ""))).strip_edges()
+	if not v4_name.is_empty():
+		return v4_name
+	return String(manifest.get("map_name", "")).strip_edges()
+
+func _resolve_bpm(info_dat: Dictionary, manifest: Dictionary) -> float:
+	var legacy_bpm := _info_number(info_dat, ["_beatsPerMinute", "beatsPerMinute"], -1.0)
+	if legacy_bpm > 0.0:
+		return legacy_bpm
+	var audio_info: Dictionary = Dictionary(info_dat.get("audio", {}))
+	var v4_bpm := _info_number(audio_info, ["bpm"], -1.0)
+	if v4_bpm > 0.0:
+		return v4_bpm
+	return _variant_to_float(manifest.get("bpm", 120.0), 120.0)
+
 func _resolve_song_filename(manifest: Dictionary, info_dat: Dictionary) -> String:
 	var info_song := String(info_dat.get("_songFilename", info_dat.get("songFilename", manifest.get("song_filename", "")))).strip_edges()
 	if not info_song.is_empty():
 		return info_song
+	var audio_info: Dictionary = Dictionary(info_dat.get("audio", {}))
+	var v4_song := String(audio_info.get("songFilename", "")).strip_edges()
+	if not v4_song.is_empty():
+		return v4_song
 	for file_variant in Array(manifest.get("audio_files", [])):
 		var file_entry: Dictionary = Dictionary(file_variant)
 		var path := String(file_entry.get("path", "")).strip_edges()
@@ -885,6 +912,18 @@ func _select_standard_difficulties(manifest: Dictionary, info_dat: Dictionary) -
 				"difficulty": String(difficulty_entry.get("_difficulty", difficulty_entry.get("difficulty", "Normal"))),
 				"difficulty_rank": int(difficulty_entry.get("_difficultyRank", difficulty_entry.get("difficultyRank", 0))),
 				"path": String(difficulty_entry.get("_beatmapFilename", difficulty_entry.get("beatmapFilename", ""))),
+			})
+	if selected.is_empty():
+		for difficulty_variant in Array(info_dat.get("difficultyBeatmaps", [])):
+			var difficulty_entry: Dictionary = Dictionary(difficulty_variant)
+			if String(difficulty_entry.get("characteristic", "")).strip_edges() != "Standard":
+				continue
+			selected.append({
+				"characteristic": "Standard",
+				"difficulty": String(difficulty_entry.get("difficulty", "Normal")),
+				"difficulty_rank": _difficulty_rank_from_label(String(difficulty_entry.get("difficulty", "Normal"))),
+				"path": String(difficulty_entry.get("beatmapDataFilename", difficulty_entry.get("path", ""))),
+				"lightshowPath": String(difficulty_entry.get("lightshowDataFilename", "")),
 			})
 	selected.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return int(a.get("difficulty_rank", 0)) < int(b.get("difficulty_rank", 0))
@@ -956,6 +995,21 @@ func _normalize_difficulty_label(value: String) -> String:
 			return "ExpertPlus"
 		_:
 			return value
+
+func _difficulty_rank_from_label(value: String) -> int:
+	match _normalize_difficulty_label(value):
+		"Easy":
+			return 1
+		"Normal":
+			return 3
+		"Hard":
+			return 5
+		"Expert":
+			return 7
+		"ExpertPlus":
+			return 9
+		_:
+			return 0
 
 func _beatmap_version(beatmap: Dictionary) -> String:
 	return String(beatmap.get("version", beatmap.get("_version", ""))).strip_edges()

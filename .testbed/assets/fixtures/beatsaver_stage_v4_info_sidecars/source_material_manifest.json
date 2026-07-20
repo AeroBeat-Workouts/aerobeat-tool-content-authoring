@@ -1,0 +1,126 @@
+{
+  "provider": "beatsaver",
+  "map_id": "synthetic-v4-info",
+  "map_key": "synthetic-v4-info",
+  "map_name": "Synthetic BeatSaver V4 Info Demo",
+  "version_hash": "synthetic-hash-v4-info-001",
+  "version_download_url": "https://example.invalid/synthetic-v4-info-sidecars.zip",
+  "archive_path": "demo-beatsaver-stage-v4-info-sidecars.zip",
+  "archive_file_name": "demo-beatsaver-stage-v4-info-sidecars.zip",
+  "archive_entries": [
+    {
+      "basename": "Info.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": true,
+      "path": "Info.dat",
+      "size_bytes": 1378
+    },
+    {
+      "basename": "HardStandard.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "HardStandard.dat",
+      "size_bytes": 916
+    },
+    {
+      "basename": "Lawless.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "Lawless.dat",
+      "size_bytes": 221
+    },
+    {
+      "basename": "Lightshow.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "Lightshow.dat",
+      "size_bytes": 72
+    },
+    {
+      "basename": "LightshowLawless.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "LightshowLawless.dat",
+      "size_bytes": 72
+    },
+    {
+      "basename": "BPMInfo.dat",
+      "extension": "dat",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "BPMInfo.dat",
+      "size_bytes": 86
+    },
+    {
+      "basename": "main-track.egg",
+      "extension": "egg",
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "main-track.egg",
+      "size_bytes": 19
+    },
+    {
+      "basename": "preview.ogg",
+      "extension": "ogg",
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "preview.ogg",
+      "size_bytes": 22
+    },
+    {
+      "basename": "cover.png",
+      "extension": "png",
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "is_directory": false,
+      "is_info_dat": false,
+      "path": "cover.png",
+      "size_bytes": 7
+    }
+  ],
+  "archive_entry_count": 9,
+  "audio_files": [
+    {
+      "path": "main-track.egg",
+      "extension": "egg",
+      "referenced_by_info_dat": true
+    },
+    {
+      "path": "preview.ogg",
+      "extension": "ogg",
+      "referenced_by_info_dat": false
+    }
+  ],
+  "difficulty_files": [],
+  "schema": "v4-info-audio-sidecars"
+}
