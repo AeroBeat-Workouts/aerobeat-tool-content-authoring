@@ -481,18 +481,38 @@ func _collapse_same_hand_clusters(notes: Array) -> Array:
 	var normalized: Array = []
 	for hand_variant in by_hand.keys():
 		var hand_notes: Array = Array(by_hand[hand_variant])
+		var dominant_row := _dominant_same_hand_cluster_row(hand_notes)
 		hand_notes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 			var a_row := _row_from_cell(int(a.get("cell", 0)))
 			var b_row := _row_from_cell(int(b.get("cell", 0)))
+			if a_row == dominant_row and b_row != dominant_row:
+				return true
+			if b_row == dominant_row and a_row != dominant_row:
+				return false
 			if a_row == b_row:
 				return int(a.get("cell", 0)) < int(b.get("cell", 0))
-			return a_row > b_row
+			return a_row < b_row
 		)
 		normalized.append(Dictionary(hand_notes[0]).duplicate(true))
 	normalized.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.get("hand", "left")) < String(b.get("hand", "left"))
 	)
 	return normalized
+
+func _dominant_same_hand_cluster_row(notes: Array) -> int:
+	var row_counts := {0: 0, 1: 0, 2: 0}
+	for note_variant in notes:
+		var note: Dictionary = Dictionary(note_variant)
+		var row := _row_from_cell(int(note.get("cell", 0)))
+		row_counts[row] = int(row_counts.get(row, 0)) + 1
+	var best_row := 2
+	var best_count := -1
+	for row in [0, 1, 2]:
+		var count := int(row_counts.get(row, 0))
+		if count > best_count:
+			best_count = count
+			best_row = row
+	return best_row
 
 func _is_guard_pair(notes: Array) -> bool:
 	if notes.size() != 2:

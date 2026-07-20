@@ -34,7 +34,7 @@ static func run() -> Dictionary:
 		and bool(save_result.get("ok", false)) \
 		and bool(package_validation.get("valid", false)) \
 		and chart_ids == ["ab-chart-synthetic-beatsaver-demo-boxing-hard", "ab-chart-synthetic-beatsaver-demo-flow-hard"] \
-		and boxing_types == ["straight_left", "guard", "uppercut_right", "hook_left", "squat", "hook_left", "straight_right", "uppercut_left"] \
+		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "hook_left", "straight_right", "uppercut_left"] \
 		and flow_beats.size() == 1 \
 		and String(flow_beats[0].get("type", "")) == "burst" \
 		and report_text.contains("artifact_only_contract_gap") \
