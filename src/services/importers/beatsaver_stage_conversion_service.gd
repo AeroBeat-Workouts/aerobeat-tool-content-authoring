@@ -538,7 +538,7 @@ func _flatten_authored_candidates(candidates: Dictionary) -> Array:
 
 func _boxing_type_for_row_and_hand(cell: int, hand: String) -> String:
 	var row := _row_from_cell(cell)
-	if row >= 2:
+	if row <= 0:
 		return "uppercut_%s" % hand
 	if row == 1:
 		return "straight_%s" % hand
