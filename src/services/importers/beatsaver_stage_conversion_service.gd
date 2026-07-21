@@ -23,6 +23,81 @@ const SUPPORTED_COVER_IMAGE_EXTENSIONS := {
 	".webp": true,
 }
 
+func inspect_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
+	var absolute_stage_dir := ProjectSettings.globalize_path(stage_dir).simplify_path()
+	var manifest_path := absolute_stage_dir.path_join(STAGE_MANIFEST_NAME)
+	if not FileAccess.file_exists(manifest_path):
+		return _error("stage_manifest_missing", "Missing staged BeatSaver manifest: %s" % manifest_path)
+	var manifest_parse := _read_json_file(manifest_path)
+	if not bool(manifest_parse.get("ok", false)):
+		return _error("stage_manifest_invalid", "Could not parse staged BeatSaver manifest.", {"manifestPath": manifest_path, "parse": manifest_parse})
+	var manifest: Dictionary = Dictionary(manifest_parse.get("data", {}))
+	var archive_path := _resolve_archive_path(absolute_stage_dir, manifest)
+	if archive_path.is_empty() or not FileAccess.file_exists(archive_path):
+		return _error("archive_missing", "Could not resolve staged BeatSaver archive.", {"archivePath": archive_path, "stageDir": absolute_stage_dir})
+	var archive := ZIPReader.new()
+	var open_error := archive.open(archive_path)
+	if open_error != OK:
+		return _error("archive_open_failed", "Failed to open staged BeatSaver archive.", {"archivePath": archive_path, "error": error_string(open_error)})
+
+	var info_dat_path := _resolve_info_dat_path(manifest, archive)
+	if info_dat_path.is_empty():
+		archive.close()
+		return _error("info_dat_missing", "The staged BeatSaver archive does not contain Info.dat.")
+	var info_parse := _read_archive_json(archive, info_dat_path)
+	if not bool(info_parse.get("ok", false)):
+		archive.close()
+		return _error("info_dat_invalid", "Could not parse Info.dat from staged BeatSaver archive.", {"path": info_dat_path, "parse": info_parse})
+	var info_dat: Dictionary = Dictionary(info_parse.get("data", {}))
+
+	var standard_difficulties := _select_standard_difficulties(manifest, info_dat)
+	if standard_difficulties.is_empty():
+		archive.close()
+		return _error("standard_difficulty_missing", "No Standard BeatSaver difficulty entries were found in the staged source.")
+
+	var normalized_difficulties: Array = []
+	for difficulty_entry_variant in standard_difficulties:
+		var difficulty_entry: Dictionary = Dictionary(difficulty_entry_variant)
+		var difficulty_path := String(difficulty_entry.get("path", "")).strip_edges()
+		if difficulty_path.is_empty():
+			continue
+		var beatmap_parse := _read_archive_json(archive, difficulty_path)
+		if not bool(beatmap_parse.get("ok", false)):
+			archive.close()
+			return _error("difficulty_parse_failed", "Could not parse BeatSaver difficulty file.", {"path": difficulty_path, "parse": beatmap_parse})
+		var beatmap: Dictionary = Dictionary(beatmap_parse.get("data", {}))
+		var difficulty_label := _normalize_difficulty_label(String(difficulty_entry.get("difficulty", "Normal")))
+		normalized_difficulties.append({
+			"characteristic": String(difficulty_entry.get("characteristic", "Standard")).strip_edges(),
+			"difficulty": difficulty_label,
+			"difficultyRank": int(difficulty_entry.get("difficulty_rank", difficulty_entry.get("difficultyRank", _difficulty_rank_from_label(difficulty_label)))),
+			"path": difficulty_path,
+			"lightshowPath": String(difficulty_entry.get("lightshowPath", difficulty_entry.get("lightshow_path", ""))).strip_edges(),
+			"beatmapVersion": _beatmap_version(beatmap),
+			"beatmapVersionFamily": _beatmap_version_family(_beatmap_version(beatmap)),
+		})
+	archive.close()
+
+	return {
+		"ok": true,
+		"stage": {
+			"stageDir": absolute_stage_dir,
+			"manifestPath": manifest_path,
+			"archivePath": archive_path,
+			"infoDatPath": info_dat_path,
+		},
+		"metadata": {
+			"songName": _resolve_song_name(manifest, info_dat),
+			"bpm": _resolve_bpm(info_dat, manifest),
+			"songFilename": _resolve_song_filename(manifest, info_dat),
+			"previewFilename": _resolve_preview_filename(manifest, info_dat),
+			"previewUrl": _resolve_preview_url(manifest),
+			"previewTiming": _resolve_preview_timing(manifest, info_dat),
+			"coverImageFilename": _resolve_cover_image_filename(manifest, info_dat),
+		},
+		"difficulties": normalized_difficulties,
+	}
+
 func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var absolute_stage_dir := ProjectSettings.globalize_path(stage_dir).simplify_path()
 	var manifest_path := absolute_stage_dir.path_join(STAGE_MANIFEST_NAME)
@@ -163,9 +238,13 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			return _error("difficulty_parse_failed", "Could not parse BeatSaver difficulty file.", {"path": difficulty_path, "parse": beatmap_parse})
 		var beatmap: Dictionary = Dictionary(beatmap_parse.get("data", {}))
 		var version_text := _beatmap_version(beatmap)
-		if not version_text.begins_with("3") and not version_text.begins_with("4"):
+		var version_family := _beatmap_version_family(version_text)
+		if version_family == "legacy_v1" or version_family == "legacy_v2":
 			archive.close()
-			return _error("unsupported_beatmap_version", "Only BeatSaver v3/v4 Standard maps are supported by this first converter foundation.", {"path": difficulty_path, "version": version_text})
+			return _error("legacy_beatmap_object_normalization_pending", "Legacy BeatSaver Standard metadata and difficulty selection now normalize, but legacy v1/v2 beat-object normalization is not implemented yet.", {"path": difficulty_path, "version": version_text, "versionFamily": version_family})
+		if version_family != "v3" and version_family != "v4":
+			archive.close()
+			return _error("unsupported_beatmap_version", "Only BeatSaver v3/v4 beat-object conversion and legacy v1/v2 metadata+difficulty normalization are supported by this converter foundation.", {"path": difficulty_path, "version": version_text, "versionFamily": version_family})
 
 		var difficulty_label := _normalize_difficulty_label(String(difficulty_entry.get("difficulty", "Normal")))
 		var source_summary := _normalize_source_summary(beatmap)
@@ -1076,10 +1155,7 @@ func _select_standard_difficulties(manifest: Dictionary, info_dat: Dictionary) -
 		if String(difficulty.get("characteristic", "")).strip_edges() == "Standard":
 			selected.append(difficulty.duplicate(true))
 	if not selected.is_empty():
-		selected.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-			return int(a.get("difficulty_rank", 0)) < int(b.get("difficulty_rank", 0))
-		)
-		return selected
+		return _normalized_standard_difficulties(selected)
 	for set_variant in Array(info_dat.get("_difficultyBeatmapSets", info_dat.get("difficultyBeatmapSets", []))):
 		var set_entry: Dictionary = Dictionary(set_variant)
 		var characteristic := String(set_entry.get("_beatmapCharacteristicName", set_entry.get("beatmapCharacteristicName", ""))).strip_edges()
@@ -1105,10 +1181,28 @@ func _select_standard_difficulties(manifest: Dictionary, info_dat: Dictionary) -
 				"path": String(difficulty_entry.get("beatmapDataFilename", difficulty_entry.get("path", ""))),
 				"lightshowPath": String(difficulty_entry.get("lightshowDataFilename", "")),
 			})
-	selected.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return int(a.get("difficulty_rank", 0)) < int(b.get("difficulty_rank", 0))
+	return _normalized_standard_difficulties(selected)
+
+func _normalized_standard_difficulties(difficulties: Array) -> Array:
+	var normalized: Array = []
+	for difficulty_variant in difficulties:
+		var difficulty: Dictionary = Dictionary(difficulty_variant).duplicate(true)
+		var label := _normalize_difficulty_label(String(difficulty.get("difficulty", "Normal")))
+		var rank := int(difficulty.get("difficulty_rank", difficulty.get("difficultyRank", 0)))
+		if rank <= 0:
+			rank = _difficulty_rank_from_label(label)
+		difficulty["difficulty"] = label
+		difficulty["difficulty_rank"] = rank
+		difficulty["difficultyRank"] = rank
+		normalized.append(difficulty)
+	normalized.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_rank := int(a.get("difficulty_rank", a.get("difficultyRank", 0)))
+		var b_rank := int(b.get("difficulty_rank", b.get("difficultyRank", 0)))
+		if a_rank == b_rank:
+			return String(a.get("path", "")) < String(b.get("path", ""))
+		return a_rank < b_rank
 	)
-	return selected
+	return normalized
 
 func _read_json_file(path: String) -> Dictionary:
 	var text := FileAccess.get_file_as_string(path)
@@ -1193,6 +1287,18 @@ func _difficulty_rank_from_label(value: String) -> int:
 
 func _beatmap_version(beatmap: Dictionary) -> String:
 	return String(beatmap.get("version", beatmap.get("_version", ""))).strip_edges()
+
+func _beatmap_version_family(version_text: String) -> String:
+	var normalized := version_text.strip_edges().to_lower()
+	if normalized.begins_with("4"):
+		return "v4"
+	if normalized.begins_with("3"):
+		return "v3"
+	if normalized.begins_with("2"):
+		return "legacy_v2"
+	if normalized.begins_with("1"):
+		return "legacy_v1"
+	return "unknown"
 
 func _array_value(data: Dictionary, keys: Array) -> Array:
 	for key_variant in keys:

@@ -1,0 +1,91 @@
+{
+  "provider": "beatsaver",
+  "map_id": "LEGACYV1",
+  "map_key": "LEGACYV1",
+  "map_name": "Synthetic Legacy V1 Demo",
+  "version_hash": "synthetic-legacy-v1",
+  "version_download_url": "https://example.invalid/synthetic-legacy-v1.zip",
+  "archive_path": "synthetic-legacy-v1-stage.zip",
+  "archive_file_name": "synthetic-legacy-v1-stage.zip",
+  "info_dat_path": "Info.dat",
+  "song_filename": "legacy-v1-demo.ogg",
+  "cover_image_filename": "legacy-cover.png",
+  "audio_files": [
+    {
+      "path": "legacy-v1-demo.ogg",
+      "extension": "ogg",
+      "referenced_by_info_dat": true
+    }
+  ],
+  "difficulty_files": [],
+  "archive_entries": [
+    {
+      "path": "Info.dat",
+      "basename": "Info.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": true,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 551
+    },
+    {
+      "path": "Hard.dat",
+      "basename": "Hard.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 68
+    },
+    {
+      "path": "ExpertPlus.dat",
+      "basename": "ExpertPlus.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 68
+    },
+    {
+      "path": "OneSaberNormal.dat",
+      "basename": "OneSaberNormal.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 68
+    },
+    {
+      "path": "legacy-v1-demo.ogg",
+      "basename": "legacy-v1-demo.ogg",
+      "extension": "ogg",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 13
+    },
+    {
+      "path": "legacy-cover.png",
+      "basename": "legacy-cover.png",
+      "extension": "png",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "size_bytes": 17
+    }
+  ],
+  "archive_entry_count": 6,
+  "schema": "legacy-v1-synthetic"
+}

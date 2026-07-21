@@ -190,6 +190,11 @@ func get_beatsaver_stage_conversion_service() -> BeatSaverStageConversionService
 		_service_registry = build_service_registry()
 	return _service_registry.get("beatsaver_stage_conversion") as BeatSaverStageConversionService
 
+func inspect_beatsaver_stage_source(stage_dir: String, options: Dictionary = {}) -> Dictionary:
+	if not _is_initialized:
+		initialize()
+	return get_beatsaver_stage_conversion_service().inspect_stage(stage_dir, options)
+
 func convert_beatsaver_stage_to_current_package(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	if not _is_initialized:
 		initialize()
