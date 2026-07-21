@@ -2,8 +2,8 @@
 
 **Date:** 2026-07-20  
 **Status:** In Progress  
-**Last Updated:** 2026-07-20 19:47 EDT  
-**Blocked Reason:** Session wrap-up stop point: next session should execute the approved legacy compatibility order and also verify whether the `aerobeat-input-camera-tracking` regression seam was worked on.  
+**Last Updated:** 2026-07-20 19:54 EDT  
+**Blocked Reason:** None  
 **Agent:** `pico`
 
 ---
@@ -426,6 +426,38 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 **Status:** ✅ Complete  
 
 **Results:** Research/planning completed on bead `aerobeat-tool-content-authoring-433` and left a concrete handoff in the bead notes. Main conclusions: lowercase `info.dat` is already effectively handled via case-tolerant archive lookup and is not a major new architecture seam; `.jpg/.jpeg` cover-art import is a small next implementation slice; preview-audio preservation/import is a real open seam that may need a small `aerobeat-content-core` contract decision first; legacy `.egg` -> `.ogg` conversion should likely live in a new `aerobeat-vendor-ffmpeg` repo with pinned ffmpeg assets and a singleton wrapper API; and legacy v1/v2 support should be treated as an explicit legacy normalization adapter path rather than assumed to fall out of current v3/v4 handling. Recommended implementation order from the planning pass: (1) cover-art import from staged archives, (2) preview-audio preservation/import, (3) legacy v2/v1 metadata+difficulty normalization, (4) legacy v2/v1 beat-object normalization into the current internal source summary, then (5) the `aerobeat-vendor-ffmpeg` seam once exact legacy audio requirements are proven. References validated: `REF-02`, `REF-04`, `REF-05`.
+
+---
+
+### Task 10: Implement BeatSaver cover-art import (.jpg/.jpeg)
+
+**Bead ID:** `aerobeat-tool-content-authoring-5j2`  
+**SubAgent:** `primary` (for `coder`)  
+**Role:** `coder`  
+**References:** `REF-02`, `REF-04`, `REF-05`  
+**Prompt:** In `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`, implement the next approved BeatSaver compatibility slice against bead `aerobeat-tool-content-authoring-5j2`. Claim it on start with `bd update aerobeat-tool-content-authoring-5j2 --status in_progress --json`. Add truthful BeatSaver staged-archive cover-art import support for `.jpg` and `.jpeg` assets without widening support dishonestly. Preserve existing repo boundaries, keep provenance/debug artifacts truthful, update fixtures/tests/docs as needed, and verify the imported cover art is saved into canonical AeroBeat package output the same way existing supported cover-art paths are handled. Run the strongest repo-local validation, commit, and push to `main` before handoff. Do not close the bead; report exact files changed, validation evidence, and any remaining compatibility caveats.  
+
+**Folders Created/Deleted/Modified:**
+- `.testbed/assets/fixtures/`
+- `.testbed/scripts/tests/`
+- `src/docs/`
+- `src/services/`
+
+**Files Created/Deleted/Modified:**
+- `src/services/importers/beatsaver_stage_conversion_service.gd`
+- `.testbed/scripts/tests/run_tool_tests.gd`
+- `.testbed/scripts/tests/test_beatsaver_stage_conversion_service.gd`
+- `.testbed/scripts/tests/test_beatsaver_stage_cover_image_import_service.gd`
+- `.testbed/assets/fixtures/beatsaver_stage_cover_jpg/demo-beatsaver-stage-cover-jpg.zip`
+- `.testbed/assets/fixtures/beatsaver_stage_cover_jpg/source_material_manifest.json`
+- `.testbed/assets/fixtures/beatsaver_stage_cover_jpeg/demo-beatsaver-stage-cover-jpeg.zip`
+- `.testbed/assets/fixtures/beatsaver_stage_cover_jpeg/source_material_manifest.json`
+- `README.md`
+- `src/docs/beatsaver-converter-foundation.md`
+
+**Status:** ✅ Complete  
+
+**Results:** Coder implemented truthful staged BeatSaver cover-art import into canonical AeroBeat package output by teaching `BeatSaverStageConversionService` to resolve staged cover filenames from manifest/`Info.dat`, extract supported image assets from the ZIP, and author them as `image_background` environment records plus `media/environments/...` package assets while preserving existing `.artifacts/beatsaver/...` provenance output. The slice stayed bounded: no preview-audio expansion, no legacy beatmap widening, and no new external repo seams. Dedicated staged `.jpg` and `.jpeg` fixtures/tests were added, the existing synthetic `.png` conversion test now verifies saved cover output too, and docs were updated to state the support truth. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` (still with the known Godot headless shutdown leak warnings on exit, but exit status `0`). Commit/push details will be appended once the coder handoff commit lands. References validated: `REF-02`, `REF-04`, `REF-05`.
 
 ---
 

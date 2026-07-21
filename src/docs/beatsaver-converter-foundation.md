@@ -9,10 +9,12 @@ Current scope:
 - emit canonical song-package-shaped authored output in repo-local runtime state
 - convert Boxing v1 source semantics into canonical Boxing chart beats
 - convert Flow v1 Standard-map semantics into canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` beats
+- import supported staged cover-art assets into canonical package `image_background` environment output, including explicit `.jpg` / `.jpeg` coverage
 - preserve source/provenance/debug material under package-local `.artifacts/beatsaver/`
 
 Coverage currently proved in-repo:
-- synthetic staged v3 conversion fixture
+- synthetic staged v3 conversion fixture with saved `cover.png` package output checks
+- synthetic staged `.jpg` / `.jpeg` cover-art import fixtures with saved folder + zip package checks
 - synthetic staged v4 beat-object normalization fixture
 - synthetic actual-v4-info fixture with nested `audio.songFilename`, separate `songPreviewFilename`, `BPMInfo.dat`, `lightshowDataFilename`, and ignored non-Standard sidecar/custom-data permutations
 - real-world staged Starlight `524b6` v3 probe through the shared-contract validation path

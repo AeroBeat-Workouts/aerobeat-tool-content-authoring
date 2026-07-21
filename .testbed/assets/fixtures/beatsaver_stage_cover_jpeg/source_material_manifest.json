@@ -1,0 +1,103 @@
+{
+  "provider": "beatsaver",
+  "map_id": "SYNTHJPEG",
+  "map_key": "SYNTHJPEG",
+  "map_name": "Synthetic BeatSaver JPEG Cover Demo",
+  "version_hash": "synthetic-synthjpeg-hash",
+  "version_key": "SYNTHJPEG-V1",
+  "version_download_url": "https://example.invalid/demo-beatsaver-stage-cover-jpeg.zip",
+  "stage_root_path": ".",
+  "stage_directory_path": ".",
+  "archive_path": "demo-beatsaver-stage-cover-jpeg.zip",
+  "archive_file_name": "demo-beatsaver-stage-cover-jpeg.zip",
+  "archive_size_bytes": 1043299,
+  "archive_entry_count": 4,
+  "archive_entries": [
+    {
+      "path": "Info.dat",
+      "basename": "Info.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": true,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 463
+    },
+    {
+      "path": "HardStandard.dat",
+      "basename": "HardStandard.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 702
+    },
+    {
+      "path": "demo-song.ogg",
+      "basename": "demo-song.ogg",
+      "extension": "ogg",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 1049150
+    },
+    {
+      "path": "cover.jpeg",
+      "basename": "cover.jpeg",
+      "extension": "jpeg",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "size_bytes": 342
+    }
+  ],
+  "info_dat_path": "Info.dat",
+  "song_filename": "demo-song.ogg",
+  "cover_image_filename": "cover.jpeg",
+  "audio_files": [
+    {
+      "path": "demo-song.ogg",
+      "referenced_by_info_dat": true,
+      "extension": "ogg"
+    }
+  ],
+  "difficulty_files": [
+    {
+      "path": "HardStandard.dat",
+      "difficulty": "Hard",
+      "difficulty_rank": 5,
+      "characteristic": "Standard",
+      "note_jump_movement_speed": 16.0,
+      "note_jump_start_beat_offset": 0.0,
+      "referenced_by_info_dat": true
+    }
+  ],
+  "beatmap_characteristics": [
+    {
+      "characteristic": "Standard",
+      "difficulty_count": 1,
+      "difficulties": [
+        {
+          "characteristic": "Standard",
+          "difficulty": "Hard",
+          "difficulty_rank": 5,
+          "path": "HardStandard.dat",
+          "note_jump_movement_speed": 16.0,
+          "note_jump_start_beat_offset": 0.0
+        }
+      ]
+    }
+  ],
+  "manifest_path": "source_material_manifest.json",
+  "raw_archive_report": {
+    "ok": true,
+    "synthetic": true
+  }
+}

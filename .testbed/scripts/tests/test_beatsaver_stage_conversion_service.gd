@@ -24,6 +24,9 @@ static func run() -> Dictionary:
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
 	var charts: Array = Array(state.get("charts", []))
+	var environments: Array = Array(state.get("environments", []))
+	var cover_environment: Dictionary = Dictionary(environments[0]) if not environments.is_empty() else {}
+	var saved_cover_path := output_dir.path_join("media/environments/synthetic-beatsaver-demo-cover.png")
 	var boxing_chart := _find_chart(charts, "boxing")
 	var flow_chart := _find_chart(charts, "flow")
 	var boxing_types: Array = []
@@ -48,6 +51,11 @@ static func run() -> Dictionary:
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and chart_ids == ["ab-chart-synthetic-beatsaver-demo-boxing-hard", "ab-chart-synthetic-beatsaver-demo-flow-hard"] \
+		and environments.size() == 1 \
+		and String(cover_environment.get("environmentId", "")) == "ab-environment-synthetic-beatsaver-demo-cover" \
+		and String(cover_environment.get("type", "")) == "image_background" \
+		and String(cover_environment.get("resourcePath", "")) == "media/environments/synthetic-beatsaver-demo-cover.png" \
+		and FileAccess.file_exists(saved_cover_path) \
 		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "straight_left", "hook_left", "hook_left", "straight_right", "uppercut_left"] \
 		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "arc", "note", "burst"] \
 		and float(first_note.get("angleOffset", 0.0)) == 15.5 \

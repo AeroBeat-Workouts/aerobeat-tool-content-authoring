@@ -16,6 +16,12 @@ const CENTER_GUARD_CELL_SETS := {
 }
 const LEFT_SIDE_CELLS := {0: true, 1: true, 4: true, 5: true, 8: true, 9: true}
 const RIGHT_SIDE_CELLS := {2: true, 3: true, 6: true, 7: true, 10: true, 11: true}
+const SUPPORTED_COVER_IMAGE_EXTENSIONS := {
+	".png": true,
+	".jpg": true,
+	".jpeg": true,
+	".webp": true,
+}
 
 func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var absolute_stage_dir := ProjectSettings.globalize_path(stage_dir).simplify_path()
@@ -70,8 +76,36 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var draft_asset_sources := {}
 	if not extracted_audio_path.is_empty() and FileAccess.file_exists(extracted_audio_path):
 		draft_asset_sources[authored_audio_relative_path] = extracted_audio_path
+
+	var conversion_warnings: Array = []
+	var environments: Array = []
+	var cover_entry_path := _resolve_archive_entry_path(archive, _resolve_cover_image_filename(manifest, info_dat))
+	if not cover_entry_path.is_empty():
+		var cover_extension := ".%s" % cover_entry_path.get_extension().to_lower()
+		if bool(SUPPORTED_COVER_IMAGE_EXTENSIONS.get(cover_extension, false)):
+			var extracted_cover_path := extraction_root.path_join("cover").path_join(cover_entry_path.get_file())
+			_extract_archive_file(archive, cover_entry_path, extracted_cover_path)
+			if FileAccess.file_exists(extracted_cover_path):
+				var authored_cover_relative_path := "media/environments/%s-cover%s" % [song_token, cover_extension]
+				draft_asset_sources[authored_cover_relative_path] = extracted_cover_path
+				environments.append({
+					"schemaId": "aerobeat.environment.v1",
+					"schemaVersion": 1,
+					"recordVersion": 1,
+					"environmentId": "ab-environment-%s-cover" % song_token,
+					"environmentName": "%s Cover" % (song_name if not song_name.is_empty() else _titleize(song_token)),
+					"type": "image_background",
+					"resourcePath": authored_cover_relative_path,
+				})
+		else:
+			conversion_warnings.append({
+				"code": "unsupported_cover_image_extension",
+				"message": "Cover image was found in the staged archive but uses an unsupported extension for authored package import.",
+				"entryPath": cover_entry_path,
+				"extension": cover_extension,
+			})
 	var archive_copy_path := extraction_root.path_join(archive_path.get_file())
-		
+
 	DirAccess.make_dir_recursive_absolute(archive_copy_path.get_base_dir())
 	DirAccess.copy_absolute(archive_path, archive_copy_path)
 	draft_asset_sources[".artifacts/beatsaver/source/%s" % archive_path.get_file()] = archive_copy_path
@@ -81,7 +115,6 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var set_ids: Array = []
 	var boxing_trace: Array = []
 	var flow_trace: Array = []
-	var conversion_warnings: Array = []
 
 	for difficulty_entry_variant in standard_difficulties:
 		var difficulty_entry: Dictionary = Dictionary(difficulty_entry_variant)
@@ -189,7 +222,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			"songs": [song_state],
 			"charts": charts,
 			"sets": sets,
-			"environments": [],
+			"environments": environments,
 			"coachConfig": {},
 			"sqlFiles": [],
 		},
@@ -887,6 +920,34 @@ func _resolve_song_filename(manifest: Dictionary, info_dat: Dictionary) -> Strin
 		var path := String(file_entry.get("path", "")).strip_edges()
 		if not path.is_empty():
 			return path
+	return ""
+
+func _resolve_cover_image_filename(manifest: Dictionary, info_dat: Dictionary) -> String:
+	var info_cover := String(info_dat.get("_coverImageFilename", info_dat.get("coverImageFilename", manifest.get("cover_image_filename", manifest.get("coverImageFilename", ""))))).strip_edges()
+	if not info_cover.is_empty():
+		return info_cover
+	for entry_variant in Array(manifest.get("archive_entries", [])):
+		var entry: Dictionary = Dictionary(entry_variant)
+		if bool(entry.get("is_cover_image_candidate", false)):
+			var path := String(entry.get("path", "")).strip_edges()
+			if not path.is_empty():
+				return path
+	return ""
+
+func _resolve_archive_entry_path(archive: ZIPReader, preferred_path: String) -> String:
+	var normalized_preferred := preferred_path.strip_edges()
+	if normalized_preferred.is_empty():
+		return ""
+	for entry_variant in archive.get_files():
+		var entry_path := String(entry_variant)
+		if entry_path == normalized_preferred:
+			return entry_path
+	for entry_variant in archive.get_files():
+		var entry_path := String(entry_variant)
+		if entry_path.to_lower() == normalized_preferred.to_lower():
+			return entry_path
+		if entry_path.get_file().to_lower() == normalized_preferred.get_file().to_lower():
+			return entry_path
 	return ""
 
 func _select_standard_difficulties(manifest: Dictionary, info_dat: Dictionary) -> Array:
