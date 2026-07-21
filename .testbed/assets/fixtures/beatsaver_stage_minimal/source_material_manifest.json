@@ -99,5 +99,6 @@
   "raw_archive_report": {
     "ok": true,
     "synthetic": true
-  }
+  },
+  "preview_url": "https://cdn.example.invalid/beatsaver/synthetic-preview.mp3"
 }

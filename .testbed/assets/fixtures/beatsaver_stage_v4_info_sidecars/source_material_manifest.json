@@ -122,5 +122,6 @@
     }
   ],
   "difficulty_files": [],
-  "schema": "v4-info-audio-sidecars"
+  "schema": "v4-info-audio-sidecars",
+  "preview_url": "https://cdn.example.invalid/beatsaver/synthetic-v4-info-preview.mp3"
 }

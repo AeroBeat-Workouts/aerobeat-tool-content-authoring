@@ -12,6 +12,7 @@ static func run() -> Dictionary:
 	var state: Dictionary = Dictionary(convert_result.get("state", {}))
 	var songs: Array = Array(state.get("songs", []))
 	var song_record: Dictionary = Dictionary(songs[0]) if not songs.is_empty() else {}
+	var song_audio: Dictionary = Dictionary(song_record.get("audio", {}))
 	var summary: Dictionary = Dictionary(convert_result.get("summary", {}))
 	var chart_ids: Array = []
 	for chart_variant in Array(state.get("charts", [])):
@@ -37,7 +38,7 @@ static func run() -> Dictionary:
 	var source_keys: Array = draft_asset_sources.keys()
 	source_keys.sort()
 	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-v4-info-demo.egg")
-	var saved_preview_audio := output_dir.path_join("media/audio/preview.ogg")
+	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-v4-info-demo-preview.ogg")
 	var passed := bool(convert_result.get("ok", false)) \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
@@ -49,12 +50,20 @@ static func run() -> Dictionary:
 		and int(summary.get("chartCount", 0)) == 2 \
 		and String(song_record.get("songName", "")) == "Synthetic BeatSaver V4 Info Demo" \
 		and int(song_record.get("durationSec", 0)) == 8 \
-		and String(Dictionary(song_record.get("audio", {})).get("filePath", "")) == "media/audio/synthetic-beatsaver-v4-info-demo.egg" \
+		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-beatsaver-v4-info-demo.egg" \
+		and String(song_audio.get("previewFilePath", "")) == "media/audio/synthetic-beatsaver-v4-info-demo-preview.ogg" \
+		and String(song_audio.get("previewUrl", "")) == "https://cdn.example.invalid/beatsaver/synthetic-v4-info-preview.mp3" \
+		and is_equal_approx(float(song_audio.get("previewStartTime", -1.0)), 0.5) \
+		and is_equal_approx(float(song_audio.get("previewDuration", -1.0)), 2.0) \
+		and String(song_audio.get("previewMode", "")) == "preview_file" \
 		and source_keys.has("media/audio/synthetic-beatsaver-v4-info-demo.egg") \
-		and not source_keys.has("media/audio/preview.ogg") \
+		and source_keys.has("media/audio/synthetic-beatsaver-v4-info-demo-preview.ogg") \
 		and FileAccess.file_exists(saved_main_audio) \
-		and not FileAccess.file_exists(saved_preview_audio) \
+		and FileAccess.file_exists(saved_preview_audio) \
 		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "arc", "note", "burst"] \
+		and report_text.contains('"previewMode": "preview_file"') \
+		and report_text.contains('"previewFilePath": "media/audio/synthetic-beatsaver-v4-info-demo-preview.ogg"') \
+		and report_text.contains('"previewUrl": "https://cdn.example.invalid/beatsaver/synthetic-v4-info-preview.mp3"') \
 		and report_text.contains('"sourceFamily": "burstSlider"') \
 		and report_text.contains('"sourceFamily": "slider"')
 	return {
@@ -70,6 +79,7 @@ static func run() -> Dictionary:
 			"draftAssetSourceKeys": source_keys,
 			"songRecord": song_record,
 			"reportPath": report_path,
+			"songAudio": song_audio,
 		}
 	}
 

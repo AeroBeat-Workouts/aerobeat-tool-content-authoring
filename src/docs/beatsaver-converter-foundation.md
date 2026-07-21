@@ -5,18 +5,19 @@ This repo now owns the first honest staged BeatSaver -> AeroBeat authoring found
 Current scope:
 - ingest a staged BeatSaver directory that contains `source_material_manifest.json` plus the staged ZIP
 - support BeatSaver Standard difficulty files in v3/v4 object form
-- parse both legacy v2.x/v3-style Info metadata and actual v4 `Info.dat` nested `song` / `audio` / `difficultyBeatmaps` metadata when selecting Standard difficulties, BPM, and primary song audio
+- parse both legacy v2.x/v3-style Info metadata and actual v4 `Info.dat` nested `song` / `audio` / `difficultyBeatmaps` metadata when selecting Standard difficulties, BPM, primary song audio, preview timing, and dedicated preview-file truth
 - emit canonical song-package-shaped authored output in repo-local runtime state
 - convert Boxing v1 source semantics into canonical Boxing chart beats
 - convert Flow v1 Standard-map semantics into canonical Flow `note`, `burst`, `bomb`, `obstacle`, and `arc` beats
 - import supported staged cover-art assets into canonical package `image_background` environment output, including explicit `.jpg` / `.jpeg` coverage
+- preserve BeatSaver preview truth into the shared song-audio contract: `previewFilePath`, `previewUrl`, `previewStartTime`, `previewDuration`, and converter-authored `previewMode`
 - preserve source/provenance/debug material under package-local `.artifacts/beatsaver/`
 
 Coverage currently proved in-repo:
-- synthetic staged v3 conversion fixture with saved `cover.png` package output checks
+- synthetic staged v3 conversion fixture with saved `cover.png` package output checks plus preserved preview URL/timing truth and `previewMode: song_file_clip`
 - synthetic staged `.jpg` / `.jpeg` cover-art import fixtures with saved folder + zip package checks
-- synthetic staged v4 beat-object normalization fixture
-- synthetic actual-v4-info fixture with nested `audio.songFilename`, separate `songPreviewFilename`, `BPMInfo.dat`, `lightshowDataFilename`, and ignored non-Standard sidecar/custom-data permutations
+- synthetic staged v4 beat-object normalization fixture plus preserved preview URL truth and `previewMode: preview_url`
+- synthetic actual-v4-info fixture with nested `audio.songFilename`, dedicated preview-file truth, preserved preview timing, preserved preview URL, extracted preview asset output, and `previewMode: preview_file`
 - real-world staged Starlight `524b6` v3 probe through the shared-contract validation path
 - real-world staged legacy map `1` rejection coverage, proving we still fail honestly on unsupported v2 beatmap payloads instead of pretending successful conversion
 

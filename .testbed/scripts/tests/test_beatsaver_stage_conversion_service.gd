@@ -11,6 +11,9 @@ static func run() -> Dictionary:
 	var convert_result: Dictionary = runtime.convert_beatsaver_stage_to_current_package(stage_dir)
 	var state: Dictionary = Dictionary(convert_result.get("state", {}))
 	var summary: Dictionary = Dictionary(convert_result.get("summary", {}))
+	var songs: Array = Array(state.get("songs", []))
+	var song_record: Dictionary = Dictionary(songs[0]) if not songs.is_empty() else {}
+	var song_audio: Dictionary = Dictionary(song_record.get("audio", {}))
 	var chart_ids: Array = []
 	for chart_variant in Array(state.get("charts", [])):
 		chart_ids.append(String(Dictionary(chart_variant).get("chartId", "")))
@@ -27,6 +30,8 @@ static func run() -> Dictionary:
 	var environments: Array = Array(state.get("environments", []))
 	var cover_environment: Dictionary = Dictionary(environments[0]) if not environments.is_empty() else {}
 	var saved_cover_path := output_dir.path_join("media/environments/synthetic-beatsaver-demo-cover.png")
+	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo.ogg")
+	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo-preview.ogg")
 	var boxing_chart := _find_chart(charts, "boxing")
 	var flow_chart := _find_chart(charts, "flow")
 	var boxing_types: Array = []
@@ -56,6 +61,14 @@ static func run() -> Dictionary:
 		and String(cover_environment.get("type", "")) == "image_background" \
 		and String(cover_environment.get("resourcePath", "")) == "media/environments/synthetic-beatsaver-demo-cover.png" \
 		and FileAccess.file_exists(saved_cover_path) \
+		and FileAccess.file_exists(saved_main_audio) \
+		and not FileAccess.file_exists(saved_preview_audio) \
+		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-beatsaver-demo.ogg" \
+		and String(song_audio.get("previewUrl", "")) == "https://cdn.example.invalid/beatsaver/synthetic-preview.mp3" \
+		and is_equal_approx(float(song_audio.get("previewStartTime", -1.0)), 12.5) \
+		and is_equal_approx(float(song_audio.get("previewDuration", -1.0)), 3.25) \
+		and String(song_audio.get("previewMode", "")) == "song_file_clip" \
+		and not song_audio.has("previewFilePath") \
 		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "straight_left", "hook_left", "hook_left", "straight_right", "uppercut_left"] \
 		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "arc", "note", "burst"] \
 		and float(first_note.get("angleOffset", 0.0)) == 15.5 \
@@ -74,6 +87,8 @@ static func run() -> Dictionary:
 		and is_equal_approx(float(arc_beat.get("headCurveMultiplier", 0.0)), 1.25) \
 		and is_equal_approx(float(arc_beat.get("tailCurveMultiplier", 0.0)), 0.8) \
 		and int(burst_beat.get("checkpointCount", 0)) == 4 \
+		and report_text.contains('"previewMode": "song_file_clip"') \
+		and report_text.contains('"previewUrl": "https://cdn.example.invalid/beatsaver/synthetic-preview.mp3"') \
 		and report_text.contains('"sourceFamily": "slider"') \
 		and report_text.contains('"startNoteRef"') \
 		and not report_text.contains("artifact_only_contract_gap") \
@@ -91,6 +106,7 @@ static func run() -> Dictionary:
 			"boxingTypes": boxing_types,
 			"flowBeats": flow_beats,
 			"reportPath": report_path,
+			"songAudio": song_audio,
 		}
 	}
 

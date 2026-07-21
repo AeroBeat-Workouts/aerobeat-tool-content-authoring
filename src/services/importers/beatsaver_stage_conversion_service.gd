@@ -77,7 +77,43 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	if not extracted_audio_path.is_empty() and FileAccess.file_exists(extracted_audio_path):
 		draft_asset_sources[authored_audio_relative_path] = extracted_audio_path
 
+	var preview_source_filename := _resolve_preview_filename(manifest, info_dat)
+	var preview_entry_path := _resolve_archive_entry_path(archive, preview_source_filename)
+	var preview_is_dedicated := not preview_entry_path.is_empty() and preview_entry_path.to_lower() != audio_entry_path.to_lower()
+	var extracted_preview_path := ""
+	var authored_preview_relative_path := ""
+	if preview_is_dedicated:
+		extracted_preview_path = extraction_root.path_join("audio_preview").path_join(preview_entry_path.get_file())
+		_extract_archive_file(archive, preview_entry_path, extracted_preview_path)
+		if FileAccess.file_exists(extracted_preview_path):
+			var preview_extension := preview_entry_path.get_extension().to_lower()
+			if preview_extension.is_empty():
+				preview_extension = audio_extension if not audio_extension.is_empty() else "ogg"
+			authored_preview_relative_path = "media/audio/%s-preview.%s" % [song_token, preview_extension]
+			draft_asset_sources[authored_preview_relative_path] = extracted_preview_path
+
+	var preview_url := _resolve_preview_url(manifest)
+	var preview_timing := _resolve_preview_timing(manifest, info_dat)
+	var preview_start_time_valid := bool(preview_timing.get("startValid", false))
+	var preview_duration_valid := bool(preview_timing.get("durationValid", false))
+	var imported_preview_audio := {}
+	if not authored_audio_relative_path.is_empty():
+		imported_preview_audio["filePath"] = authored_audio_relative_path
+	if not authored_preview_relative_path.is_empty():
+		imported_preview_audio["previewFilePath"] = authored_preview_relative_path
+	if not preview_url.is_empty():
+		imported_preview_audio["previewUrl"] = preview_url
+	if preview_start_time_valid:
+		imported_preview_audio["previewStartTime"] = float(preview_timing.get("startTime", 0.0))
+	if preview_duration_valid:
+		imported_preview_audio["previewDuration"] = float(preview_timing.get("duration", 0.0))
+	var imported_preview_mode := _choose_preview_mode(imported_preview_audio)
+	if not imported_preview_mode.is_empty():
+		imported_preview_audio["previewMode"] = imported_preview_mode
+
 	var conversion_warnings: Array = []
+	for warning_variant in Array(preview_timing.get("warnings", [])):
+		conversion_warnings.append(warning_variant)
 	var environments: Array = []
 	var cover_entry_path := _resolve_archive_entry_path(archive, _resolve_cover_image_filename(manifest, info_dat))
 	if not cover_entry_path.is_empty():
@@ -166,6 +202,16 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 				"archivePath": archive_path,
 				"stageDir": absolute_stage_dir,
 			},
+			"preview": {
+				"source": {
+					"filename": preview_source_filename,
+					"entryPath": preview_entry_path,
+					"url": preview_url,
+					"startTime": preview_timing.get("startTime", null),
+					"duration": preview_timing.get("duration", null),
+				},
+				"imported": imported_preview_audio,
+			},
 			"warnings": conversion_warnings,
 			"boxing": boxing_trace,
 			"flow": flow_trace,
@@ -184,6 +230,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var duration_sec := _estimate_song_duration_sec_from_charts(charts, bpm)
 	if song_name.is_empty():
 		song_name = "Imported BeatSaver Song"
+	var song_audio: Dictionary = imported_preview_audio.duplicate(true)
 	var song_state := {
 		"schemaId": "aerobeat.song.v1",
 		"schemaVersion": 1,
@@ -191,7 +238,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		"songId": "ab-song-%s" % song_token,
 		"songName": song_name,
 		"durationSec": duration_sec,
-		"audio": {"filePath": authored_audio_relative_path},
+		"audio": song_audio,
 		"timing": {
 			"anchorMs": 0,
 			"tempoSegments": [{"startBeat": 0, "bpm": bpm}],
@@ -922,6 +969,78 @@ func _resolve_song_filename(manifest: Dictionary, info_dat: Dictionary) -> Strin
 			return path
 	return ""
 
+func _resolve_preview_filename(manifest: Dictionary, info_dat: Dictionary) -> String:
+	var audio_info: Dictionary = Dictionary(info_dat.get("audio", {}))
+	var candidates := [
+		String(audio_info.get("songPreviewFilename", "")).strip_edges(),
+		String(info_dat.get("_songPreviewFilename", info_dat.get("songPreviewFilename", manifest.get("song_preview_filename", manifest.get("songPreviewFilename", ""))))).strip_edges(),
+	]
+	for candidate in candidates:
+		if not String(candidate).is_empty():
+			return String(candidate)
+	return ""
+
+func _resolve_preview_url(manifest: Dictionary) -> String:
+	var direct_url := _first_non_empty_string(manifest, ["preview_url", "previewUrl", "previewURL", "version_preview_url", "versionPreviewUrl"])
+	if not direct_url.is_empty():
+		return direct_url
+	for nested_variant in [manifest.get("version", {}), manifest.get("latest_version", manifest.get("latestVersion", {})), manifest.get("raw_version", manifest.get("rawVersion", {}))]:
+		var nested: Dictionary = Dictionary(nested_variant)
+		var nested_url := _first_non_empty_string(nested, ["preview_url", "previewUrl", "previewURL"])
+		if not nested_url.is_empty():
+			return nested_url
+	return ""
+
+func _resolve_preview_timing(manifest: Dictionary, info_dat: Dictionary) -> Dictionary:
+	var audio_info: Dictionary = Dictionary(info_dat.get("audio", {}))
+	var start_info := _optional_number(audio_info, ["previewStartTime", "preview_start_time"])
+	if not bool(start_info.get("present", false)):
+		start_info = _optional_number(info_dat, ["_previewStartTime", "previewStartTime", "preview_start_time"])
+	if not bool(start_info.get("present", false)):
+		start_info = _optional_number(manifest, ["preview_start_time", "previewStartTime"])
+	var duration_info := _optional_number(audio_info, ["previewDuration", "preview_duration"])
+	if not bool(duration_info.get("present", false)):
+		duration_info = _optional_number(info_dat, ["_previewDuration", "previewDuration", "preview_duration"])
+	if not bool(duration_info.get("present", false)):
+		duration_info = _optional_number(manifest, ["preview_duration", "previewDuration"])
+
+	var warnings: Array = []
+	var result := {
+		"startValid": false,
+		"durationValid": false,
+		"warnings": warnings,
+	}
+	if bool(start_info.get("present", false)):
+		if bool(start_info.get("valid", false)) and float(start_info.get("value", -1.0)) >= 0.0:
+			result["startValid"] = true
+			result["startTime"] = float(start_info.get("value", 0.0))
+		else:
+			warnings.append({
+				"code": "preview_start_time_invalid",
+				"message": "BeatSaver previewStartTime was present but invalid, so it was not preserved into song.audio.previewStartTime.",
+				"value": start_info.get("raw", null),
+			})
+	if bool(duration_info.get("present", false)):
+		if bool(duration_info.get("valid", false)) and float(duration_info.get("value", 0.0)) > 0.0:
+			result["durationValid"] = true
+			result["duration"] = float(duration_info.get("value", 0.0))
+		else:
+			warnings.append({
+				"code": "preview_duration_invalid",
+				"message": "BeatSaver previewDuration was present but invalid, so it was not preserved into song.audio.previewDuration.",
+				"value": duration_info.get("raw", null),
+			})
+	return result
+
+func _choose_preview_mode(song_audio: Dictionary) -> String:
+	if not String(song_audio.get("previewFilePath", "")).strip_edges().is_empty():
+		return "preview_file"
+	if not String(song_audio.get("filePath", "")).strip_edges().is_empty() and song_audio.has("previewStartTime") and song_audio.has("previewDuration"):
+		return "song_file_clip"
+	if not String(song_audio.get("previewUrl", "")).strip_edges().is_empty():
+		return "preview_url"
+	return ""
+
 func _resolve_cover_image_filename(manifest: Dictionary, info_dat: Dictionary) -> String:
 	var info_cover := String(info_dat.get("_coverImageFilename", info_dat.get("coverImageFilename", manifest.get("cover_image_filename", manifest.get("coverImageFilename", ""))))).strip_edges()
 	if not info_cover.is_empty():
@@ -1089,6 +1208,20 @@ func _info_number(data: Dictionary, keys: Array, fallback: float) -> float:
 			return _variant_to_float(data.get(key), fallback)
 	return fallback
 
+func _optional_number(data: Dictionary, keys: Array) -> Dictionary:
+	for key_variant in keys:
+		var key := String(key_variant)
+		if not data.has(key):
+			continue
+		var value = data.get(key)
+		if value is int or value is float:
+			return {"present": true, "valid": true, "value": float(value), "raw": value}
+		var text := String(value).strip_edges()
+		if text.is_valid_float() or text.is_valid_int():
+			return {"present": true, "valid": true, "value": _variant_to_float(value), "raw": value}
+		return {"present": true, "valid": false, "raw": value}
+	return {"present": false, "valid": false}
+
 func _estimate_song_duration_sec_from_charts(charts: Array, bpm: float) -> int:
 	var max_beat := 0.0
 	for chart_variant in charts:
@@ -1111,6 +1244,14 @@ func _variant_to_float(value: Variant, fallback: float = 0.0) -> float:
 	if text.is_valid_int():
 		return float(text.to_int())
 	return fallback
+
+func _first_non_empty_string(data: Dictionary, keys: Array) -> String:
+	for key_variant in keys:
+		var key := String(key_variant)
+		var value := String(data.get(key, "")).strip_edges()
+		if not value.is_empty():
+			return value
+	return ""
 
 func _slug(text: String) -> String:
 	var lowered := text.to_lower()

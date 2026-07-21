@@ -100,5 +100,6 @@
     "ok": true,
     "synthetic": true,
     "schema": "v4"
-  }
+  },
+  "preview_url": "https://cdn.example.invalid/beatsaver/synthetic-v4-preview.mp3"
 }
