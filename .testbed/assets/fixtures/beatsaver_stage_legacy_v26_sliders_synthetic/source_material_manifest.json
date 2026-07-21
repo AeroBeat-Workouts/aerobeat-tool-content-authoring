@@ -1,0 +1,68 @@
+{
+  "provider": "beatsaver",
+  "map_id": "LEGACYV26SLIDER",
+  "map_key": "LEGACYV26SLIDER",
+  "map_name": "Synthetic Legacy V26 Slider Demo",
+  "version_hash": "synthetic-legacy-v26-slider-demo",
+  "version_download_url": "https://example.invalid/synthetic-legacy-v26-slider-demo.zip",
+  "archive_path": "synthetic-legacy-v26-slider-demo.zip",
+  "archive_file_name": "synthetic-legacy-v26-slider-demo.zip",
+  "info_dat_path": "Info.dat",
+  "song_filename": "synthetic-legacy-v26-slider-demo.ogg",
+  "cover_image_filename": "synthetic-legacy-v26-slider-demo.png",
+  "audio_files": [
+    {
+      "path": "synthetic-legacy-v26-slider-demo.ogg",
+      "extension": "ogg",
+      "referenced_by_info_dat": true
+    }
+  ],
+  "difficulty_files": [],
+  "archive_entries": [
+    {
+      "path": "Info.dat",
+      "basename": "Info.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": true,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 419
+    },
+    {
+      "path": "Hard.dat",
+      "basename": "Hard.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 566
+    },
+    {
+      "path": "synthetic-legacy-v26-slider-demo.ogg",
+      "basename": "synthetic-legacy-v26-slider-demo.ogg",
+      "extension": "ogg",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 16
+    },
+    {
+      "path": "synthetic-legacy-v26-slider-demo.png",
+      "basename": "synthetic-legacy-v26-slider-demo.png",
+      "extension": "png",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "size_bytes": 16
+    }
+  ],
+  "schema": "legacy-v26-sliders-synthetic"
+}

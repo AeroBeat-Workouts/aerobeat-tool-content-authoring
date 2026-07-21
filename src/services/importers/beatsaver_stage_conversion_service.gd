@@ -500,7 +500,7 @@ func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
 			"colorNotes": _normalize_legacy_color_notes(beatmap),
 			"bombNotes": _normalize_legacy_bomb_notes(beatmap),
 			"obstacles": _normalize_legacy_obstacles(beatmap),
-			"sliders": [],
+			"sliders": _normalize_legacy_sliders(beatmap),
 			"burstSliders": [],
 		}
 	return {
@@ -679,6 +679,24 @@ func _normalize_legacy_obstacles(beatmap: Dictionary) -> Array:
 			normalized["height"] = 3
 		obstacles.append(normalized)
 	return obstacles
+
+func _normalize_legacy_sliders(beatmap: Dictionary) -> Array:
+	var sliders: Array = []
+	for slider_variant in _array_value(beatmap, ["_sliders", "sliders"]):
+		var slider: Dictionary = Dictionary(slider_variant)
+		sliders.append({
+			"start": _variant_to_float(slider.get("_headTime", slider.get("b", 0.0))),
+			"end": _variant_to_float(slider.get("_tailTime", slider.get("tb", slider.get("_headTime", slider.get("b", 0.0))))),
+			"cell": _cell_from_xy(int(slider.get("_headLineIndex", slider.get("x", 0))), int(slider.get("_headLineLayer", slider.get("y", 0)))),
+			"tailCell": _cell_from_xy(int(slider.get("_tailLineIndex", slider.get("tx", 0))), int(slider.get("_tailLineLayer", slider.get("ty", 0)))),
+			"hand": _hand_from_color(int(slider.get("_colorType", slider.get("c", 0)))),
+			"direction": int(slider.get("_headCutDirection", slider.get("d", 8))),
+			"tailDirection": int(slider.get("_tailCutDirection", slider.get("tc", slider.get("_headCutDirection", slider.get("d", 8))))),
+			"headCurveMultiplier": _variant_to_float(slider.get("_headControlPointLengthMultiplier", slider.get("mu", 1.0)), 1.0),
+			"tailCurveMultiplier": _variant_to_float(slider.get("_tailControlPointLengthMultiplier", slider.get("tmu", 1.0)), 1.0),
+			"midAnchorMode": int(slider.get("_sliderMidAnchorMode", slider.get("m", 0))),
+		})
+	return sliders
 
 func _normalize_color_notes(beatmap: Dictionary) -> Array:
 	var notes: Array = []
