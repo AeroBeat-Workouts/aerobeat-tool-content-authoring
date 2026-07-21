@@ -829,7 +829,7 @@ func _normalize_obstacle_windows(obstacles: Array) -> Array:
 func _emit_boxing_burst(burst: Dictionary, difficulty_label: String) -> Dictionary:
 	var beats: Array = []
 	var start := _variant_to_float(burst.get("start", 0.0))
-	var finish := max(_variant_to_float(burst.get("end", start)), start)
+	var finish: float = maxf(_variant_to_float(burst.get("end", start)), start)
 	var interval_ms := int(BOXING_INTERVAL_MS_BY_DIFFICULTY.get(difficulty_label, 1000))
 	var interval_beats := (float(interval_ms) / 1000.0) * (120.0 / 60.0)
 	if interval_beats <= 0.0:
@@ -1064,11 +1064,11 @@ func _v4_float_field(primary: Dictionary, fallback: Dictionary, key: String, def
 	return default_value
 
 func _cells_for_obstacle(obstacle: Dictionary) -> Dictionary:
-	var cells := {}
+	var cells: Dictionary = {}
 	var x0 := int(obstacle.get("x", 0))
 	var y0 := int(obstacle.get("y", 0))
-	var width := max(int(obstacle.get("width", 1)), 1)
-	var height := max(int(obstacle.get("height", 1)), 1)
+	var width: int = maxi(int(obstacle.get("width", 1)), 1)
+	var height: int = maxi(int(obstacle.get("height", 1)), 1)
 	var x_start := clampi(x0, 0, 3)
 	var x_end := clampi(x0 + width, 0, 4)
 	if x_end <= x_start:
