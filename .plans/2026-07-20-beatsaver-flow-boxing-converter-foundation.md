@@ -457,7 +457,7 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 
 **Status:** ✅ Complete  
 
-**Results:** Coder implemented truthful staged BeatSaver cover-art import into canonical AeroBeat package output by teaching `BeatSaverStageConversionService` to resolve staged cover filenames from manifest/`Info.dat`, extract supported image assets from the ZIP, and author them as `image_background` environment records plus `media/environments/...` package assets while preserving existing `.artifacts/beatsaver/...` provenance output. The slice stayed bounded: no preview-audio expansion, no legacy beatmap widening, and no new external repo seams. Dedicated staged `.jpg` and `.jpeg` fixtures/tests were added, the existing synthetic `.png` conversion test now verifies saved cover output too, and docs were updated to state the support truth. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` (still with the known Godot headless shutdown leak warnings on exit, but exit status `0`). Commit/push details will be appended once the coder handoff commit lands. References validated: `REF-02`, `REF-04`, `REF-05`.
+**Results:** Coder implemented truthful staged BeatSaver cover-art import into canonical AeroBeat package output by teaching `BeatSaverStageConversionService` to resolve staged cover filenames from manifest/`Info.dat`, extract supported image assets from the ZIP, and author them as `image_background` environment records plus `media/environments/...` package assets while preserving existing `.artifacts/beatsaver/...` provenance output. The slice stayed bounded: no preview-audio expansion, no legacy beatmap widening, and no new external repo seams. Dedicated staged `.jpg` and `.jpeg` fixtures/tests were added, the existing synthetic `.png` conversion test now verifies saved cover output too, and docs were updated to state the support truth. Repo-local validation passed via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd` (still with the known Godot headless shutdown leak warnings on exit, but exit status `0`). Coder commit/push: `3de3a91` (`Import BeatSaver staged cover art assets`) pushed to `main`. References validated: `REF-02`, `REF-04`, `REF-05`.
 
 ---
 
@@ -485,7 +485,7 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 
 **Status:** ⚠️ Partial
 
-**What We Built:** The converter foundation in `aerobeat-tool-content-authoring` is now structurally sound for staged source ingestion, provenance preservation, Boxing mapping truth, full shared-contract Flow object emission, direct delegation of Flow validation to shared `aerobeat-content-core` truth without silent package-level fallback, broader real-world BeatSaver coverage, and broader v4 normalization/info-sidecar evidence. The next seam is no longer implementation hardening of the current surface; it is planning support expansion for legacy audio, lowercase `info.dat`, and legacy v2 beatmaps.
+**What We Built:** The converter foundation in `aerobeat-tool-content-authoring` is now structurally sound for staged source ingestion, provenance preservation, Boxing mapping truth, full shared-contract Flow object emission, direct delegation of Flow validation to shared `aerobeat-content-core` truth without silent package-level fallback, broader real-world BeatSaver coverage, broader v4 normalization/info-sidecar evidence, and truthful staged cover-art import into canonical AeroBeat `image_background` package output for supported image assets including `.jpg` / `.jpeg`. The next seam is no longer implementation hardening of the current surface; it is planning support expansion for preview audio, legacy audio, and legacy v2/v1 beatmaps.
 
 **Reference Check:** `REF-01` satisfied for handoff recovery and next-slice selection. `REF-02`..`REF-05` were used across implementation, QA, audit, the downstream contract freeze, validator-delegation follow-up, and broader coverage hardening. Boxing mapping defects found against `REF-03` were fixed, the shared Flow contract exists under `aerobeat-content-core` commit `18db07e`, and the follow-on beads `aerobeat-tool-content-authoring-5nm`, `aerobeat-tool-content-authoring-96r`, `aerobeat-tool-content-authoring-gc1`, and `aerobeat-tool-content-authoring-djk` are now audited closed.
 
@@ -497,6 +497,7 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 - `8bb7c80` - Emit full Flow v1 BeatSaver conversion output
 - `c32c00d` - Delegate Flow chart validation to content-core
 - `d9e9004` - Fail package validation when shared validator is unavailable
+- `3de3a91` - Import BeatSaver staged cover art assets
 
 **Lessons Learned:** Converter work should not invent private Flow truth ahead of the shared contract. Now that the contract is frozen and audited upstream, the approved continuation is to teach this repo to emit the full shared Flow object surface instead of keeping non-burst Flow semantics in artifacts only.
 
