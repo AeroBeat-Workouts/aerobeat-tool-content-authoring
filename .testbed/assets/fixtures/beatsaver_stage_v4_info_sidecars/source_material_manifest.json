@@ -118,7 +118,7 @@
     {
       "path": "preview.ogg",
       "extension": "ogg",
-      "referenced_by_info_dat": false
+      "referenced_by_info_dat": true
     }
   ],
   "difficulty_files": [],

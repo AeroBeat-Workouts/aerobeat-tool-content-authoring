@@ -17,7 +17,7 @@ Coverage currently proved in-repo:
 - synthetic staged v3 conversion fixture with saved `cover.png` package output checks plus preserved preview URL/timing truth and `previewMode: song_file_clip`
 - synthetic staged `.jpg` / `.jpeg` cover-art import fixtures with saved folder + zip package checks
 - synthetic staged v4 beat-object normalization fixture plus preserved preview URL truth and `previewMode: preview_url`
-- synthetic actual-v4-info fixture with nested `audio.songFilename`, dedicated preview-file truth, preserved preview timing, preserved preview URL, extracted preview asset output, and `previewMode: preview_file`
+- synthetic actual-v4-info fixture with nested `audio.songFilename`, nested `audio.songPreviewFilename`, preserved preview timing, preserved preview URL, extracted preview asset output, and `previewMode: preview_file`
 - real-world staged Starlight `524b6` v3 probe through the shared-contract validation path
 - real-world staged legacy map `1` rejection coverage, proving we still fail honestly on unsupported v2 beatmap payloads instead of pretending successful conversion
 

@@ -8,6 +8,8 @@ static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
 	runtime.initialize()
 	var stage_dir := ProjectSettings.globalize_path("res://assets/fixtures/beatsaver_stage_v4_info_sidecars")
+	var info_dat: Dictionary = _read_info_dat_from_stage(stage_dir)
+	var audio_info: Dictionary = Dictionary(info_dat.get("audio", {}))
 	var convert_result: Dictionary = runtime.convert_beatsaver_stage_to_current_package(stage_dir)
 	var state: Dictionary = Dictionary(convert_result.get("state", {}))
 	var songs: Array = Array(state.get("songs", []))
@@ -40,6 +42,8 @@ static func run() -> Dictionary:
 	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-v4-info-demo.egg")
 	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-v4-info-demo-preview.ogg")
 	var passed := bool(convert_result.get("ok", false)) \
+		and String(info_dat.get("songPreviewFilename", "")).is_empty() \
+		and String(audio_info.get("songPreviewFilename", "")) == "preview.ogg" \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
 		and bool(package_validation.get("valid", false)) \
@@ -80,8 +84,22 @@ static func run() -> Dictionary:
 			"songRecord": song_record,
 			"reportPath": report_path,
 			"songAudio": song_audio,
+			"infoDat": info_dat,
 		}
 	}
+
+static func _read_info_dat_from_stage(stage_dir: String) -> Dictionary:
+	var manifest_text := TestSupport.read_text(stage_dir.path_join("source_material_manifest.json"))
+	var manifest_variant: Variant = JSON.parse_string(manifest_text)
+	var manifest: Dictionary = Dictionary(manifest_variant if manifest_variant is Dictionary else {})
+	var archive_path := stage_dir.path_join(String(manifest.get("archive_path", "")))
+	var reader := ZIPReader.new()
+	if reader.open(archive_path) != OK:
+		return {}
+	var info_text := reader.read_file("Info.dat").get_string_from_utf8()
+	reader.close()
+	var info_variant: Variant = JSON.parse_string(info_text)
+	return Dictionary(info_variant if info_variant is Dictionary else {})
 
 static func _find_chart(charts: Array, feature: String) -> Dictionary:
 	for chart_variant in charts:
