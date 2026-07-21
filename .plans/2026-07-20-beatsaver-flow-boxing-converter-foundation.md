@@ -1,8 +1,8 @@
 # AeroBeat BeatSaver Flow/Boxing Converter Foundation
 
 **Date:** 2026-07-20
-**Status:** In Progress
-**Last Updated:** 2026-07-20 21:34 EDT
+**Status:** Complete
+**Last Updated:** 2026-07-20 23:38 EDT
 **Blocked Reason:** None
 **Agent:** `pico`
 
@@ -498,6 +498,35 @@ Execution will follow the normal loop on one bead: coder implements the foundati
 **Status:** ✅ Complete
 
 **Results:** Auditor re-ran the strongest repo-local validation via `godot --headless --path .testbed --script scripts/tests/run_tool_tests.gd`; the full suite passed with exit status `0`, while the known Godot headless shutdown leak/resource warnings remained non-blocking noise. Independent package inspection then confirmed the cover-art slice is truthful and bounded. Saved package folders plus zip outputs now contain the expected canonical environment assets for all three checked cases: `.jpg` -> `media/environments/synthetic-beatsaver-jpg-cover-demo-cover.jpg`, `.jpeg` -> `media/environments/synthetic-beatsaver-jpeg-cover-demo-cover.jpeg`, and existing `.png` -> `media/environments/synthetic-beatsaver-demo-cover.png`. The matching `environments/*.yaml` records line up exactly with those saved media paths and all declare `type: image_background` under the expected `environmentId` values. `file(1)` confirmed the saved `.jpg` and `.jpeg` outputs are actual JPEG image data; the synthetic `.png` path still resolves and validates through the package pipeline exactly as before. Provenance/debug output remained preserved in the saved folders and zips for all audited cases: `.artifacts/beatsaver/source/source_material_manifest.json`, `Info.dat`, `HardStandard.dat`, the staged source zip, and `.artifacts/beatsaver/conversion/report.json` were all present. Docs/tests stayed bounded to this slice: the repo docs claim supported staged cover-art import for supported image assets including `.jpg` / `.jpeg`, but do not widen scope to preview-audio import, legacy beatmap support, or new external seams. Auditor closed bead `aerobeat-tool-content-authoring-tjl` with reason `BeatSaver cover-art import audited: jpg/jpeg/png package output, image_background records, and provenance artifacts verified`. References validated: `REF-02`, `REF-04`, `REF-05`. 
+
+---
+
+### Task 11: Plan preview-audio preservation/import seam
+
+**Bead ID:** `aerobeat-tool-content-authoring-348`
+**SubAgent:** `primary` (for `research`)
+**Role:** `research`
+**References:** `REF-02`, `REF-04`, `REF-05`
+**Prompt:** In `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-tool-content-authoring`, plan the next approved compatibility seam against bead `aerobeat-tool-content-authoring-348`. Claim it on start with `bd update aerobeat-tool-content-authoring-348 --status in_progress --json`. Determine the smallest honest implementation path for preview-audio preservation/import in BeatSaver staged conversion, including whether the current package/content-core contract already supports what the importer needs or whether a small `aerobeat-content-core` addition/decision is required first. Keep the plan bounded and truthful, identify the likely file/package touch points, and update this plan with exact findings before finishing. Do not implement the importer yet unless a tiny inseparable proof change is required for the planning result.
+
+**Folders Created/Deleted/Modified:**
+- planning/docs only for now
+
+**Files Created/Deleted/Modified:**
+- likely first contract decision in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-content-core/data_types/song.gd`
+- likely shared contract proof/update in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-content-core/validators/content_package_validator.gd`
+- likely shared contract docs/fixture coverage in `/home/derrick/.openclaw/workspace/projects/aerobeat/aerobeat-content-core/README.md` plus one song-package fixture/test
+- likely importer implementation in `src/services/importers/beatsaver_stage_conversion_service.gd`
+- likely importer proof/update in `.testbed/scripts/tests/test_beatsaver_stage_conversion_service_v4_info_sidecars.gd` plus a dedicated preview-audio fixture/test if we want non-synthetic archive evidence
+- likely repo docs truth updates in `README.md` and `src/docs/beatsaver-converter-foundation.md`
+
+**Status:** ✅ Complete
+
+**Results:** Research confirmed the save/validation pipeline is already physically close to supporting preview-audio import, but the durable shared contract is not named yet. Evidence: `BeatSaverStageConversionService` already extracts the main song audio into `draftAssetSources`, `SongPackageYamlCodec._copy_draft_asset_sources(...)` will faithfully save any additional staged asset path, and both this repo plus `aerobeat-content-core` only require `song.audio.filePath` today rather than rejecting extra audio keys. However, no current shared `aerobeat-content-core` record/doc/test names a canonical menu-preview locator, so teaching this repo alone to emit one would create undocumented contract drift even if validators happen to accept it. Smallest honest path originally looked like one tiny shared song-audio field in `aerobeat-content-core` (recommended shape: `song.audio.previewFilePath`, keeping this slice strictly to separate preview-file preservation/import and not preview clip timing/transcoding semantics). That upstream change should stay tiny: document the field, add one fixture/contract test proving it is accepted/preserved, and optionally comment the song audio shape in `data_types/song.gd`; no deep validator rewrite appears necessary because the current validators already pass through extra audio members.
+
+**Derrick clarification (2026-07-20 late session):** the product requirement is now **both** (1) a packaged preview-audio file for downloaded/local packages **and** (2) preserved BeatSaver preview URL(s) so undownloaded packages can likely stream a quick menu preview without downloading the full BeatSaver package. That means the next shared contract seam is slightly broader than just `previewFilePath`: we likely need one canonical local/package locator such as `song.audio.previewFilePath` **and** one source/provider-oriented preview URL field or metadata bucket that can preserve the BeatSaver preview URL truth without pretending it is already a packaged local asset. I have **not** frozen the exact shared field name for the URL half yet; that should be settled in the next tiny `aerobeat-content-core` decision before importer work starts.
+
+Once that tiny contract decision lands, the importer slice in this repo is still localized: (1) add `_resolve_preview_audio_filename(...)` alongside the existing `_resolve_song_filename(...)`, reading explicit preview-file truth from staged `Info.dat` first (notably v4 `audio.songPreviewFilename` when present); (2) extract that file from the staged ZIP into the conversion workspace when present; (3) author it into `draftAssetSources` under a canonical package path such as `media/audio/<song-token>-preview.<ext>`; (4) write the agreed local preview field onto `song_state.audio`; and (5) preserve BeatSaver preview URL truth into the newly agreed shared URL field/metadata shape for menu streaming of undownloaded packages. Likely Beatsaver-side source is the API/manifest preview URL truth rather than `Info.dat`, so this may also require a small explicit manifest field from `aerobeat-vendor-beatsaver` if the staged source material does not already carry that URL cleanly. Important boundary call: still do **not** broaden this slice into preview start/duration clip semantics, `.egg` -> `.ogg` transcoding, or legacy v1/v2 audio rules. If no shared fields are approved first, the honest fallback is to keep preview audio + preview URLs only as provenance/source artifacts and explicitly say menu-preview import/streaming is still unsupported.
 
 ---
 
