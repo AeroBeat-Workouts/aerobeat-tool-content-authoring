@@ -18,6 +18,7 @@ func _initialize() -> void:
 		load(script_dir.path_join("test_beatsaver_stage_conversion_service_v4.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_conversion_service_v4_info_sidecars.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_legacy_metadata_normalization.gd")),
+		load(script_dir.path_join("test_beatsaver_stage_conversion_service_legacy_v2_synthetic.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_conversion_service_real_world_legacy_v2.gd")),
 	]
 	var results: Array = []

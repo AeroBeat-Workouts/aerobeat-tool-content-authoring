@@ -239,10 +239,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		var beatmap: Dictionary = Dictionary(beatmap_parse.get("data", {}))
 		var version_text := _beatmap_version(beatmap)
 		var version_family := _beatmap_version_family(version_text)
-		if version_family == "legacy_v1" or version_family == "legacy_v2":
-			archive.close()
-			return _error("legacy_beatmap_object_normalization_pending", "Legacy BeatSaver Standard metadata and difficulty selection now normalize, but legacy v1/v2 beat-object normalization is not implemented yet.", {"path": difficulty_path, "version": version_text, "versionFamily": version_family})
-		if version_family != "v3" and version_family != "v4":
+		if version_family != "legacy_v1" and version_family != "legacy_v2" and version_family != "v3" and version_family != "v4":
 			archive.close()
 			return _error("unsupported_beatmap_version", "Only BeatSaver v3/v4 beat-object conversion and legacy v1/v2 metadata+difficulty normalization are supported by this converter foundation.", {"path": difficulty_path, "version": version_text, "versionFamily": version_family})
 
@@ -489,13 +486,22 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 
 func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
 	var version_text := _beatmap_version(beatmap)
-	if version_text.begins_with("4"):
+	var version_family := _beatmap_version_family(version_text)
+	if version_family == "v4":
 		return {
 			"colorNotes": _normalize_v4_color_notes(beatmap),
 			"bombNotes": _normalize_v4_bomb_notes(beatmap),
 			"obstacles": _normalize_v4_obstacles(beatmap),
 			"sliders": _normalize_v4_arcs(beatmap),
 			"burstSliders": _normalize_v4_chains(beatmap),
+		}
+	if version_family == "legacy_v1" or version_family == "legacy_v2":
+		return {
+			"colorNotes": _normalize_legacy_color_notes(beatmap),
+			"bombNotes": _normalize_legacy_bomb_notes(beatmap),
+			"obstacles": _normalize_legacy_obstacles(beatmap),
+			"sliders": [],
+			"burstSliders": [],
 		}
 	return {
 		"colorNotes": _normalize_color_notes(beatmap),
@@ -610,6 +616,69 @@ func _normalize_v4_chains(beatmap: Dictionary) -> Array:
 			normalized["spacingBias"] = _variant_to_float(metadata.get("s"))
 		bursts.append(normalized)
 	return bursts
+
+func _normalize_legacy_color_notes(beatmap: Dictionary) -> Array:
+	var notes: Array = []
+	var source_index := 0
+	for note_variant in _array_value(beatmap, ["_notes", "notes"]):
+		var note: Dictionary = Dictionary(note_variant)
+		var note_type := int(note.get("_type", note.get("type", 0)))
+		if note_type != 0 and note_type != 1:
+			continue
+		var x := int(note.get("_lineIndex", note.get("lineIndex", 0)))
+		var y := int(note.get("_lineLayer", note.get("lineLayer", 0)))
+		var cell := _cell_from_xy(x, y)
+		notes.append({
+			"sourceIndex": source_index,
+			"start": _variant_to_float(note.get("_time", note.get("b", 0.0))),
+			"x": x,
+			"y": y,
+			"cell": cell,
+			"color": note_type,
+			"hand": _hand_from_color(note_type),
+			"direction": int(note.get("_cutDirection", note.get("cutDirection", 8))),
+			"angleOffset": 0.0,
+			"hasAngleOffset": false,
+		})
+		source_index += 1
+	return notes
+
+func _normalize_legacy_bomb_notes(beatmap: Dictionary) -> Array:
+	var bombs: Array = []
+	for note_variant in _array_value(beatmap, ["_notes", "notes"]):
+		var note: Dictionary = Dictionary(note_variant)
+		var note_type := int(note.get("_type", note.get("type", 0)))
+		if note_type != 3:
+			continue
+		var x := int(note.get("_lineIndex", note.get("lineIndex", 0)))
+		var y := int(note.get("_lineLayer", note.get("lineLayer", 0)))
+		bombs.append({
+			"start": _variant_to_float(note.get("_time", note.get("b", 0.0))),
+			"x": x,
+			"y": y,
+			"cell": _cell_from_xy(x, y),
+		})
+	return bombs
+
+func _normalize_legacy_obstacles(beatmap: Dictionary) -> Array:
+	var obstacles: Array = []
+	for obstacle_variant in _array_value(beatmap, ["_obstacles", "obstacles"]):
+		var obstacle: Dictionary = Dictionary(obstacle_variant)
+		var legacy_type := int(obstacle.get("_type", obstacle.get("type", 0)))
+		var normalized := {
+			"start": _variant_to_float(obstacle.get("_time", obstacle.get("b", 0.0))),
+			"duration": _variant_to_float(obstacle.get("_duration", obstacle.get("d", 0.0))),
+			"x": int(obstacle.get("_lineIndex", obstacle.get("x", 0))),
+			"width": max(int(obstacle.get("_width", obstacle.get("w", 1))), 1),
+		}
+		if legacy_type == 1:
+			normalized["y"] = 2
+			normalized["height"] = 1
+		else:
+			normalized["y"] = 0
+			normalized["height"] = 3
+		obstacles.append(normalized)
+	return obstacles
 
 func _normalize_color_notes(beatmap: Dictionary) -> Array:
 	var notes: Array = []

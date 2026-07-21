@@ -1,0 +1,68 @@
+{
+  "provider": "beatsaver",
+  "map_id": "LEGACYV2CONV",
+  "map_key": "LEGACYV2CONV",
+  "map_name": "Synthetic Legacy V2 Conversion Demo",
+  "version_hash": "synthetic-legacy-v2-conversion",
+  "version_download_url": "https://example.invalid/synthetic-legacy-v2-conversion.zip",
+  "archive_path": "synthetic-legacy-v2-conversion.zip",
+  "archive_file_name": "synthetic-legacy-v2-conversion.zip",
+  "info_dat_path": "Info.dat",
+  "song_filename": "legacy-v2-conversion-demo.ogg",
+  "cover_image_filename": "legacy-v2-cover.png",
+  "audio_files": [
+    {
+      "path": "legacy-v2-conversion-demo.ogg",
+      "extension": "ogg",
+      "referenced_by_info_dat": true
+    }
+  ],
+  "difficulty_files": [],
+  "archive_entries": [
+    {
+      "path": "Info.dat",
+      "basename": "Info.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": true,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 397
+    },
+    {
+      "path": "Hard.dat",
+      "basename": "Hard.dat",
+      "extension": "dat",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": true,
+      "size_bytes": 912
+    },
+    {
+      "path": "legacy-v2-conversion-demo.ogg",
+      "basename": "legacy-v2-conversion-demo.ogg",
+      "extension": "ogg",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": true,
+      "is_cover_image_candidate": false,
+      "is_difficulty_candidate": false,
+      "size_bytes": 15
+    },
+    {
+      "path": "legacy-v2-cover.png",
+      "basename": "legacy-v2-cover.png",
+      "extension": "png",
+      "is_directory": false,
+      "is_info_dat": false,
+      "is_audio_candidate": false,
+      "is_cover_image_candidate": true,
+      "is_difficulty_candidate": false,
+      "size_bytes": 15
+    }
+  ],
+  "schema": "legacy-v2-conversion-synthetic"
+}
