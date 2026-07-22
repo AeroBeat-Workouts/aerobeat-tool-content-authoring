@@ -64,7 +64,8 @@ static func run() -> Dictionary:
 		],
 	})
 	var current_passed := not bool(current_result.get("ok", false)) \
-		and String(current_result.get("error", "")).find("song-package.yaml packages") != -1 \
+		and String(current_result.get("error", "")).find("song.package.yaml packages") != -1 \
+		and String(current_result.get("expectedPackageContract", "")) == "song.package.yaml" \
 		and bool(current_result.get("legacyCompatibilityOnly", false))
 
 	return {

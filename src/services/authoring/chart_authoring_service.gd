@@ -22,13 +22,13 @@ func upsert_record(record_data: Dictionary) -> Dictionary:
 	if String(chart.get("songId", "")).is_empty():
 		return _error("songId is required for chart upsert.", {"packageDir": package_dir, "record": chart})
 
-	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song-package.yaml"))
+	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song.package.yaml"))
 	if has_song_package_yaml:
-		return _error("chart upsert does not support current song-package.yaml packages yet; the remaining authoring path is temporary legacy manifest-only compatibility.", {
+		return _error("chart upsert does not support current song.package.yaml packages yet; the remaining authoring path is temporary legacy manifest-only compatibility.", {
 			"packageDir": package_dir,
 			"record": chart,
 			"legacyCompatibilityOnly": true,
-			"expectedPackageContract": "song-package.yaml",
+			"expectedPackageContract": "song.package.yaml",
 		})
 
 	var manifest_path: String = package_dir.path_join("manifest.json")
@@ -159,7 +159,7 @@ func _write_json(path: String, data: Dictionary) -> Dictionary:
 
 func _validation_for_package_state(package_dir: String) -> Dictionary:
 	var has_manifest: bool = FileAccess.file_exists(package_dir.path_join("manifest.json"))
-	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song-package.yaml"))
+	var has_song_package_yaml: bool = FileAccess.file_exists(package_dir.path_join("song.package.yaml"))
 	if has_manifest and not has_song_package_yaml:
 		return {
 			"ok": true,
