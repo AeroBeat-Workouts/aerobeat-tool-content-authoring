@@ -258,7 +258,7 @@ func _normalize_record(record: Dictionary, kind: String) -> Dictionary:
 
 func _normalize_song_package_record(record: Dictionary) -> Dictionary:
 	var normalized: Dictionary = record.duplicate(true)
-	for retired_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder"]:
+	for retired_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder", "setIds"]:
 		normalized.erase(retired_field)
 	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.song-package.v1")).strip_edges()
 	normalized["schemaVersion"] = int(normalized.get("schemaVersion", 1))

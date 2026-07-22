@@ -12,6 +12,7 @@ static func run() -> Dictionary:
 		_duplicate_song_id_scenario(base_fixture_dir, base_tmp_dir),
 		_missing_set_reference_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_song_package_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
+		_forbidden_song_package_set_ids_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_set_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
 		_asset_selections_not_supported_scenario(base_fixture_dir, base_tmp_dir),
 		_assets_directory_not_supported_scenario(base_fixture_dir, base_tmp_dir),
@@ -62,13 +63,25 @@ static func _forbidden_song_package_legacy_fields_scenario(base_fixture_dir: Str
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_package_legacy_fields")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var root_path: String = scenario_dir.path_join("song-package.yaml")
+	var root_path: String = scenario_dir.path_join("song.package.yaml")
 	var root_text: String = TestSupport.read_text(root_path)
 	root_text += "\nworkoutId: ab-workout-legacy\ncoachConfigId: ab-coach-config-legacy\n"
 	TestSupport.write_text(root_path, root_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {"name": "forbidden_song_package_legacy_fields", "passed": codes.has("song_package_forbidden_field"), "codes": codes}
+
+static func _forbidden_song_package_set_ids_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_package_set_ids")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var root_path: String = scenario_dir.path_join("song.package.yaml")
+	var root_text: String = TestSupport.read_text(root_path)
+	root_text += "\nsetIds:\n  - ab-set-splat-demo-boxing-normal\n"
+	TestSupport.write_text(root_path, root_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {"name": "forbidden_song_package_set_ids", "passed": codes.has("song_package_forbidden_field"), "codes": codes}
 
 static func _forbidden_set_legacy_fields_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_set_legacy_fields")

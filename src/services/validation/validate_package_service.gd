@@ -124,7 +124,7 @@ func _validate_song_package(context: Dictionary) -> Dictionary:
 	for field in ["schemaId", "schemaVersion", "songId", "songName", "packageVersion", "song", "charts"]:
 		if _is_missing_value(data.get(field, null)):
 			issues.append(_issue("required_field_missing", "Song package is missing required field '%s'." % field, path, "song_package", String(data.get("songId", "")), field))
-	for forbidden_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder"]:
+	for forbidden_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder", "setIds"]:
 		if data.has(forbidden_field) and not _is_missing_value(data.get(forbidden_field, null)):
 			issues.append(_issue("song_package_forbidden_field", "Song package field '%s' is retired from the clean-break manifest contract and must not be present." % forbidden_field, path, "song_package", String(data.get("songId", "")), forbidden_field))
 	if data.has("song") and not (data.get("song") is Dictionary):

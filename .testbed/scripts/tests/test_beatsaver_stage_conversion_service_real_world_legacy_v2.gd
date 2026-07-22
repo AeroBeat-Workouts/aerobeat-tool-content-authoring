@@ -23,7 +23,7 @@ static func run() -> Dictionary:
 	TestSupport.ensure_clean_dir(save_parent)
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir := String(save_result.get("outputDir", ""))
-	var report_path := output_dir.path_join(".artifacts/beatsaver/conversion/report.json")
+	var report_path := output_dir.path_join(".artifacts/conversion-report.json")
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
 	var charts: Array = Array(state.get("charts", []))

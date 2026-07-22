@@ -332,7 +332,6 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 				"songName": String(song_state.get("songName", "")),
 				"cover": ({"path": cover_art_relative_path} if not cover_art_relative_path.is_empty() else {}),
 				"artifacts": {},
-				"setIds": set_ids,
 			},
 			"songs": [song_state],
 			"charts": charts,
