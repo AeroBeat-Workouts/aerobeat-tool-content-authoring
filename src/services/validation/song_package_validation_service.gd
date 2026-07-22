@@ -21,7 +21,7 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 	var local_report: Dictionary = _local_validate_package_service.validate_path(validation_path, "package")
 	var core_report: Dictionary = _validate_with_content_core(validation_path)
 	var merged_issues: Array = Array(local_report.get("issues", [])).duplicate(true)
-	if String(core_report.get("delegatedValidator", "unavailable")) == "aerobeat-content-core":
+	if not Array(core_report.get("issues", [])).is_empty():
 		merged_issues = _merge_issue_arrays(merged_issues, core_report.get("issues", []))
 	var report: Dictionary = local_report.duplicate(true)
 	report["packageDir"] = package_dir

@@ -82,8 +82,13 @@ func _validate_boxing_beat(beat: Dictionary, index: int, path: String) -> Array:
 	return issues
 
 func _validate_flow_chart_via_content_core(chart_data: Dictionary, beats: Array, path: String) -> Dictionary:
-	var chart_script: Variant = _load_core_flow_chart_script()
-	if chart_script == null:
+	var load_result: Dictionary = _load_core_flow_chart_script()
+	var chart_script: Variant = load_result.get("script", null)
+	if chart_script == null or not bool(load_result.get("ok", false)):
+		var unavailable_reference := {"validator": "aerobeat-content-core"}
+		var load_error: String = String(load_result.get("error", "")).strip_edges()
+		if not load_error.is_empty():
+			unavailable_reference["loadError"] = load_error
 		return {
 			"delegatedValidator": "unavailable",
 			"issues": [
@@ -91,7 +96,7 @@ func _validate_flow_chart_via_content_core(chart_data: Dictionary, beats: Array,
 					"flow_validator_unavailable",
 					"Flow chart validation requires the shared aerobeat-content-core Chart contract to be runtime-loadable.",
 					path,
-					{"validator": "aerobeat-content-core"}
+					unavailable_reference
 				)
 			],
 		}
@@ -106,13 +111,25 @@ func _validate_flow_chart_via_content_core(chart_data: Dictionary, beats: Array,
 		"issues": issues,
 	}
 
-func _load_core_flow_chart_script():
+func _load_core_flow_chart_script() -> Dictionary:
+	var required_dependency := "res://addons/aerobeat-content-core/data_types/chart_envelope.gd"
 	for candidate_path in CORE_FLOW_CHART_PATHS:
-		if ResourceLoader.exists(candidate_path):
-			var script: Variant = load(candidate_path)
-			if script != null:
-				return script
-	return null
+		if candidate_path.begins_with("res://../../") and not ResourceLoader.exists(required_dependency):
+			continue
+		if not ResourceLoader.exists(candidate_path):
+			continue
+		var script: Variant = load(candidate_path)
+		if script == null:
+			continue
+		if script.has_method("validate_contract"):
+			return {"ok": true, "script": script, "path": candidate_path}
+		return {
+			"ok": false,
+			"script": null,
+			"path": candidate_path,
+			"error": "Loaded Chart contract script is missing validate_contract, usually because a dependency failed to parse or resolve.",
+		}
+	return {"ok": false, "script": null, "error": "No runtime-loadable aerobeat-content-core Chart contract script was found."}
 
 func _normalize_core_issue(issue: Variant, path: String) -> Dictionary:
 	var data: Dictionary = Dictionary(issue)
