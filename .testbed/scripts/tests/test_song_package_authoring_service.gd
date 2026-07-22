@@ -4,28 +4,25 @@ const ADDON_SONG_PACKAGE_AUTHORING_SERVICE_PATH := "res://addons/aerobeat-tool-c
 
 static func run() -> Dictionary:
 	var result: Dictionary = load(ADDON_SONG_PACKAGE_AUTHORING_SERVICE_PATH).new().upsert_record({
-		"songPackageId": " ab-song-package-demo ",
+		"songId": " ab-song-demo ",
 		"title": " Demo Song Package ",
-		"description": " Short boxing and flow block. ",
 		"packageVersion": " 2.1.0 ",
-		"sets": [
-			{"setId": " set_round_01 "},
-			" set_round_02 ",
-		],
-		"steps": [
-			{"stepId": "legacy_step_01"},
+		"charts": [
+			{"chartId": " ab-chart-demo-boxing-hard ", "feature": " boxing ", "difficulty": " Hard ", "path": " charts/ab-chart-demo-boxing-hard.yaml "},
 		],
 	})
 	var record: Dictionary = result.get("record", {})
+	var charts: Array = Array(record.get("charts", []))
+	var first_chart: Dictionary = Dictionary(charts[0]) if not charts.is_empty() else {}
 	var passed := bool(result.get("ok", false)) \
-		and String(record.get("songPackageId", "")) == "ab-song-package-demo" \
-		and String(record.get("songPackageName", "")) == "Demo Song Package" \
-		and String(record.get("description", "")) == "Short boxing and flow block." \
+		and String(record.get("songId", "")) == "ab-song-demo" \
+		and String(record.get("songName", "")) == "Demo Song Package" \
 		and String(record.get("packageVersion", "")) == "2.1.0" \
-		and Array(record.get("setIds", [])).size() == 2 \
-		and String(record.get("setIds", [])[0]) == "set_round_01" \
-		and String(record.get("setIds", [])[1]) == "set_round_02" \
-		and not record.has("steps") \
+		and charts.size() == 1 \
+		and String(first_chart.get("chartId", "")) == "ab-chart-demo-boxing-hard" \
+		and String(first_chart.get("feature", "")) == "boxing" \
+		and String(first_chart.get("difficulty", "")) == "Hard" \
+		and String(first_chart.get("path", "")) == "charts/ab-chart-demo-boxing-hard.yaml" \
 		and not record.has("title")
 	return {
 		"name": "test_song_package_authoring_service",

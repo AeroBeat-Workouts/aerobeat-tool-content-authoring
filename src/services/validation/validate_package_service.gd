@@ -5,7 +5,7 @@ const ValidateChartService = preload("validate_chart_service.gd")
 
 const VALID_SUBJECTS := ["package", "song_package", "songs", "charts", "sets", "coaches", "environments", "sql"]
 const RECORD_FAMILY_ORDER := ["songs", "charts", "sets", "coaches", "environments", "sql"]
-const ROOT_CHART_DESCRIPTOR_REQUIRED_FIELDS := ["setId", "setName", "chartId", "path"]
+const ROOT_CHART_DESCRIPTOR_REQUIRED_FIELDS := ["chartId", "feature", "difficulty", "path"]
 const FAMILY_CONFIG := {
 	"songs": {
 		"dir": "songs",
@@ -121,26 +121,26 @@ func _validate_song_package(context: Dictionary) -> Dictionary:
 		issues.append(_issue("song_package_invalid_yaml", "%s could not be parsed as YAML." % path, path, "song_package", "", "", {"error": song_package.get("error", "")}))
 		return _report("song_package", package_dir, issues, {"fileCount": 1}, {"songPackage": path}, {})
 	var data: Dictionary = song_package.get("data", {})
-	for field in ["schemaId", "schemaVersion", "recordVersion", "songPackageId", "songPackageName", "packageVersion", "song", "charts"]:
+	for field in ["schemaId", "schemaVersion", "songId", "songName", "packageVersion", "song", "charts"]:
 		if _is_missing_value(data.get(field, null)):
-			issues.append(_issue("required_field_missing", "Song package is missing required field '%s'." % field, path, "song_package", String(data.get("songPackageId", "")), field))
-	for forbidden_field in ["workoutId", "workoutName", "coachConfigId", "setOrder"]:
+			issues.append(_issue("required_field_missing", "Song package is missing required field '%s'." % field, path, "song_package", String(data.get("songId", "")), field))
+	for forbidden_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder"]:
 		if data.has(forbidden_field) and not _is_missing_value(data.get(forbidden_field, null)):
-			issues.append(_issue("song_package_forbidden_field", "Song package field '%s' is legacy workout-era data and must not be present." % forbidden_field, path, "song_package", String(data.get("songPackageId", "")), forbidden_field))
+			issues.append(_issue("song_package_forbidden_field", "Song package field '%s' is retired from the clean-break manifest contract and must not be present." % forbidden_field, path, "song_package", String(data.get("songId", "")), forbidden_field))
 	if data.has("song") and not (data.get("song") is Dictionary):
-		issues.append(_issue("song_invalid_type", "Song package song must be an embedded song dictionary.", path, "song_package", String(data.get("songPackageId", "")), "song"))
+		issues.append(_issue("song_invalid_type", "Song package song must be an embedded song details dictionary.", path, "song_package", String(data.get("songId", "")), "song"))
 	if data.has("charts") and not (data.get("charts") is Array):
-		issues.append(_issue("charts_invalid_type", "Song package charts must be an array of root chart descriptors.", path, "song_package", String(data.get("songPackageId", "")), "charts"))
+		issues.append(_issue("charts_invalid_type", "Song package charts must be an array of root chart descriptors.", path, "song_package", String(data.get("songId", "")), "charts"))
 	else:
 		for index in range(Array(data.get("charts", [])).size()):
 			var descriptor_variant: Variant = Array(data.get("charts", []))[index]
 			if not (descriptor_variant is Dictionary):
-				issues.append(_issue("chart_descriptor_invalid_type", "Root charts entries must be dictionaries.", path, "song_package", String(data.get("songPackageId", "")), "charts[%d]" % index))
+				issues.append(_issue("chart_descriptor_invalid_type", "Root charts entries must be dictionaries.", path, "song_package", String(data.get("songId", "")), "charts[%d]" % index))
 				continue
 			var descriptor := Dictionary(descriptor_variant)
 			for required_field in ROOT_CHART_DESCRIPTOR_REQUIRED_FIELDS:
 				if _is_missing_value(descriptor.get(required_field, null)):
-					issues.append(_issue("chart_descriptor_missing_field", "Root charts entry is missing required field '%s'." % required_field, path, "song_package", String(data.get("songPackageId", "")), "charts[%d].%s" % [index, required_field]))
+					issues.append(_issue("chart_descriptor_missing_field", "Root charts entry is missing required field '%s'." % required_field, path, "song_package", String(data.get("songId", "")), "charts[%d].%s" % [index, required_field]))
 	return _report("song_package", package_dir, issues, {"fileCount": 1}, {"songPackage": path}, {})
 
 func _validate_songs(context: Dictionary) -> Dictionary:
@@ -331,27 +331,26 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 	var root_path: String = String(context.get("songPackage", {}).get("path", "song.package.yaml"))
 	var songs_by_id: Dictionary = _index_records(context.get("songs", []), "songId")
 	var charts_by_id: Dictionary = _index_records(context.get("charts", []), "chartId")
-	var sets_by_id: Dictionary = _index_records(context.get("sets", []), "setId")
 	var referenced_chart_ids: Dictionary = {}
 	if not song_package.is_empty() and song_package.get("charts") is Array:
-		var seen_set_ids: Dictionary = {}
 		for index in range(song_package.get("charts", []).size()):
 			var descriptor := Dictionary(song_package.get("charts", [])[index])
-			var set_id: String = String(descriptor.get("setId", "")).strip_edges()
 			var chart_id: String = String(descriptor.get("chartId", "")).strip_edges()
 			var path_value: String = String(descriptor.get("path", "")).strip_edges()
-			if set_id.is_empty():
-				issues.append(_issue("set_ids_entry_missing", "%s charts entries must declare a non-empty setId." % root_path, root_path, "package", String(song_package.get("songPackageId", "")), "charts[%d].setId" % index))
-			elif seen_set_ids.has(set_id):
-				issues.append(_issue("duplicate_song_package_set_id", "%s charts contains duplicate set id '%s'." % [root_path, set_id], root_path, "package", String(song_package.get("songPackageId", "")), "charts[%d].setId" % index))
-			else:
-				seen_set_ids[set_id] = true
-			if not set_id.is_empty() and not sets_by_id.has(set_id):
-				issues.append(_issue("missing_set_ref", "%s charts references a setId that is not present in the package." % root_path, root_path, "package", String(song_package.get("songPackageId", "")), "charts[%d].setId" % index, {"setId": set_id}))
+			var feature: String = String(descriptor.get("feature", "")).strip_edges()
+			var difficulty: String = String(descriptor.get("difficulty", "")).strip_edges()
+			var issue_id: String = String(song_package.get("songId", ""))
 			if path_value.is_empty() or not _package_file_exists(package_dir, path_value):
-				issues.append(_issue("missing_chart_path", "%s charts entry points at a chart file that does not exist." % root_path, root_path, "package", String(song_package.get("songPackageId", "")), "charts[%d].path" % index, {"pathValue": path_value}))
+				issues.append(_issue("missing_chart_path", "%s charts entry points at a chart file that does not exist." % root_path, root_path, "package", issue_id, "charts[%d].path" % index, {"pathValue": path_value}))
 			if not chart_id.is_empty():
 				referenced_chart_ids[chart_id] = true
+			if chart_id.is_empty() or not charts_by_id.has(chart_id):
+				continue
+			var chart_data: Dictionary = Dictionary(charts_by_id.get(chart_id, {}).get("data", {}))
+			if feature != String(chart_data.get("feature", "")).strip_edges():
+				issues.append(_issue("chart_descriptor_feature_mismatch", "Root charts[] descriptor feature must match the referenced chart file feature.", root_path, "package", issue_id, "charts[%d].feature" % index, {"chartId": chart_id, "feature": feature, "chartFeature": chart_data.get("feature", "")}))
+			if difficulty != String(chart_data.get("difficulty", "")).strip_edges():
+				issues.append(_issue("chart_descriptor_difficulty_mismatch", "Root charts[] descriptor difficulty must match the referenced chart file difficulty.", root_path, "package", issue_id, "charts[%d].difficulty" % index, {"chartId": chart_id, "difficulty": difficulty, "chartDifficulty": chart_data.get("difficulty", "")}))
 	for set_record in context.get("sets", []):
 		if not bool(set_record.get("ok", false)):
 			continue
@@ -437,8 +436,13 @@ func _load_package_context(package_dir: String) -> Dictionary:
 
 func _normalize_song_package_root(data: Dictionary) -> Dictionary:
 	var normalized := data.duplicate(true)
+	normalized["songId"] = String(normalized.get("songId", "")).strip_edges()
+	normalized["songName"] = String(normalized.get("songName", "")).strip_edges()
 	if normalized.get("song") is Dictionary:
-		normalized["song"] = _normalize_song_root(Dictionary(normalized.get("song", {})).duplicate(true))
+		var song_record := Dictionary(normalized.get("song", {})).duplicate(true)
+		song_record["songId"] = normalized["songId"]
+		song_record["songName"] = normalized["songName"]
+		normalized["song"] = _normalize_song_root(song_record)
 	var descriptors: Array = []
 	for descriptor_variant in Array(normalized.get("charts", [])):
 		if not (descriptor_variant is Dictionary):
@@ -463,12 +467,15 @@ func _root_song_records(song_package_record: Dictionary) -> Array:
 	var data: Dictionary = Dictionary(song_package_record.get("data", {}))
 	if not (data.get("song") is Dictionary):
 		return []
+	var song_record := Dictionary(data.get("song", {})).duplicate(true)
+	song_record["songId"] = String(data.get("songId", song_record.get("songId", ""))).strip_edges()
+	song_record["songName"] = String(data.get("songName", song_record.get("songName", ""))).strip_edges()
 	return [{
 		"family": "songs",
 		"path": "%s#song" % String(song_package_record.get("path", "song.package.yaml")),
 		"absolutePath": String(song_package_record.get("absolutePath", "")),
 		"ok": true,
-		"data": _normalize_song_root(Dictionary(data.get("song", {})).duplicate(true)),
+		"data": _normalize_song_root(song_record),
 		"error": "",
 	}]
 
@@ -485,6 +492,8 @@ func _load_root_chart_records(package_dir: String, song_package_record: Dictiona
 		if relative_path.is_empty():
 			continue
 		var absolute_path: String = package_dir.path_join(relative_path)
+		if not FileAccess.file_exists(absolute_path):
+			continue
 		var parsed: Dictionary = _load_yaml_file(absolute_path)
 		records.append({
 			"family": "charts",
@@ -501,13 +510,16 @@ func _derive_root_sets(song_package_record: Dictionary) -> Array:
 	if not bool(song_package_record.get("ok", false)):
 		return sets
 	var data: Dictionary = Dictionary(song_package_record.get("data", {}))
-	var song: Dictionary = Dictionary(data.get("song", {}))
-	var song_id: String = String(song.get("songId", "")).strip_edges()
+	var song_id: String = String(data.get("songId", "")).strip_edges()
+	var song_name: String = String(data.get("songName", "")).strip_edges()
 	var index: int = 0
 	for descriptor_variant in Array(data.get("charts", [])):
 		if not (descriptor_variant is Dictionary):
 			continue
 		var descriptor := Dictionary(descriptor_variant)
+		var chart_id := String(descriptor.get("chartId", "")).strip_edges()
+		var feature := String(descriptor.get("feature", "")).strip_edges()
+		var difficulty := String(descriptor.get("difficulty", "")).strip_edges()
 		sets.append({
 			"family": "sets",
 			"path": "%s#charts[%d]" % [String(song_package_record.get("path", "song.package.yaml")), index],
@@ -517,10 +529,10 @@ func _derive_root_sets(song_package_record: Dictionary) -> Array:
 				"schemaId": "aerobeat.set.v1",
 				"schemaVersion": 1,
 				"recordVersion": 1,
-				"setId": String(descriptor.get("setId", "")).strip_edges(),
-				"setName": String(descriptor.get("setName", "")).strip_edges(),
+				"setId": chart_id,
+				"setName": ("%s %s %s" % [song_name, difficulty, feature.capitalize()]).strip_edges(),
 				"songId": song_id,
-				"chartId": String(descriptor.get("chartId", "")).strip_edges(),
+				"chartId": chart_id,
 			},
 			"error": "",
 		})

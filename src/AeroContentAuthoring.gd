@@ -430,8 +430,8 @@ func _staging_dir(kind: String) -> String:
 
 func _package_folder_name(state: Dictionary) -> String:
 	var song_package: Dictionary = Dictionary(state.get("songPackage", {}))
-	var song_package_id: String = String(song_package.get("songPackageId", "")).strip_edges()
-	return song_package_id if not song_package_id.is_empty() else "song-package"
+	var song_id: String = String(song_package.get("songId", "")).strip_edges()
+	return song_id if not song_id.is_empty() else "song-package"
 
 func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 	var normalized := state.duplicate(true)
@@ -480,22 +480,15 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 		song_package["schemaId"] = "aerobeat.song-package.v1"
 	if not song_package.has("schemaVersion"):
 		song_package["schemaVersion"] = 1
-	if not song_package.has("recordVersion"):
-		song_package["recordVersion"] = 1
+	song_package.erase("recordVersion")
 	var chart_descriptors: Array = []
 	for chart_variant in charts:
 		var chart_record := Dictionary(chart_variant).duplicate(true)
 		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
-		var matched_set: Dictionary = {}
-		for set_variant in sets:
-			var set_record := Dictionary(set_variant).duplicate(true)
-			if String(set_record.get("chartId", "")).strip_edges() == chart_id:
-				matched_set = set_record
-				break
 		chart_descriptors.append({
-			"setId": String(matched_set.get("setId", "ab-set-%s" % chart_id)).strip_edges(),
-			"setName": String(matched_set.get("setName", String(chart_record.get("chartName", chart_id)))).strip_edges(),
 			"chartId": chart_id,
+			"feature": String(chart_record.get("feature", "")).strip_edges(),
+			"difficulty": String(chart_record.get("difficulty", "")).strip_edges(),
 			"path": "charts/%s.yaml" % chart_id,
 		})
 	song_package["charts"] = chart_descriptors

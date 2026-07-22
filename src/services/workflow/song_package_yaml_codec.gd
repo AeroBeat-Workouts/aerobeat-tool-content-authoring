@@ -5,8 +5,6 @@ const ValidatePackageService = preload("../validation/validate_package_service.g
 
 const AUTHORED_DIRECTORIES := ["charts", "coaches", "sql"]
 const AUTHORED_ROOT_FILES := ["song.package.yaml"]
-const DEFAULT_SONG_PACKAGE_ID := "ab-song-package-draft"
-const DEFAULT_SONG_PACKAGE_NAME := "Draft Song Package"
 const DEFAULT_SET_ID := "ab-set-001"
 const DEFAULT_SET_NAME := "Set 1"
 const DEFAULT_SONG_ID := "ab-song-001"
@@ -22,13 +20,6 @@ var _yaml_loader: ValidatePackageService = ValidatePackageService.new()
 
 func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 	var package_version: String = String(seed.get("packageVersion", "1.0.0")).strip_edges()
-	var song_package_id: String = _token(seed.get("songPackageId", seed.get("packageId", DEFAULT_SONG_PACKAGE_ID)))
-	if song_package_id.is_empty():
-		song_package_id = DEFAULT_SONG_PACKAGE_ID
-	var song_package_name: String = String(seed.get("songPackageName", DEFAULT_SONG_PACKAGE_NAME)).strip_edges()
-	if song_package_name.is_empty():
-		song_package_name = DEFAULT_SONG_PACKAGE_NAME
-	var description: String = String(seed.get("description", "")).strip_edges()
 	var set_id: String = _token(seed.get("setId", DEFAULT_SET_ID))
 	var set_name: String = String(seed.get("setName", DEFAULT_SET_NAME)).strip_edges()
 	var song_id: String = _token(seed.get("songId", DEFAULT_SONG_ID))
@@ -50,12 +41,29 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 		"songPackage": {
 			"schemaId": "aerobeat.song-package.v1",
 			"schemaVersion": 1,
-			"recordVersion": 1,
-			"songPackageId": song_package_id,
-			"songPackageName": song_package_name,
-			"description": description,
 			"packageVersion": package_version,
-			"charts": [{"setId": set_id, "setName": set_name, "chartId": chart_id, "path": "charts/%s.yaml" % chart_id}],
+			"songId": song_id,
+			"songName": song_name,
+			"song": {
+				"durationSec": int(seed.get("durationSec", 1)),
+				"audio": {
+					"filePath": PLACEHOLDER_SONG_AUDIO_PATH,
+				},
+				"timing": {
+					"anchorMs": 0,
+					"tempoSegments": [{
+						"startBeat": 0,
+						"bpm": 120,
+					}],
+					"stopSegments": [],
+					"timeSignatureSegments": [{
+						"startBeat": 0,
+						"numerator": 4,
+						"denominator": 4,
+					}],
+				},
+			},
+			"charts": [{"chartId": chart_id, "feature": "boxing", "difficulty": "Normal", "path": "charts/%s.yaml" % chart_id}],
 		},
 		"songs": [{
 			"schemaId": "aerobeat.song.v1",
@@ -159,7 +167,19 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 	var sets: Array = _normalize_record_list(state.get("sets", []), "set")
 	var coach_config: Dictionary = _normalize_dictionary(state.get("coachConfig", {}))
 	var root_song: Dictionary = Dictionary(songs[0]).duplicate(true) if not songs.is_empty() else {}
-	song_package["song"] = root_song
+	song_package["songId"] = String(root_song.get("songId", song_package.get("songId", ""))).strip_edges()
+	song_package["songName"] = String(root_song.get("songName", song_package.get("songName", ""))).strip_edges()
+	song_package["song"] = _build_root_song_manifest(root_song)
+	var cover_manifest: Dictionary = _build_root_cover_manifest(root_song, song_package)
+	if cover_manifest.is_empty():
+		song_package.erase("cover")
+	else:
+		song_package["cover"] = cover_manifest
+	var artifacts_manifest: Dictionary = _build_root_artifacts_manifest(state, song_package)
+	if artifacts_manifest.is_empty():
+		song_package.erase("artifacts")
+	else:
+		song_package["artifacts"] = artifacts_manifest
 	song_package["charts"] = _build_root_chart_descriptors(charts, sets)
 
 	var written_files: Array = []
@@ -238,27 +258,41 @@ func _normalize_record(record: Dictionary, kind: String) -> Dictionary:
 
 func _normalize_song_package_record(record: Dictionary) -> Dictionary:
 	var normalized: Dictionary = record.duplicate(true)
-	normalized.erase("workoutId")
-	normalized.erase("workoutName")
-	normalized.erase("coachConfigId")
-	normalized.erase("setOrder")
+	for retired_field in ["recordVersion", "songPackageId", "songPackageName", "description", "workoutId", "workoutName", "coachConfigId", "setOrder"]:
+		normalized.erase(retired_field)
 	normalized["schemaId"] = String(normalized.get("schemaId", "aerobeat.song-package.v1")).strip_edges()
 	normalized["schemaVersion"] = int(normalized.get("schemaVersion", 1))
-	normalized["recordVersion"] = int(normalized.get("recordVersion", 1))
-	normalized["songPackageId"] = _token(normalized.get("songPackageId", ""))
-	normalized["songPackageName"] = String(normalized.get("songPackageName", "")).strip_edges()
-	normalized["description"] = String(normalized.get("description", "")).strip_edges()
 	normalized["packageVersion"] = String(normalized.get("packageVersion", "1.0.0")).strip_edges()
+	normalized["songId"] = _token(normalized.get("songId", ""))
+	normalized["songName"] = String(normalized.get("songName", "")).strip_edges()
 	if normalized.get("song") is Dictionary:
-		normalized["song"] = _normalize_song_record(Dictionary(normalized.get("song", {})).duplicate(true))
+		var song_record := _normalize_song_record(Dictionary(normalized.get("song", {})).duplicate(true))
+		song_record.erase("schemaId")
+		song_record.erase("schemaVersion")
+		song_record.erase("recordVersion")
+		song_record.erase("songId")
+		song_record.erase("songName")
+		normalized["song"] = song_record
+	var normalized_cover := _normalize_dictionary(normalized.get("cover", {}))
+	if not normalized_cover.is_empty() and normalized_cover.has("path"):
+		normalized_cover["path"] = String(normalized_cover.get("path", "")).strip_edges()
+	if normalized_cover.is_empty():
+		normalized.erase("cover")
+	else:
+		normalized["cover"] = normalized_cover
+	var normalized_artifacts := _normalize_dictionary(normalized.get("artifacts", {}))
+	if normalized_artifacts.is_empty():
+		normalized.erase("artifacts")
+	else:
+		normalized["artifacts"] = normalized_artifacts
 	var normalized_descriptors: Array = []
 	for descriptor_variant in Array(normalized.get("charts", [])):
 		if not (descriptor_variant is Dictionary):
 			continue
 		var descriptor := Dictionary(descriptor_variant).duplicate(true)
-		descriptor["setId"] = _token(descriptor.get("setId", ""))
-		descriptor["setName"] = String(descriptor.get("setName", "")).strip_edges()
 		descriptor["chartId"] = _token(descriptor.get("chartId", ""))
+		descriptor["feature"] = String(descriptor.get("feature", "")).strip_edges()
+		descriptor["difficulty"] = _normalize_difficulty_label(String(descriptor.get("difficulty", "Normal")).strip_edges())
 		descriptor["path"] = String(descriptor.get("path", "")).strip_edges()
 		normalized_descriptors.append(descriptor)
 	normalized["charts"] = normalized_descriptors
@@ -331,23 +365,55 @@ func _normalize_environment_record(record: Dictionary) -> Dictionary:
 	return normalized
 
 
+func _build_root_song_manifest(root_song: Dictionary) -> Dictionary:
+	var manifest_song := _normalize_song_record(root_song)
+	manifest_song.erase("schemaId")
+	manifest_song.erase("schemaVersion")
+	manifest_song.erase("recordVersion")
+	manifest_song.erase("songId")
+	manifest_song.erase("songName")
+	manifest_song.erase("coverArtPath")
+	return manifest_song
+
+func _build_root_cover_manifest(root_song: Dictionary, song_package: Dictionary) -> Dictionary:
+	var cover_path := String(root_song.get("coverArtPath", Dictionary(song_package.get("cover", {})).get("path", ""))).strip_edges()
+	if cover_path.is_empty():
+		return {}
+	return {"path": cover_path}
+
+func _build_root_artifacts_manifest(state: Dictionary, song_package: Dictionary) -> Dictionary:
+	var manifest := _normalize_dictionary(song_package.get("artifacts", {}))
+	var draft_text_sources: Dictionary = Dictionary(state.get("draftTextSources", {}))
+	var draft_asset_sources: Dictionary = Dictionary(state.get("draftAssetSources", {}))
+	var conversion_report_path := ".artifacts/conversion-report.json"
+	if draft_text_sources.has(conversion_report_path):
+		manifest["conversionReport"] = {"path": conversion_report_path}
+	var beatsaver_paths: Array = []
+	for source_path_variant in draft_text_sources.keys():
+		var source_path := String(source_path_variant).strip_edges()
+		if source_path.begins_with(".artifacts/beatsaver/"):
+			beatsaver_paths.append(source_path)
+	for source_path_variant in draft_asset_sources.keys():
+		var source_path := String(source_path_variant).strip_edges()
+		if source_path.begins_with(".artifacts/beatsaver/"):
+			beatsaver_paths.append(source_path)
+	beatsaver_paths.sort()
+	if not beatsaver_paths.is_empty():
+		var preserved: Array = []
+		for artifact_path in beatsaver_paths:
+			preserved.append({"path": artifact_path})
+		manifest["beatsaver"] = {"preservedFiles": preserved}
+	return manifest
+
 func _build_root_chart_descriptors(charts: Array, sets: Array) -> Array:
 	var descriptors: Array = []
-	var sets_by_chart: Dictionary = {}
-	for set_variant in sets:
-		var set_record := Dictionary(set_variant).duplicate(true)
-		var chart_id := String(set_record.get("chartId", "")).strip_edges()
-		if chart_id.is_empty() or sets_by_chart.has(chart_id):
-			continue
-		sets_by_chart[chart_id] = set_record
 	for chart_variant in charts:
 		var chart_record := Dictionary(chart_variant).duplicate(true)
 		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
-		var set_record: Dictionary = Dictionary(sets_by_chart.get(chart_id, {})).duplicate(true)
 		descriptors.append({
-			"setId": String(set_record.get("setId", "ab-set-%s" % chart_id)).strip_edges(),
-			"setName": String(set_record.get("setName", String(chart_record.get("chartName", chart_id)))).strip_edges(),
 			"chartId": chart_id,
+			"feature": String(chart_record.get("feature", "")).strip_edges(),
+			"difficulty": _normalize_difficulty_label(String(chart_record.get("difficulty", "Normal")).strip_edges()),
 			"path": "charts/%s.yaml" % chart_id,
 		})
 	return descriptors
