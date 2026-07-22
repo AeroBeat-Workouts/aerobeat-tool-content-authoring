@@ -11,9 +11,11 @@ static func run() -> Dictionary:
 	var convert_result: Dictionary = runtime.convert_beatsaver_stage_to_current_package(stage_dir)
 	var state: Dictionary = Dictionary(convert_result.get("state", {}))
 	var summary: Dictionary = Dictionary(convert_result.get("summary", {}))
+	var song_package: Dictionary = Dictionary(state.get("songPackage", {}))
 	var songs: Array = Array(state.get("songs", []))
 	var song_record: Dictionary = Dictionary(songs[0]) if not songs.is_empty() else {}
 	var song_audio: Dictionary = Dictionary(song_record.get("audio", {}))
+	var cover_record: Dictionary = Dictionary(song_package.get("cover", {}))
 	var chart_ids: Array = []
 	for chart_variant in Array(state.get("charts", [])):
 		chart_ids.append(String(Dictionary(chart_variant).get("chartId", "")))
@@ -23,13 +25,12 @@ static func run() -> Dictionary:
 	TestSupport.ensure_clean_dir(save_parent)
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir := String(save_result.get("outputDir", ""))
-	var report_path := output_dir.path_join(".artifacts/beatsaver/conversion/report.json")
+	var report_path := output_dir.path_join(".artifacts/conversion-report.json")
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
 	var charts: Array = Array(state.get("charts", []))
 	var environments: Array = Array(state.get("environments", []))
-	var cover_environment: Dictionary = Dictionary(environments[0]) if not environments.is_empty() else {}
-	var saved_cover_path := output_dir.path_join("media/environments/synthetic-beatsaver-demo-cover.png")
+	var saved_cover_path := output_dir.path_join("media/cover/synthetic-beatsaver-demo-cover.png")
 	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo.ogg")
 	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo-preview.ogg")
 	var boxing_chart := _find_chart(charts, "boxing")
@@ -56,10 +57,8 @@ static func run() -> Dictionary:
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and chart_ids == ["ab-chart-synthetic-beatsaver-demo-boxing-hard", "ab-chart-synthetic-beatsaver-demo-flow-hard"] \
-		and environments.size() == 1 \
-		and String(cover_environment.get("environmentId", "")) == "ab-environment-synthetic-beatsaver-demo-cover" \
-		and String(cover_environment.get("type", "")) == "image_background" \
-		and String(cover_environment.get("resourcePath", "")) == "media/environments/synthetic-beatsaver-demo-cover.png" \
+		and environments.is_empty() \
+		and String(cover_record.get("path", "")) == "media/cover/synthetic-beatsaver-demo-cover.png" \
 		and FileAccess.file_exists(saved_cover_path) \
 		and FileAccess.file_exists(saved_main_audio) \
 		and not FileAccess.file_exists(saved_preview_audio) \
@@ -104,6 +103,7 @@ static func run() -> Dictionary:
 			"flowChartValidation": flow_chart_validation,
 			"chartIds": chart_ids,
 			"boxingTypes": boxing_types,
+			"cover": cover_record,
 			"flowBeats": flow_beats,
 			"reportPath": report_path,
 			"songAudio": song_audio,

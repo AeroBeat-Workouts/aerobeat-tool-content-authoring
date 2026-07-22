@@ -8,6 +8,7 @@ static func run() -> Dictionary:
 	var initial_state := runtime.get_current_package_state()
 	var initial_sets: Array = Array(initial_state.get("sets", []))
 	var initial_order: Array = Array(Dictionary(initial_state.get("songPackage", {})).get("setIds", []))
+	var initial_song_package: Dictionary = Dictionary(initial_state.get("songPackage", {}))
 
 	var fixture_dir := TestSupport.tmp_dir("task6_runtime_fixture")
 	TestSupport.ensure_clean_dir(fixture_dir)
@@ -36,7 +37,8 @@ static func run() -> Dictionary:
 	var post_delete_state := Dictionary(delete_result.get("state", {}))
 
 	var passed := initial_sets.size() == 1 \
-		and initial_order.size() == 1 \
+		and initial_order.is_empty() \
+		and not initial_song_package.has("setIds") \
 		and bool(beatmap_result.get("ok", false)) \
 		and String(primary_environment_result.get("errorCode", "")) == "retired_environment_linking_contract" \
 		and String(fallback_environment_result.get("errorCode", "")) == "retired_environment_linking_contract" \

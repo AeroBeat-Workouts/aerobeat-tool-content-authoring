@@ -9,12 +9,12 @@ static func run() -> Dictionary:
 	var base_tmp_dir: String = TestSupport.tmp_dir("test_validate_package_failure_modes")
 	TestSupport.ensure_clean_dir(base_tmp_dir)
 	var scenarios: Array = [
-		_duplicate_song_id_scenario(base_fixture_dir, base_tmp_dir),
-		_missing_set_reference_scenario(base_fixture_dir, base_tmp_dir),
+		_orphan_chart_record_scenario(base_fixture_dir, base_tmp_dir),
+		_missing_chart_reference_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_song_package_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
 		_forbidden_song_package_set_ids_scenario(base_fixture_dir, base_tmp_dir),
-		_forbidden_set_legacy_fields_scenario(base_fixture_dir, base_tmp_dir),
-		_asset_selections_not_supported_scenario(base_fixture_dir, base_tmp_dir),
+		_sets_directory_not_supported_scenario(base_fixture_dir, base_tmp_dir),
+		_missing_chart_path_scenario(base_fixture_dir, base_tmp_dir),
 		_assets_directory_not_supported_scenario(base_fixture_dir, base_tmp_dir),
 		_dance_chart_rejected_scenario(base_fixture_dir, base_tmp_dir),
 		_step_chart_rejected_scenario(base_fixture_dir, base_tmp_dir),
@@ -36,28 +36,29 @@ static func run() -> Dictionary:
 		},
 	}
 
-static func _duplicate_song_id_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("duplicate_song_id")
+static func _orphan_chart_record_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("chart_descriptor_feature_mismatch")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var original_path: String = scenario_dir.path_join("songs/ab-song-splat-demo.yaml")
-	var duplicate_path: String = scenario_dir.path_join("songs/ab-song-splat-demo-duplicate.yaml")
-	TestSupport.write_text(duplicate_path, TestSupport.read_text(original_path).replace("songName: Splat Demo Song", "songName: Splat Demo Song Duplicate"))
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "songs")
-	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "duplicate_song_id", "passed": codes.has("duplicate_id"), "codes": codes}
-
-static func _missing_set_reference_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("missing_set_reference")
-	TestSupport.ensure_clean_dir(scenario_dir)
-	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var root_path: String = scenario_dir.path_join("song-package.yaml")
+	var root_path: String = scenario_dir.path_join("song.package.yaml")
 	var root_text: String = TestSupport.read_text(root_path)
-	root_text = root_text.replace("- ab-set-splat-demo-boxing-hard", "- ab-set-does-not-exist")
+	root_text = root_text.replace("feature: boxing", "feature: flow")
 	TestSupport.write_text(root_path, root_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "missing_set_reference", "passed": codes.has("missing_set_ref"), "codes": codes}
+	return {"name": "chart_descriptor_feature_mismatch", "passed": codes.has("chart_descriptor_feature_mismatch"), "codes": codes}
+
+static func _missing_chart_reference_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("missing_chart_reference")
+	TestSupport.ensure_clean_dir(scenario_dir)
+	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
+	var root_path: String = scenario_dir.path_join("song.package.yaml")
+	var root_text: String = TestSupport.read_text(root_path)
+	root_text = root_text.replace("chartId: ab-chart-splat-demo-boxing-normal", "chartId: ab-chart-does-not-exist")
+	TestSupport.write_text(root_path, root_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
+	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
+	return {"name": "missing_chart_reference", "passed": codes.has("missing_chart_ref"), "codes": codes}
 
 static func _forbidden_song_package_legacy_fields_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_package_legacy_fields")
@@ -83,29 +84,28 @@ static func _forbidden_song_package_set_ids_scenario(base_fixture_dir: String, b
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {"name": "forbidden_song_package_set_ids", "passed": codes.has("song_package_forbidden_field"), "codes": codes}
 
-static func _forbidden_set_legacy_fields_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("forbidden_set_legacy_fields")
+static func _sets_directory_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("sets_directory_not_supported")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-normal.yaml")
-	var set_text: String = TestSupport.read_text(set_path)
-	set_text += "\nenvironmentId: ab-environment-legacy\ncoachingOverlayId: ab-overlay-legacy\n"
-	TestSupport.write_text(set_path, set_text)
+	var sets_dir: String = scenario_dir.path_join("sets")
+	DirAccess.make_dir_recursive_absolute(sets_dir)
+	_write_legacy_set_file(sets_dir.path_join("ab-set-splat-demo-boxing-normal.yaml"), {})
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "forbidden_set_legacy_fields", "passed": _count_code(codes, "set_forbidden_field") >= 2, "codes": codes}
+	return {"name": "sets_directory_not_supported", "passed": codes.has("sets_directory_not_supported"), "codes": codes}
 
-static func _asset_selections_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("asset_selections_not_supported")
+static func _missing_chart_path_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
+	var scenario_dir: String = base_tmp_dir.path_join("missing_chart_path")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var set_path: String = scenario_dir.path_join("sets/ab-set-splat-demo-boxing-normal.yaml")
-	var set_text: String = TestSupport.read_text(set_path)
-	set_text += "\nassetSelections:\n  gloves: ab-asset-gloves-neon-pulse\n"
-	TestSupport.write_text(set_path, set_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "sets")
+	var root_path: String = scenario_dir.path_join("song.package.yaml")
+	var root_text: String = TestSupport.read_text(root_path)
+	root_text = root_text.replace("path: charts/ab-chart-splat-demo-boxing-normal.yaml", "path: charts/ab-chart-does-not-exist.yaml")
+	TestSupport.write_text(root_path, root_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "asset_selections_not_supported", "passed": codes.has("asset_selections_not_supported"), "codes": codes}
+	return {"name": "missing_chart_path", "passed": codes.has("missing_chart_path"), "codes": codes}
 
 static func _assets_directory_not_supported_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("assets_directory_not_supported")
@@ -146,11 +146,14 @@ static func _forbidden_song_composition_links_scenario(base_fixture_dir: String,
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_composition_links")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
-	var song_path: String = scenario_dir.path_join("songs/ab-song-splat-demo.yaml")
-	var song_text: String = TestSupport.read_text(song_path)
-	song_text += "\nchartId: ab-chart-splat-demo-boxing-normal\nsetId: ab-set-splat-demo-boxing-normal\nworkoutId: ab-workout-legacy\n"
-	TestSupport.write_text(song_path, song_text)
-	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "songs")
+	var song_package_path: String = scenario_dir.path_join("song.package.yaml")
+	var song_package_text: String = TestSupport.read_text(song_package_path)
+	song_package_text = song_package_text.replace(
+		"song:\n  durationSec: 90\n",
+		"song:\n  chartId: ab-chart-splat-demo-boxing-normal\n  setId: ab-set-splat-demo-boxing-normal\n  workoutId: ab-workout-legacy\n  durationSec: 90\n"
+	)
+	TestSupport.write_text(song_package_path, song_package_text)
+	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
 	return {"name": "forbidden_song_composition_links", "passed": _count_code(codes, "forbidden_composition_link_field") >= 3, "codes": codes}
 
@@ -207,6 +210,22 @@ static func _content_core_package_validator_unavailable_scenario(base_fixture_di
 		"codes": codes,
 		"delegatedValidator": report.get("delegatedValidator", ""),
 	}
+
+static func _write_legacy_set_file(path: String, extras: Dictionary) -> void:
+	var lines := [
+		"schemaId: aerobeat.set.v1",
+		"schemaVersion: 1",
+		"recordVersion: 1",
+		"setId: ab-set-splat-demo-boxing-normal",
+		"setName: Splat Demo Boxing Normal",
+		"songId: ab-song-splat-demo",
+		"chartId: ab-chart-splat-demo-boxing-normal",
+	]
+	if extras.has("assetSelections"):
+		lines.append("assetSelections:")
+		for key_variant in Dictionary(extras.get("assetSelections", {})).keys():
+			lines.append("  %s: %s" % [String(key_variant), String(Dictionary(extras.get("assetSelections", {})).get(key_variant, ""))])
+	TestSupport.write_text(path, "\n".join(lines) + "\n")
 
 static func _count_code(codes: Array, code: String) -> int:
 	var count: int = 0
