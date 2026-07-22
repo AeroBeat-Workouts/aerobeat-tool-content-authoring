@@ -189,7 +189,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var conversion_warnings: Array = []
 	for warning_variant in Array(preview_timing.get("warnings", [])):
 		conversion_warnings.append(warning_variant)
-	var environments: Array = []
+	var cover_art_relative_path := ""
 	var cover_entry_path := _resolve_archive_entry_path(archive, _resolve_cover_image_filename(manifest, info_dat))
 	if not cover_entry_path.is_empty():
 		var cover_extension := ".%s" % cover_entry_path.get_extension().to_lower()
@@ -197,17 +197,8 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			var extracted_cover_path := extraction_root.path_join("cover").path_join(cover_entry_path.get_file())
 			_extract_archive_file(archive, cover_entry_path, extracted_cover_path)
 			if FileAccess.file_exists(extracted_cover_path):
-				var authored_cover_relative_path := "media/environments/%s-cover%s" % [song_token, cover_extension]
-				draft_asset_sources[authored_cover_relative_path] = extracted_cover_path
-				environments.append({
-					"schemaId": "aerobeat.environment.v1",
-					"schemaVersion": 1,
-					"recordVersion": 1,
-					"environmentId": "ab-environment-%s-cover" % song_token,
-					"environmentName": "%s Cover" % (song_name if not song_name.is_empty() else _titleize(song_token)),
-					"type": "image_background",
-					"resourcePath": authored_cover_relative_path,
-				})
+				cover_art_relative_path = "media/cover/%s-cover%s" % [song_token, cover_extension]
+				draft_asset_sources[cover_art_relative_path] = extracted_cover_path
 		else:
 			conversion_warnings.append({
 				"code": "unsupported_cover_image_extension",
@@ -269,7 +260,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var draft_text_sources := {
 		".artifacts/beatsaver/source/%s" % STAGE_MANIFEST_NAME: JSON.stringify(manifest, "  ") + "\n",
 		".artifacts/beatsaver/source/%s" % info_dat_path: JSON.stringify(info_dat, "  ") + "\n",
-		".artifacts/beatsaver/conversion/report.json": JSON.stringify({
+		".artifacts/conversion-report.json": JSON.stringify({
 			"source": {
 				"provider": String(manifest.get("provider", "beatsaver")),
 				"mapId": String(manifest.get("map_id", "")),
@@ -315,6 +306,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		"songName": song_name,
 		"durationSec": duration_sec,
 		"audio": song_audio,
+		"coverArtPath": cover_art_relative_path,
 		"timing": {
 			"anchorMs": 0,
 			"tempoSegments": [{"startBeat": 0, "bpm": bpm}],
@@ -345,7 +337,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			"songs": [song_state],
 			"charts": charts,
 			"sets": sets,
-			"environments": environments,
+			"environments": [],
 			"coachConfig": {},
 			"sqlFiles": [],
 		},

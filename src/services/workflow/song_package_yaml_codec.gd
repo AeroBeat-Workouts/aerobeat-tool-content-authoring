@@ -3,8 +3,8 @@ extends RefCounted
 
 const ValidatePackageService = preload("../validation/validate_package_service.gd")
 
-const AUTHORED_DIRECTORIES := ["songs", "charts", "sets", "coaches", "environments", "sql"]
-const AUTHORED_ROOT_FILES := ["song-package.yaml"]
+const AUTHORED_DIRECTORIES := ["charts", "coaches", "sql"]
+const AUTHORED_ROOT_FILES := ["song.package.yaml"]
 const DEFAULT_SONG_PACKAGE_ID := "ab-song-package-draft"
 const DEFAULT_SONG_PACKAGE_NAME := "Draft Song Package"
 const DEFAULT_SET_ID := "ab-set-001"
@@ -55,7 +55,7 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 			"songPackageName": song_package_name,
 			"description": description,
 			"packageVersion": package_version,
-			"setIds": [set_id],
+			"charts": [{"setId": set_id, "setName": set_name, "chartId": chart_id, "path": "charts/%s.yaml" % chart_id}],
 		},
 		"songs": [{
 			"schemaId": "aerobeat.song.v1",
@@ -142,7 +142,7 @@ func load_package_state(package_dir: String) -> Dictionary:
 			"songs": _extract_records(context.get("songs", []), "song"),
 			"charts": _extract_records(context.get("charts", []), "chart"),
 			"sets": _extract_records(context.get("sets", []), "set"),
-			"environments": _extract_records(context.get("environments", []), "environment"),
+			"environments": [],
 			"coachConfig": _single_record_data(context.get("coaches", [])),
 			"sqlFiles": _extract_sql_files(context.get("sql", [])),
 		},
@@ -157,31 +157,18 @@ func write_package_state(state: Dictionary, package_dir: String) -> Dictionary:
 	var songs: Array = _normalize_record_list(state.get("songs", []), "song")
 	var charts: Array = _normalize_record_list(state.get("charts", []), "chart")
 	var sets: Array = _normalize_record_list(state.get("sets", []), "set")
-	var environments: Array = _normalize_record_list(state.get("environments", []), "environment")
 	var coach_config: Dictionary = _normalize_dictionary(state.get("coachConfig", {}))
+	var root_song: Dictionary = Dictionary(songs[0]).duplicate(true) if not songs.is_empty() else {}
+	song_package["song"] = root_song
+	song_package["charts"] = _build_root_chart_descriptors(charts, sets)
 
 	var written_files: Array = []
-	if not _write_yaml_file(absolute_dir.path_join("song-package.yaml"), song_package):
-		return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("song-package.yaml")}
-	written_files.append("song-package.yaml")
+	if not _write_yaml_file(absolute_dir.path_join("song.package.yaml"), song_package):
+		return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join("song.package.yaml")}
+	written_files.append("song.package.yaml")
 
-	for record in songs:
-		var path: String = "songs/%s.yaml" % String(record.get("songId", "song"))
-		if not _write_yaml_file(absolute_dir.path_join(path), record):
-			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
-		written_files.append(path)
 	for record in charts:
 		var path: String = "charts/%s.yaml" % String(record.get("chartId", "chart"))
-		if not _write_yaml_file(absolute_dir.path_join(path), record):
-			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
-		written_files.append(path)
-	for record in sets:
-		var path: String = "sets/%s.yaml" % String(record.get("setId", "set"))
-		if not _write_yaml_file(absolute_dir.path_join(path), record):
-			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
-		written_files.append(path)
-	for record in environments:
-		var path: String = "environments/%s.yaml" % String(record.get("environmentId", "environment"))
 		if not _write_yaml_file(absolute_dir.path_join(path), record):
 			return {"ok": false, "errorCode": "write_failed", "path": absolute_dir.path_join(path)}
 		written_files.append(path)
@@ -262,7 +249,19 @@ func _normalize_song_package_record(record: Dictionary) -> Dictionary:
 	normalized["songPackageName"] = String(normalized.get("songPackageName", "")).strip_edges()
 	normalized["description"] = String(normalized.get("description", "")).strip_edges()
 	normalized["packageVersion"] = String(normalized.get("packageVersion", "1.0.0")).strip_edges()
-	normalized["setIds"] = _normalize_token_array(normalized.get("setIds", []))
+	if normalized.get("song") is Dictionary:
+		normalized["song"] = _normalize_song_record(Dictionary(normalized.get("song", {})).duplicate(true))
+	var normalized_descriptors: Array = []
+	for descriptor_variant in Array(normalized.get("charts", [])):
+		if not (descriptor_variant is Dictionary):
+			continue
+		var descriptor := Dictionary(descriptor_variant).duplicate(true)
+		descriptor["setId"] = _token(descriptor.get("setId", ""))
+		descriptor["setName"] = String(descriptor.get("setName", "")).strip_edges()
+		descriptor["chartId"] = _token(descriptor.get("chartId", ""))
+		descriptor["path"] = String(descriptor.get("path", "")).strip_edges()
+		normalized_descriptors.append(descriptor)
+	normalized["charts"] = normalized_descriptors
 	return normalized
 
 func _normalize_song_record(record: Dictionary) -> Dictionary:
@@ -330,6 +329,28 @@ func _normalize_environment_record(record: Dictionary) -> Dictionary:
 	if normalized.has("configPath"):
 		normalized["configPath"] = String(normalized.get("configPath", "")).strip_edges()
 	return normalized
+
+
+func _build_root_chart_descriptors(charts: Array, sets: Array) -> Array:
+	var descriptors: Array = []
+	var sets_by_chart: Dictionary = {}
+	for set_variant in sets:
+		var set_record := Dictionary(set_variant).duplicate(true)
+		var chart_id := String(set_record.get("chartId", "")).strip_edges()
+		if chart_id.is_empty() or sets_by_chart.has(chart_id):
+			continue
+		sets_by_chart[chart_id] = set_record
+	for chart_variant in charts:
+		var chart_record := Dictionary(chart_variant).duplicate(true)
+		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
+		var set_record: Dictionary = Dictionary(sets_by_chart.get(chart_id, {})).duplicate(true)
+		descriptors.append({
+			"setId": String(set_record.get("setId", "ab-set-%s" % chart_id)).strip_edges(),
+			"setName": String(set_record.get("setName", String(chart_record.get("chartName", chart_id)))).strip_edges(),
+			"chartId": chart_id,
+			"path": "charts/%s.yaml" % chart_id,
+		})
+	return descriptors
 
 func _write_draft_text_sources(state: Dictionary, package_dir: String) -> Array:
 	var written: Array = []

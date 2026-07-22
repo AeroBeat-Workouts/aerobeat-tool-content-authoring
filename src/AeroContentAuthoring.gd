@@ -444,7 +444,7 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 	normalized["coachConfig"] = Dictionary(normalized.get("coachConfig", {})).duplicate(true)
 	var song_package := Dictionary(normalized.get("songPackage", {})).duplicate(true)
 	var sets: Array = Array(normalized.get("sets", [])).duplicate(true)
-	var set_ids: Array = Array(song_package.get("setIds", [])).duplicate(true)
+	var charts: Array = Array(normalized.get("charts", [])).duplicate(true)
 	if sets.is_empty():
 		var default_set := {
 			"schemaId": "aerobeat.set.v1",
@@ -456,7 +456,6 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 			"chartId": "",
 		}
 		sets.append(default_set)
-		set_ids = [DEFAULT_SET_ID]
 	else:
 		var normalized_sets: Array = []
 		for set_variant in sets:
@@ -472,21 +471,34 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 					set_record.erase(retired_field)
 			normalized_sets.append(set_record)
 		sets = normalized_sets
-		for set_record_variant in sets:
-			var set_id := String(Dictionary(set_record_variant).get("setId", "")).strip_edges()
-			if not set_id.is_empty() and not set_ids.has(set_id):
-				set_ids.append(set_id)
 	song_package.erase("workoutId")
 	song_package.erase("workoutName")
 	song_package.erase("coachConfigId")
 	song_package.erase("setOrder")
+	song_package.erase("setIds")
 	if not song_package.has("schemaId"):
 		song_package["schemaId"] = "aerobeat.song-package.v1"
 	if not song_package.has("schemaVersion"):
 		song_package["schemaVersion"] = 1
 	if not song_package.has("recordVersion"):
 		song_package["recordVersion"] = 1
-	song_package["setIds"] = set_ids
+	var chart_descriptors: Array = []
+	for chart_variant in charts:
+		var chart_record := Dictionary(chart_variant).duplicate(true)
+		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
+		var matched_set: Dictionary = {}
+		for set_variant in sets:
+			var set_record := Dictionary(set_variant).duplicate(true)
+			if String(set_record.get("chartId", "")).strip_edges() == chart_id:
+				matched_set = set_record
+				break
+		chart_descriptors.append({
+			"setId": String(matched_set.get("setId", "ab-set-%s" % chart_id)).strip_edges(),
+			"setName": String(matched_set.get("setName", String(chart_record.get("chartName", chart_id)))).strip_edges(),
+			"chartId": chart_id,
+			"path": "charts/%s.yaml" % chart_id,
+		})
+	song_package["charts"] = chart_descriptors
 	normalized["songPackage"] = song_package
 	normalized.erase("workout")
 	normalized["sets"] = sets

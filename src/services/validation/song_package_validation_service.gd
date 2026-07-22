@@ -17,11 +17,12 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 	if subject != "package":
 		return _local_validate_package_service.validate_path(package_dir, subject)
 
-	var bridge: Dictionary = _bridge_package_dir(package_dir)
-	var validation_path: String = String(bridge.get("validationPath", package_dir)).simplify_path()
+	var validation_path: String = String(package_dir).simplify_path()
 	var local_report: Dictionary = _local_validate_package_service.validate_path(validation_path, "package")
 	var core_report: Dictionary = _validate_with_content_core(validation_path)
-	var merged_issues: Array = _merge_issue_arrays(local_report.get("issues", []), core_report.get("issues", []))
+	var merged_issues: Array = Array(local_report.get("issues", [])).duplicate(true)
+	if String(core_report.get("delegatedValidator", "unavailable")) == "aerobeat-content-core":
+		merged_issues = _merge_issue_arrays(merged_issues, core_report.get("issues", []))
 	var report: Dictionary = local_report.duplicate(true)
 	report["packageDir"] = package_dir
 	report["valid"] = merged_issues.is_empty()
@@ -29,67 +30,14 @@ func validate_path(package_dir: String, subject: String = "package") -> Dictiona
 	report["issueCount"] = merged_issues.size()
 	report["delegatedValidator"] = String(core_report.get("delegatedValidator", "unavailable"))
 	report["validationPath"] = validation_path
-	report["validationBridgeMode"] = String(bridge.get("pathMode", "direct"))
+	report["validationBridgeMode"] = "direct"
 	report["coreValidation"] = core_report
-	_cleanup_bridge(bridge)
 	return report
 
 func set_core_validator_paths(paths: Array) -> SongPackageValidationService:
 	_core_validator_paths = paths.duplicate()
 	return self
 
-func _bridge_package_dir(package_dir: String) -> Dictionary:
-	var context: Dictionary = _local_validate_package_service._load_package_context(package_dir)
-	var requires_bridge := false
-	for record in context.get("sets", []):
-		var data: Dictionary = Dictionary(record.get("data", {}))
-		if data.is_empty():
-			continue
-		var preferred_environment_id: String = String(data.get("preferredEnvironmentId", data.get("environmentId", ""))).strip_edges()
-		if not preferred_environment_id.is_empty() and String(data.get("environmentId", "")).strip_edges().is_empty():
-			requires_bridge = true
-			break
-	if not requires_bridge:
-		return {
-			"validationPath": package_dir,
-			"pathMode": "direct",
-		}
-	var loaded: Dictionary = _codec.load_package_state(package_dir)
-	if not bool(loaded.get("ok", false)):
-		return {
-			"validationPath": package_dir,
-			"pathMode": "direct",
-		}
-	var bridge_dir: String = OS.get_user_data_dir().path_join("aerobeat_tool_content_authoring/validation_bridge_%s" % Time.get_unix_time_from_system())
-	var write_result: Dictionary = _codec.write_package_state(Dictionary(loaded.get("state", {})), bridge_dir)
-	if not bool(write_result.get("ok", false)):
-		_cleanup_path(bridge_dir)
-		return {
-			"validationPath": package_dir,
-			"pathMode": "direct",
-		}
-	return {
-		"validationPath": bridge_dir,
-		"bridgeDir": bridge_dir,
-		"pathMode": "bridge",
-	}
-
-func _preferred_fallback_environment_issues(package_dir: String) -> Array:
-	var issues: Array = []
-	var context: Dictionary = _local_validate_package_service._load_package_context(package_dir)
-	for record in context.get("sets", []):
-		var path: String = String(record.get("path", "sets/")).strip_edges()
-		var data: Dictionary = Dictionary(record.get("data", {}))
-		if data.is_empty():
-			continue
-		var set_id: String = String(data.get("setId", "")).strip_edges()
-		var preferred_environment_id: String = String(data.get("preferredEnvironmentId", data.get("environmentId", ""))).strip_edges()
-		var fallback_environment_id: String = String(data.get("fallbackEnvironmentId", "")).strip_edges()
-		if preferred_environment_id.is_empty():
-			issues.append(_issue("missing_preferred_environment_ref", "Set must declare preferredEnvironmentId.", path, set_id, "preferredEnvironmentId"))
-		if fallback_environment_id.is_empty():
-			issues.append(_issue("missing_fallback_environment_ref", "Set must declare fallbackEnvironmentId.", path, set_id, "fallbackEnvironmentId"))
-	return issues
 
 func _validate_with_content_core(package_dir: String) -> Dictionary:
 	var script: Variant = _load_core_validator_script()
@@ -116,7 +64,10 @@ func _validate_with_content_core(package_dir: String) -> Dictionary:
 	return _normalize_core_result(result)
 
 func _load_core_validator_script():
+	var required_dependency := "res://addons/aerobeat-content-core/validators/content_validation_result.gd"
 	for candidate_path in _core_validator_paths:
+		if not ResourceLoader.exists(required_dependency):
+			continue
 		if ResourceLoader.exists(candidate_path):
 			var script: Variant = load(candidate_path)
 			if script != null and script.has_method("new"):
