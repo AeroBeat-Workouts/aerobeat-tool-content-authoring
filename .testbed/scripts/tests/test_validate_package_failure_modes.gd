@@ -37,16 +37,16 @@ static func run() -> Dictionary:
 	}
 
 static func _orphan_chart_record_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
-	var scenario_dir: String = base_tmp_dir.path_join("chart_descriptor_feature_mismatch")
+	var scenario_dir: String = base_tmp_dir.path_join("chart_descriptor_mode_mismatch")
 	TestSupport.ensure_clean_dir(scenario_dir)
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var root_path: String = scenario_dir.path_join("song.package.yaml")
 	var root_text: String = TestSupport.read_text(root_path)
-	root_text = root_text.replace("feature: boxing", "feature: flow")
+	root_text = root_text.replace("mode: boxing", "mode: flow")
 	TestSupport.write_text(root_path, root_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "package")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "chart_descriptor_feature_mismatch", "passed": codes.has("chart_descriptor_feature_mismatch"), "codes": codes}
+	return {"name": "chart_descriptor_mode_mismatch", "passed": codes.has("chart_descriptor_mode_mismatch"), "codes": codes}
 
 static func _missing_chart_reference_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("missing_chart_reference")
@@ -124,11 +124,11 @@ static func _dance_chart_rejected_scenario(base_fixture_dir: String, base_tmp_di
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-normal.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text = chart_text.replace("feature: boxing", "feature: dance")
+	chart_text = chart_text.replace("mode: boxing", "mode: dance")
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "dance_chart_rejected", "passed": codes.has("invalid_feature"), "codes": codes}
+	return {"name": "dance_chart_rejected", "passed": codes.has("invalid_mode"), "codes": codes}
 
 static func _step_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("step_chart_rejected")
@@ -136,11 +136,11 @@ static func _step_chart_rejected_scenario(base_fixture_dir: String, base_tmp_dir
 	TestSupport.copy_tree(base_fixture_dir, scenario_dir)
 	var chart_path: String = scenario_dir.path_join("charts/ab-chart-splat-demo-boxing-normal.yaml")
 	var chart_text: String = TestSupport.read_text(chart_path)
-	chart_text = chart_text.replace("feature: boxing", "feature: step")
+	chart_text = chart_text.replace("mode: boxing", "mode: step")
 	TestSupport.write_text(chart_path, chart_text)
 	var report: Dictionary = load(ADDON_VALIDATE_PACKAGE_SERVICE_PATH).new().validate_path(scenario_dir, "charts")
 	var codes: Array = TestSupport.issue_codes(report.get("issues", []))
-	return {"name": "step_chart_rejected", "passed": codes.has("invalid_feature"), "codes": codes}
+	return {"name": "step_chart_rejected", "passed": codes.has("invalid_mode"), "codes": codes}
 
 static func _forbidden_song_composition_links_scenario(base_fixture_dir: String, base_tmp_dir: String) -> Dictionary:
 	var scenario_dir: String = base_tmp_dir.path_join("forbidden_song_composition_links")

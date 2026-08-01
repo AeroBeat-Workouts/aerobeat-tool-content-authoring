@@ -63,7 +63,7 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 					}],
 				},
 			},
-			"charts": [{"chartId": chart_id, "feature": "boxing", "difficulty": "Normal", "path": "charts/%s.yaml" % chart_id}],
+			"charts": [{"chartId": chart_id, "mode": "boxing", "difficulty": "Normal", "path": "charts/%s.yaml" % chart_id}],
 		},
 		"songs": [{
 			"schemaId": "aerobeat.song.v1",
@@ -95,7 +95,7 @@ func create_blank_package_state(seed: Dictionary = {}) -> Dictionary:
 			"recordVersion": 1,
 			"chartId": chart_id,
 			"chartName": chart_name,
-			"feature": "boxing",
+			"mode": "boxing",
 			"difficulty": "Normal",
 			"beats": [{
 				"start": 1.0,
@@ -291,7 +291,7 @@ func _normalize_song_package_record(record: Dictionary) -> Dictionary:
 			continue
 		var descriptor := Dictionary(descriptor_variant).duplicate(true)
 		descriptor["chartId"] = _token(descriptor.get("chartId", ""))
-		descriptor["feature"] = String(descriptor.get("feature", "")).strip_edges()
+		descriptor["mode"] = String(descriptor.get("mode", "")).strip_edges()
 		descriptor["difficulty"] = _normalize_difficulty_label(String(descriptor.get("difficulty", "Normal")).strip_edges())
 		descriptor["path"] = String(descriptor.get("path", "")).strip_edges()
 		normalized_descriptors.append(descriptor)
@@ -316,7 +316,7 @@ func _normalize_chart_record(record: Dictionary) -> Dictionary:
 	normalized["recordVersion"] = int(normalized.get("recordVersion", 1))
 	normalized["chartId"] = _token(normalized.get("chartId", ""))
 	normalized["chartName"] = String(normalized.get("chartName", "")).strip_edges()
-	normalized["feature"] = String(normalized.get("feature", "boxing")).strip_edges()
+	normalized["mode"] = String(normalized.get("mode", "boxing")).strip_edges()
 	normalized["difficulty"] = _normalize_difficulty_label(String(normalized.get("difficulty", "Normal")).strip_edges())
 	normalized["beats"] = Array(normalized.get("beats", [])).duplicate(true) if normalized.get("beats") is Array else []
 	return normalized
@@ -412,7 +412,7 @@ func _build_root_chart_descriptors(charts: Array, sets: Array) -> Array:
 		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
 		descriptors.append({
 			"chartId": chart_id,
-			"feature": String(chart_record.get("feature", "")).strip_edges(),
+			"mode": String(chart_record.get("mode", "")).strip_edges(),
 			"difficulty": _normalize_difficulty_label(String(chart_record.get("difficulty", "Normal")).strip_edges()),
 			"path": "charts/%s.yaml" % chart_id,
 		})

@@ -99,10 +99,10 @@ static func run() -> Dictionary:
 		}
 	}
 
-static func _find_chart(charts: Array, feature: String) -> Dictionary:
+static func _find_chart(charts: Array, mode: String) -> Dictionary:
 	for chart_variant in charts:
 		var chart: Dictionary = Dictionary(chart_variant)
-		if String(chart.get("feature", "")) == feature:
+		if String(chart.get("mode", "")) == mode:
 			return chart
 	return {}
 

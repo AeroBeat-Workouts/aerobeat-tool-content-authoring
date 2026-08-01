@@ -1,7 +1,7 @@
 class_name ValidateChartService
 extends RefCounted
 
-const VALID_FEATURES := ["boxing", "flow"]
+const VALID_MODES := ["boxing", "flow"]
 const VALID_DIFFICULTIES := ["Easy", "Normal", "Hard", "Expert", "ExpertPlus"]
 const LEGACY_DIFFICULTY_MAP := {
 	"easy": "Easy",
@@ -24,9 +24,9 @@ func validate_chart_record(chart_data: Dictionary, path: String = "") -> Diction
 func validate_record(chart_data: Dictionary, path: String = "") -> Dictionary:
 	var issues: Array = []
 	var delegated_validator := "local"
-	var feature: String = String(chart_data.get("feature", "")).strip_edges()
-	if feature.is_empty() or not VALID_FEATURES.has(feature):
-		issues.append(_issue("invalid_feature", "Chart feature must be 'boxing' or 'flow'.", path, {"feature": feature}))
+	var mode: String = String(chart_data.get("mode", "")).strip_edges()
+	if mode.is_empty() or not VALID_MODES.has(mode):
+		issues.append(_issue("invalid_mode", "Chart mode must be 'boxing' or 'flow'.", path, {"mode": mode}))
 	var difficulty: String = _normalize_difficulty_label(String(chart_data.get("difficulty", "")).strip_edges())
 	if difficulty.is_empty() or not VALID_DIFFICULTIES.has(difficulty):
 		issues.append(_issue("invalid_difficulty", "Chart difficulty must be one of Easy/Normal/Hard/Expert/ExpertPlus.", path, {"difficulty": String(chart_data.get("difficulty", "")).strip_edges()}))
@@ -35,7 +35,7 @@ func validate_record(chart_data: Dictionary, path: String = "") -> Dictionary:
 		issues.append(_issue("beats_missing", "Chart must include a non-empty beats/events array.", path, {}))
 	else:
 		var beats: Array = Array(beats_value)
-		match feature:
+		match mode:
 			"boxing":
 				for index in range(beats.size()):
 					var beat: Variant = beats[index]

@@ -876,7 +876,7 @@ func _format_beatmap_metadata(chart_record: Dictionary) -> String:
 		return "Beatmap: no linked file yet."
 	var bits: Array[String] = []
 	bits.append("Beatmap: %s" % String(chart_record.get("chartName", chart_record.get("chartId", "(unnamed)"))))
-	bits.append("feature=%s" % String(chart_record.get("feature", "boxing")))
+	bits.append("mode=%s" % String(chart_record.get("mode", "boxing")))
 	bits.append("difficulty=%s" % String(chart_record.get("difficulty", "Normal")))
 	bits.append("events=%d" % Array(chart_record.get("beats", [])).size())
 	if chart_record.has("songId") and not String(chart_record.get("songId", "")).is_empty():

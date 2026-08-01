@@ -305,7 +305,7 @@ func import_beatmap_for_set(set_id: String, source_path: String) -> Dictionary:
 	if chart_id.is_empty():
 		chart_id = _tokenized_id(normalized_path.get_file().get_basename(), "ab-chart")
 	var chart_name := String(metadata.get("chartName", normalized_path.get_file().get_basename().capitalize())).strip_edges()
-	var feature := String(metadata.get("feature", "boxing")).strip_edges()
+	var mode := String(metadata.get("mode", "boxing")).strip_edges()
 	var difficulty := String(metadata.get("difficulty", "Normal")).strip_edges()
 	var chart_record := {
 		"schemaId": "aerobeat.chart.boxing.v1",
@@ -313,7 +313,7 @@ func import_beatmap_for_set(set_id: String, source_path: String) -> Dictionary:
 		"recordVersion": 1,
 		"chartId": chart_id,
 		"chartName": chart_name,
-		"feature": feature,
+		"mode": mode,
 		"difficulty": difficulty,
 		"beats": _extract_beats(metadata),
 		"sourcePath": normalized_path,
@@ -487,7 +487,7 @@ func _normalize_state_for_authoring(state: Dictionary) -> Dictionary:
 		var chart_id := String(chart_record.get("chartId", "")).strip_edges()
 		chart_descriptors.append({
 			"chartId": chart_id,
-			"feature": String(chart_record.get("feature", "")).strip_edges(),
+			"mode": String(chart_record.get("mode", "")).strip_edges(),
 			"difficulty": String(chart_record.get("difficulty", "")).strip_edges(),
 			"path": "charts/%s.yaml" % chart_id,
 		})

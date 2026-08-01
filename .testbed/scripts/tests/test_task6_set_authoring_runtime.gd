@@ -13,7 +13,7 @@ static func run() -> Dictionary:
 	var fixture_dir := TestSupport.tmp_dir("task6_runtime_fixture")
 	TestSupport.ensure_clean_dir(fixture_dir)
 	var chart_path := fixture_dir.path_join("sample-chart.yaml")
-	TestSupport.write_text(chart_path, "chartId: ab-chart-preview\nchartName: Preview Chart\nfeature: boxing\ndifficulty: hard\nsongId: ab-song-preview\nbeats:\n  - beat: 1\n")
+	TestSupport.write_text(chart_path, "chartId: ab-chart-preview\nchartName: Preview Chart\nmode: boxing\ndifficulty: hard\nsongId: ab-song-preview\nbeats:\n  - beat: 1\n")
 	var environment_path := fixture_dir.path_join("preview-environment.ogv")
 	var audio_path := fixture_dir.path_join("coaching.ogg")
 	var warmup_path := fixture_dir.path_join("warmup.ogv")

@@ -101,9 +101,9 @@ static func _read_info_dat_from_stage(stage_dir: String) -> Dictionary:
 	var info_variant: Variant = JSON.parse_string(info_text)
 	return Dictionary(info_variant if info_variant is Dictionary else {})
 
-static func _find_chart(charts: Array, feature: String) -> Dictionary:
+static func _find_chart(charts: Array, mode: String) -> Dictionary:
 	for chart_variant in charts:
 		var chart: Dictionary = Dictionary(chart_variant)
-		if String(chart.get("feature", "")) == feature:
+		if String(chart.get("mode", "")) == mode:
 			return chart
 	return {}

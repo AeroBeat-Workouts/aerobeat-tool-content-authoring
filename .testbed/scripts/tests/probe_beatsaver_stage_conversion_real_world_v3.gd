@@ -28,14 +28,14 @@ func _initialize() -> void:
 	var flow_chart_valid := true
 	for chart_variant in charts:
 		var chart: Dictionary = Dictionary(chart_variant)
-		var feature := String(chart.get("feature", ""))
+		var mode := String(chart.get("mode", ""))
 		var beats: Array = Array(chart.get("beats", []))
-		if feature == "flow":
+		if mode == "flow":
 			for beat_variant in beats:
 				var beat_type := String(Dictionary(beat_variant).get("type", ""))
 				flow_counts[beat_type] = int(flow_counts.get(beat_type, 0)) + 1
 			flow_chart_valid = flow_chart_valid and bool(ValidateChartService.new().validate_chart_record(chart, "state://charts/%s" % String(chart.get("chartId", "flow"))).get("valid", false))
-		elif feature == "boxing":
+		elif mode == "boxing":
 			for beat_variant in beats:
 				var beat_type := String(Dictionary(beat_variant).get("type", ""))
 				boxing_counts[beat_type] = int(boxing_counts.get(beat_type, 0)) + 1

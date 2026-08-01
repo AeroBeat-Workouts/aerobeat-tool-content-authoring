@@ -5,7 +5,7 @@ const ValidateChartService = preload("validate_chart_service.gd")
 
 const VALID_SUBJECTS := ["package", "song_package", "songs", "charts", "sets", "coaches", "environments", "sql"]
 const RECORD_FAMILY_ORDER := ["songs", "charts", "sets", "coaches", "environments", "sql"]
-const ROOT_CHART_DESCRIPTOR_REQUIRED_FIELDS := ["chartId", "feature", "difficulty", "path"]
+const ROOT_CHART_DESCRIPTOR_REQUIRED_FIELDS := ["chartId", "mode", "difficulty", "path"]
 const FAMILY_CONFIG := {
 	"songs": {
 		"dir": "songs",
@@ -17,7 +17,7 @@ const FAMILY_CONFIG := {
 		"dir": "charts",
 		"extension": ".yaml",
 		"idKey": "chartId",
-		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "chartId", "chartName", "feature", "difficulty"],
+		"requiredFields": ["schemaId", "schemaVersion", "recordVersion", "chartId", "chartName", "mode", "difficulty"],
 	},
 	"sets": {
 		"dir": "sets",
@@ -337,7 +337,7 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 			var descriptor := Dictionary(song_package.get("charts", [])[index])
 			var chart_id: String = String(descriptor.get("chartId", "")).strip_edges()
 			var path_value: String = String(descriptor.get("path", "")).strip_edges()
-			var feature: String = String(descriptor.get("feature", "")).strip_edges()
+			var mode: String = String(descriptor.get("mode", "")).strip_edges()
 			var difficulty: String = String(descriptor.get("difficulty", "")).strip_edges()
 			var issue_id: String = String(song_package.get("songId", ""))
 			if path_value.is_empty() or not _package_file_exists(package_dir, path_value):
@@ -347,8 +347,8 @@ func _validate_package_cross_references(context: Dictionary) -> Dictionary:
 			if chart_id.is_empty() or not charts_by_id.has(chart_id):
 				continue
 			var chart_data: Dictionary = Dictionary(charts_by_id.get(chart_id, {}).get("data", {}))
-			if feature != String(chart_data.get("feature", "")).strip_edges():
-				issues.append(_issue("chart_descriptor_feature_mismatch", "Root charts[] descriptor feature must match the referenced chart file feature.", root_path, "package", issue_id, "charts[%d].feature" % index, {"chartId": chart_id, "feature": feature, "chartFeature": chart_data.get("feature", "")}))
+			if mode != String(chart_data.get("mode", "")).strip_edges():
+				issues.append(_issue("chart_descriptor_mode_mismatch", "Root charts[] descriptor mode must match the referenced chart file mode.", root_path, "package", issue_id, "charts[%d].mode" % index, {"chartId": chart_id, "mode": mode, "chartMode": chart_data.get("mode", "")}))
 			if difficulty != String(chart_data.get("difficulty", "")).strip_edges():
 				issues.append(_issue("chart_descriptor_difficulty_mismatch", "Root charts[] descriptor difficulty must match the referenced chart file difficulty.", root_path, "package", issue_id, "charts[%d].difficulty" % index, {"chartId": chart_id, "difficulty": difficulty, "chartDifficulty": chart_data.get("difficulty", "")}))
 	for set_record in context.get("sets", []):
@@ -518,7 +518,7 @@ func _derive_root_sets(song_package_record: Dictionary) -> Array:
 			continue
 		var descriptor := Dictionary(descriptor_variant)
 		var chart_id := String(descriptor.get("chartId", "")).strip_edges()
-		var feature := String(descriptor.get("feature", "")).strip_edges()
+		var mode := String(descriptor.get("mode", "")).strip_edges()
 		var difficulty := String(descriptor.get("difficulty", "")).strip_edges()
 		sets.append({
 			"family": "sets",
@@ -530,7 +530,7 @@ func _derive_root_sets(song_package_record: Dictionary) -> Array:
 				"schemaVersion": 1,
 				"recordVersion": 1,
 				"setId": chart_id,
-				"setName": ("%s %s %s" % [song_name, difficulty, feature.capitalize()]).strip_edges(),
+				"setName": ("%s %s %s" % [song_name, difficulty, mode.capitalize()]).strip_edges(),
 				"songId": song_id,
 				"chartId": chart_id,
 			},

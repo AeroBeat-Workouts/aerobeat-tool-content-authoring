@@ -27,7 +27,7 @@ func _normalize_chart_descriptors(value: Variant) -> Array:
 			continue
 		normalized.append({
 			"chartId": String(entry.get("chartId", "")).strip_edges(),
-			"feature": String(entry.get("feature", "")).strip_edges(),
+			"mode": String(entry.get("mode", "")).strip_edges(),
 			"difficulty": String(entry.get("difficulty", "")).strip_edges(),
 			"path": String(entry.get("path", "")).strip_edges(),
 		})

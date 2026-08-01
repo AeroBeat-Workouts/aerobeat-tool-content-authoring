@@ -70,7 +70,7 @@ func _normalize_chart(record_data: Dictionary) -> Dictionary:
 	chart["chartId"] = String(chart.get("chartId", "")).strip_edges()
 	chart["routineId"] = String(chart.get("routineId", "")).strip_edges()
 	chart["songId"] = String(chart.get("songId", "")).strip_edges()
-	chart["feature"] = _normalize_token(String(chart.get("feature", "boxing")), "boxing")
+	chart["mode"] = _normalize_token(String(chart.get("mode", "boxing")), "boxing")
 	chart["difficulty"] = _normalize_token(String(chart.get("difficulty", "Normal")), "Normal")
 	chart["interactionFamily"] = _normalize_token(String(chart.get("interactionFamily", "gesture_2d")), "gesture_2d")
 	chart["events"] = _duplicate_array(chart.get("events", []))
@@ -82,7 +82,7 @@ func _normalize_chart(record_data: Dictionary) -> Dictionary:
 func _canonical_chart_path(chart: Dictionary) -> String:
 	var base_name: String = "%s-%s-%s" % [
 		_slug_component(String(chart.get("songId", ""))),
-		_slug_component(String(chart.get("feature", ""))),
+		_slug_component(String(chart.get("mode", ""))),
 		_slug_component(String(chart.get("difficulty", ""))),
 	]
 	while base_name.contains("--"):

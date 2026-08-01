@@ -16,7 +16,7 @@ static func run() -> Dictionary:
 		"chartName": " Demo Boxing Hard ",
 		"songId": "song_demo",
 		"routineId": "routine_demo_boxing",
-		"feature": " Boxing ",
+		"mode": " Boxing ",
 		"difficulty": " Hard ",
 		"interactionFamily": " Gesture 2D ",
 		"events": [
@@ -56,7 +56,7 @@ static func run() -> Dictionary:
 		"chartName": "Demo Boxing Hard",
 		"songId": "song_demo_neon_strike",
 		"routineId": "routine_legacy_should_not_apply",
-		"feature": "boxing",
+		"mode": "boxing",
 		"difficulty": "hard",
 		"interactionFamily": "gesture_2d",
 		"events": [
@@ -110,7 +110,7 @@ static func _seed_legacy_routine_fixture(package_dir: String) -> void:
 		"schema": "aerobeat.content.routine.v1",
 		"routineId": "routine_demo_boxing",
 		"songId": "song_demo",
-		"feature": "boxing",
+		"mode": "boxing",
 		"charts": ["chart_demo_boxing_medium"],
 	})
 	_write_json(manifest_path, manifest)

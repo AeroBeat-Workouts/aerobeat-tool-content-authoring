@@ -8,7 +8,7 @@ static func run() -> Dictionary:
 		"title": " Demo Song Package ",
 		"packageVersion": " 2.1.0 ",
 		"charts": [
-			{"chartId": " ab-chart-demo-boxing-hard ", "feature": " boxing ", "difficulty": " Hard ", "path": " charts/ab-chart-demo-boxing-hard.yaml "},
+			{"chartId": " ab-chart-demo-boxing-hard ", "mode": " boxing ", "difficulty": " Hard ", "path": " charts/ab-chart-demo-boxing-hard.yaml "},
 		],
 	})
 	var record: Dictionary = result.get("record", {})
@@ -20,7 +20,7 @@ static func run() -> Dictionary:
 		and String(record.get("packageVersion", "")) == "2.1.0" \
 		and charts.size() == 1 \
 		and String(first_chart.get("chartId", "")) == "ab-chart-demo-boxing-hard" \
-		and String(first_chart.get("feature", "")) == "boxing" \
+		and String(first_chart.get("mode", "")) == "boxing" \
 		and String(first_chart.get("difficulty", "")) == "Hard" \
 		and String(first_chart.get("path", "")) == "charts/ab-chart-demo-boxing-hard.yaml" \
 		and not record.has("title")

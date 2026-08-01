@@ -245,14 +245,14 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 
 		for chart_record_variant in [boxing_chart.get("chart"), flow_chart.get("chart")]:
 			var chart_record: Dictionary = Dictionary(chart_record_variant)
-			var set_id := "ab-set-%s-%s-%s" % [song_token, String(chart_record.get("feature", "chart")), String(chart_record.get("difficulty", "normal")).to_lower()]
+			var set_id := "ab-set-%s-%s-%s" % [song_token, String(chart_record.get("mode", "chart")), String(chart_record.get("difficulty", "normal")).to_lower()]
 			set_ids.append(set_id)
 			sets.append({
 				"schemaId": "aerobeat.set.v1",
 				"schemaVersion": 1,
 				"recordVersion": 1,
 				"setId": set_id,
-				"setName": "%s %s %s" % [_titleize(song_token), String(chart_record.get("difficulty", "Normal")), _titleize(String(chart_record.get("feature", "chart")))],
+				"setName": "%s %s %s" % [_titleize(song_token), String(chart_record.get("difficulty", "Normal")), _titleize(String(chart_record.get("mode", "chart")))],
 				"songId": "ab-song-%s" % song_token,
 				"chartId": String(chart_record.get("chartId", "")),
 			})
@@ -402,7 +402,7 @@ func _convert_boxing_chart(source_summary: Dictionary, difficulty_label: String,
 			"recordVersion": 1,
 			"chartId": "ab-chart-%s-boxing-%s" % [song_token, difficulty_label.to_lower()],
 			"chartName": "%s %s Boxing" % [_titleize(song_token), difficulty_label],
-			"feature": "boxing",
+			"mode": "boxing",
 			"difficulty": difficulty_label,
 			"beats": beats,
 		},
@@ -465,7 +465,7 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 			"recordVersion": 1,
 			"chartId": "ab-chart-%s-flow-%s" % [song_token, difficulty_label.to_lower()],
 			"chartName": "%s %s Flow" % [_titleize(song_token), difficulty_label],
-			"feature": "flow",
+			"mode": "flow",
 			"difficulty": difficulty_label,
 			"beats": beats,
 		},
