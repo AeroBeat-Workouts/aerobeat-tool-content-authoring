@@ -205,6 +205,10 @@ func inspect_beatsaver_stage_source(stage_dir: String, options: Dictionary = {})
 		initialize()
 	return get_beatsaver_stage_conversion_service().inspect_stage(stage_dir, options)
 
+# Synchronous transaction boundary: save the resulting package before another
+# conversion for the same package token, even from a separate runtime instance.
+# Deferred source assets use a package-token-scoped workspace; overlapping jobs
+# are intentionally unsupported.
 func convert_beatsaver_stage_to_current_package(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	if not _is_initialized:
 		initialize()

@@ -38,6 +38,8 @@ static func run() -> Dictionary:
 	var saved_cover_path := output_dir.path_join("media/cover/synthetic-beatsaver-demo-cover.png")
 	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo.ogg")
 	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo-preview.ogg")
+	# Keep independent hash conversions after baseline save: same-token conversion
+	# workspaces are intentionally serialized through package publication.
 	var verified_runtime := AeroContentAuthoring.new()
 	verified_runtime.initialize()
 	var verified_hash_result := verified_runtime.convert_beatsaver_stage_to_current_package(stage_dir, {

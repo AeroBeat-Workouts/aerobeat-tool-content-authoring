@@ -76,6 +76,8 @@ Current Boxing posture: each compatible source difficulty produces the four cano
 
 BeatSaver conversion records the extracted source audio as lowercase `sha256:` `audio.contentHash`. Callers may also provide `expectedAudioContentHash` and a staged-path-keyed `expectedDifficultyContentHashes` dictionary; conversion fails explicitly before package publication when declared source bytes do not match.
 
+BeatSaver conversion is intentionally serialized through package save. `convert_beatsaver_stage_to_current_package()` is synchronous and prepares package-token-scoped deferred asset sources; concurrent or overlapping conversion jobs are not supported. Callers must serialize all conversions, and must complete `save_current_package()` before starting another conversion for the same package token, including from another `AeroContentAuthoring` instance. Tests save the baseline package before running independent hash-verification conversions so those jobs cannot replace its deferred workspace.
+
 BeatSaver coverage includes staged archive cover-art import for supported image assets, actual-v4 nested audio/difficulty metadata, legacy v1/v2 note/bomb/obstacle normalization, and late v2.6 slider normalization into Flow arcs. Legacy maps still do **not** claim burst-slider/chain parity or `.egg` → `.ogg` transcoding in this repo. Raw source copies and conversion traces remain package-local under `.artifacts/`, while generated chart records stay free of provider payloads.
 
 See `src/docs/beatsaver-converter-foundation.md` for the foundation slice details.
