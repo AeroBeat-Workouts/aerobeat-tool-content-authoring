@@ -22,12 +22,13 @@ static func run() -> Dictionary:
 		String(fixture.get("songToken", "sanitized-golden")),
 		float(fixture.get("bpm", 120.0))
 	)
+	var requested_modifiers := ["no_squats", "no_weaves", "any_punch", "cross_body"]
 	var modified := converter.convert_matrix(
 		Dictionary(fixture.get("sourceSummary", {})),
 		String(fixture.get("difficulty", "Hard")),
 		String(fixture.get("songToken", "sanitized-golden")),
 		float(fixture.get("bpm", 120.0)),
-		{"modifiers": ["no_squats", "no_weaves", "any_punch", "cross_body"], "presentationSuggestion": {"themeId": "golden-theme"}}
+		{"modifiers": requested_modifiers, "presentationSuggestion": {"themeId": "golden-theme"}}
 	)
 	var cross_body_only := converter.convert_matrix(
 		Dictionary(fixture.get("sourceSummary", {})),
@@ -99,6 +100,9 @@ static func run() -> Dictionary:
 	var cut_types := _types(Array(cut_semantic.get("beats", [])))
 	var row_event_ids := _event_ids(Array(row_semantic.get("beats", [])))
 	var crossed_guard := _find_type(Array(row_semantic.get("beats", [])), "guard")
+	var emitted_modifiers := _event_modifiers(Array(modified_row.get("beats", [])))
+	var expected_modifier_identity := _modifier_union(requested_modifiers, emitted_modifiers)
+	var actual_modifier_identity: Array = Array(Dictionary(modified_row.get("prototype", {})).get("modifiers", []))
 	var row_recipe := _read_json("res://../assets/recipes/boxing-row-family-v1.json")
 	var cut_recipe := _read_json("res://../assets/recipes/boxing-cut-family-v1.json")
 	var semantic_ruleset := _read_json("res://../assets/rulesets/boxing-semantic-track-v1.json")
@@ -126,7 +130,9 @@ static func run() -> Dictionary:
 		and String(crossed_guard.get("modifier", "")) == "crossed_guard" \
 		and row_types.has("weave_right") \
 		and not _types(Array(modified_row.get("beats", []))).has("weave_right") \
-		and Array(Dictionary(modified_row.get("prototype", {})).get("modifiers", [])) == ["any_punch", "cross_body", "crossed_guard", "no_squats", "no_weaves"] \
+		and emitted_modifiers == ["any_punch", "crossed_guard"] \
+		and expected_modifier_identity == ["any_punch", "cross_body", "crossed_guard", "no_squats", "no_weaves"] \
+		and actual_modifier_identity == expected_modifier_identity \
 		and String(_first_punch(Array(modified_row.get("beats", []))).get("modifier", "")) == "any_punch" \
 		and String(_first_punch(Array(cross_body_row.get("beats", []))).get("modifier", "")) == "cross_body" \
 		and not _types(Array(no_squat_row.get("beats", []))).has("squat") \
@@ -163,6 +169,12 @@ static func run() -> Dictionary:
 			"rowEventIds": row_event_ids,
 			"expected": expected,
 			"crossedGuard": crossed_guard,
+			"modifierIdentityRule": {
+				"requested": requested_modifiers,
+				"emitted": emitted_modifiers,
+				"expectedUnion": expected_modifier_identity,
+				"actual": actual_modifier_identity,
+			},
 			"fastPunchCount": _punch_count(Array(fast_row.get("beats", []))),
 			"slowPunchCount": _punch_count(Array(slow_row.get("beats", []))),
 			"blockedFirstPunch": _first_punch(Array(blocked_row.get("beats", []))),
@@ -182,6 +194,24 @@ static func _find(charts: Array, recipe_id: String, ruleset_id: String) -> Dicti
 		if String(prototype.get("recipeId", "")) == recipe_id and String(prototype.get("rulesetId", "")) == ruleset_id:
 			return chart
 	return {}
+
+static func _event_modifiers(beats: Array) -> Array:
+	var result: Array = []
+	for beat_variant in beats:
+		var modifier := String(Dictionary(beat_variant).get("modifier", ""))
+		if not modifier.is_empty() and not result.has(modifier):
+			result.append(modifier)
+	result.sort()
+	return result
+
+static func _modifier_union(requested: Array, emitted: Array) -> Array:
+	var result: Array = requested.duplicate()
+	for modifier_variant in emitted:
+		var modifier := String(modifier_variant)
+		if not result.has(modifier):
+			result.append(modifier)
+	result.sort()
+	return result
 
 static func _types(beats: Array) -> Array:
 	var result: Array = []
