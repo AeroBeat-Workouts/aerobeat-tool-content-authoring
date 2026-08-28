@@ -136,8 +136,18 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		audio_extension = "ogg"
 	var authored_audio_relative_path := "media/audio/%s.%s" % [song_token, audio_extension]
 	var draft_asset_sources := {}
+	var audio_content_hash := ""
 	if not extracted_audio_path.is_empty() and FileAccess.file_exists(extracted_audio_path):
 		draft_asset_sources[authored_audio_relative_path] = extracted_audio_path
+		audio_content_hash = "sha256:%s" % FileAccess.get_sha256(extracted_audio_path)
+	if options.has("expectedAudioContentHash"):
+		var expected_audio_hash := _normalize_expected_sha256(options.get("expectedAudioContentHash"))
+		if expected_audio_hash.is_empty():
+			archive.close()
+			return _error("audio_hash_invalid", "expectedAudioContentHash must use sha256 plus 64 lowercase hexadecimal digits.")
+		if expected_audio_hash != audio_content_hash:
+			archive.close()
+			return _error("audio_hash_mismatch", "Extracted source audio does not match expectedAudioContentHash.", {"expected": expected_audio_hash, "actual": audio_content_hash})
 
 	var preview_source_filename := _resolve_preview_filename(manifest, info_dat)
 	var preview_entry_path := _resolve_archive_entry_path(archive, preview_source_filename)
@@ -161,6 +171,8 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var imported_preview_audio := {}
 	if not authored_audio_relative_path.is_empty():
 		imported_preview_audio["filePath"] = authored_audio_relative_path
+	if not audio_content_hash.is_empty():
+		imported_preview_audio["contentHash"] = audio_content_hash
 	if not authored_preview_relative_path.is_empty():
 		imported_preview_audio["previewFilePath"] = authored_preview_relative_path
 	if not preview_url.is_empty():
@@ -214,6 +226,19 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		var difficulty_path := String(difficulty_entry.get("path", "")).strip_edges()
 		if difficulty_path.is_empty():
 			continue
+		var source_difficulty_hash := _sha256_bytes(archive.read_file(difficulty_path))
+		var expected_difficulty_hashes: Variant = options.get("expectedDifficultyContentHashes", {})
+		if options.has("expectedDifficultyContentHashes") and not (expected_difficulty_hashes is Dictionary):
+			archive.close()
+			return _error("difficulty_hashes_invalid", "expectedDifficultyContentHashes must be a dictionary keyed by staged difficulty path.")
+		if expected_difficulty_hashes is Dictionary and Dictionary(expected_difficulty_hashes).has(difficulty_path):
+			var expected_difficulty_hash := _normalize_expected_sha256(Dictionary(expected_difficulty_hashes).get(difficulty_path))
+			if expected_difficulty_hash.is_empty():
+				archive.close()
+				return _error("difficulty_hash_invalid", "Expected difficulty content hash must use sha256 plus 64 lowercase hexadecimal digits.", {"path": difficulty_path})
+			if expected_difficulty_hash != source_difficulty_hash:
+				archive.close()
+				return _error("difficulty_hash_mismatch", "Staged difficulty data does not match its expected content hash.", {"path": difficulty_path, "expected": expected_difficulty_hash, "actual": source_difficulty_hash})
 		var beatmap_parse := _read_archive_json(archive, difficulty_path)
 		if not bool(beatmap_parse.get("ok", false)):
 			archive.close()
@@ -236,7 +261,7 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			var boxing_trace_entry: Dictionary = Dictionary(trace_variant).duplicate(true)
 			boxing_trace_entry["sourceDifficultyPath"] = difficulty_path
 			boxing_trace_entry["sourceBeatmapVersion"] = version_text
-			boxing_trace_entry["sourceDifficultyHash"] = "sha256:%s" % JSON.stringify(beatmap).sha256_text()
+			boxing_trace_entry["sourceDifficultyHash"] = source_difficulty_hash
 			boxing_trace.append(boxing_trace_entry)
 		flow_trace.append(flow_chart.get("trace"))
 		if recipe_definitions.is_empty():
@@ -1217,6 +1242,23 @@ func _titleize(token: String) -> String:
 			continue
 		pieces[index] = piece.substr(0, 1).to_upper() + piece.substr(1)
 	return " ".join(pieces)
+
+func _sha256_bytes(bytes: PackedByteArray) -> String:
+	var hashing_context := HashingContext.new()
+	hashing_context.start(HashingContext.HASH_SHA256)
+	hashing_context.update(bytes)
+	return "sha256:%s" % hashing_context.finish().hex_encode()
+
+func _normalize_expected_sha256(value: Variant) -> String:
+	if not (value is String):
+		return ""
+	var text := String(value)
+	if not text.begins_with("sha256:") or text.length() != 71:
+		return ""
+	for character in text.substr(7):
+		if not String(character) in "0123456789abcdef":
+			return ""
+	return text
 
 func _error(code: String, message: String, details: Dictionary = {}) -> Dictionary:
 	return {"ok": false, "errorCode": code, "message": message, "details": details}

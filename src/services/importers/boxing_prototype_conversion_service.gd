@@ -174,7 +174,12 @@ func _generate_events(source_summary: Dictionary, difficulty: String, bpm: float
 			return float(a.get("start", 0.0)) < float(b.get("start", 0.0))
 		return String(a.get("stableId", "")) < String(b.get("stableId", ""))
 	)
-	var optimizer_result := _select_spacing_optimized_punches(candidates, bpm, obstacle_windows, difficulty)
+	var guard_center_times_ms: Array[float] = []
+	for candidate_variant in candidates:
+		var candidate: Dictionary = Dictionary(candidate_variant)
+		if String(candidate.get("kind", "")) == "guard":
+			guard_center_times_ms.append(_beat_to_ms(float(candidate.get("start", 0.0)), bpm))
+	var optimizer_result := _select_spacing_optimized_punches(candidates, bpm, obstacle_windows, difficulty, guard_center_times_ms)
 	var optimizer_selection: Dictionary = Dictionary(optimizer_result.get("selected", {}))
 	var optimizer_infeasible: Dictionary = Dictionary(optimizer_result.get("infeasible", {}))
 	var beats: Array = []
@@ -288,14 +293,14 @@ func _generate_events(source_summary: Dictionary, difficulty: String, bpm: float
 		},
 	}
 
-func _select_spacing_optimized_punches(candidates: Array, bpm: float, obstacles: Array, difficulty: String) -> Dictionary:
+func _select_spacing_optimized_punches(candidates: Array, bpm: float, obstacles: Array, difficulty: String, guard_center_times_ms: Array[float]) -> Dictionary:
 	var punches: Array = []
 	var infeasible := {}
 	for candidate_variant in candidates:
 		var candidate: Dictionary = candidate_variant
 		if String(candidate.get("kind", "")) != "punch":
 			continue
-		var static_reason := _static_infeasibility_reason(candidate, bpm, obstacles, difficulty)
+		var static_reason := _static_infeasibility_reason(candidate, bpm, obstacles, difficulty, guard_center_times_ms)
 		if not static_reason.is_empty():
 			infeasible[String(candidate.get("stableId", ""))] = static_reason
 			continue
@@ -324,7 +329,11 @@ func _select_spacing_optimized_punches(candidates: Array, bpm: float, obstacles:
 		selected[String(Dictionary(candidate_variant).get("stableId", ""))] = true
 	return {"selected": selected, "infeasible": infeasible}
 
-func _static_infeasibility_reason(candidate: Dictionary, bpm: float, obstacles: Array, difficulty: String) -> String:
+func _static_infeasibility_reason(candidate: Dictionary, bpm: float, obstacles: Array, difficulty: String, guard_center_times_ms: Array[float]) -> String:
+	var candidate_time_ms := _beat_to_ms(float(candidate.get("start", 0.0)), bpm)
+	for guard_center_ms in guard_center_times_ms:
+		if absf(candidate_time_ms - guard_center_ms) <= float(TIMING_WINDOW_MS) + 0.0001:
+			return "guard_window_reserved_before_optimizer"
 	var note: Dictionary = Dictionary(candidate.get("note", {}))
 	var hand := String(note.get("hand", "left"))
 	var family := String(candidate.get("family", "straight"))
@@ -625,7 +634,7 @@ func _reachable(start_subcell: int, target_subcell: int, delta_beats: float, rat
 					continue
 				var edge_cost := sqrt(2.0) if delta_x != 0 and delta_y != 0 else 1.0
 				distances[next] = minf(distances[next], current_distance + edge_cost)
-	return distances[target_subcell] <= maxf(delta_beats * rate, 1.0) + 0.0001
+	return distances[target_subcell] <= maxf(delta_beats * rate, 0.0) + 0.0001
 
 func _top_left_row(source_cell: int) -> int:
 	return 2 - clampi(int(source_cell / 4), 0, 2)

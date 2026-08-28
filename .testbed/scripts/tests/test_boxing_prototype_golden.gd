@@ -27,8 +27,21 @@ static func run() -> Dictionary:
 		String(fixture.get("difficulty", "Hard")),
 		String(fixture.get("songToken", "sanitized-golden")),
 		float(fixture.get("bpm", 120.0)),
-		{"modifiers": ["no_weaves", "any_punch"], "presentationSuggestion": {"themeId": "golden-theme"}}
+		{"modifiers": ["no_squats", "no_weaves", "any_punch", "cross_body"], "presentationSuggestion": {"themeId": "golden-theme"}}
 	)
+	var cross_body_only := converter.convert_matrix(
+		Dictionary(fixture.get("sourceSummary", {})),
+		String(fixture.get("difficulty", "Hard")),
+		"cross-body",
+		float(fixture.get("bpm", 120.0)),
+		{"modifiers": ["cross_body"]}
+	)
+	var squat_source := {
+		"colorNotes": [],
+		"obstacles": [{"start": 1.0, "duration": 1.0, "x": 0, "y": 0, "width": 4, "height": 1, "sourceIndex": 0}],
+		"bombNotes": [], "sliders": [], "burstSliders": [],
+	}
+	var no_squat_result := converter.convert_matrix(squat_source, "Hard", "no-squat", 120.0, {"modifiers": ["no_squats"]})
 	var boundary_source := {
 		"colorNotes": [
 			{"start": 1.0, "cell": 5, "hand": "left", "direction": 8, "sourceIndex": 0},
@@ -50,6 +63,16 @@ static func run() -> Dictionary:
 		"bombNotes": [], "sliders": [], "burstSliders": [],
 	}
 	var guard_result := converter.convert_matrix(guard_source, "Hard", "guard-relocation", 120.0)
+	var guard_window_source := {
+		"colorNotes": [
+			{"start": 1.0, "cell": 5, "hand": "left", "direction": 8, "sourceIndex": 0},
+			{"start": 1.0, "cell": 6, "hand": "right", "direction": 8, "sourceIndex": 1},
+			{"start": 1.35, "cell": 5, "hand": "left", "direction": 8, "sourceIndex": 2},
+		],
+		"obstacles": [], "bombNotes": [], "sliders": [], "burstSliders": [],
+	}
+	var guard_window_result := converter.convert_matrix(guard_window_source, "Hard", "guard-window", 120.0)
+	var guard_window_chart := _find(Array(guard_window_result.get("charts", [])), "cut_family_source_height_v1", "boxing_semantic_track_v1")
 	var charts: Array = Array(first.get("charts", []))
 	var expected: Dictionary = Dictionary(fixture.get("expected", {}))
 	var chart_ids: Array = []
@@ -65,6 +88,8 @@ static func run() -> Dictionary:
 	var cut_semantic := _find(charts, "cut_family_source_height_v1", "boxing_semantic_track_v1")
 	var cut_spatial := _find(charts, "cut_family_source_height_v1", "boxing_spatial_grid_v1")
 	var modified_row := _find(Array(modified.get("charts", [])), "row_family_balanced_height_v1", "boxing_semantic_track_v1")
+	var cross_body_row := _find(Array(cross_body_only.get("charts", [])), "row_family_balanced_height_v1", "boxing_semantic_track_v1")
+	var no_squat_row := _find(Array(no_squat_result.get("charts", [])), "row_family_balanced_height_v1", "boxing_semantic_track_v1")
 	var fast_row := _find(Array(boundary_fast.get("charts", [])), "row_family_balanced_height_v1", "boxing_semantic_track_v1")
 	var slow_row := _find(Array(boundary_slow.get("charts", [])), "row_family_balanced_height_v1", "boxing_semantic_track_v1")
 	var blocked_row := _find(Array(blocked_result.get("charts", [])), "cut_family_source_height_v1", "boxing_semantic_track_v1")
@@ -101,7 +126,11 @@ static func run() -> Dictionary:
 		and String(crossed_guard.get("modifier", "")) == "crossed_guard" \
 		and row_types.has("weave_right") \
 		and not _types(Array(modified_row.get("beats", []))).has("weave_right") \
-		and Array(Dictionary(modified_row.get("prototype", {})).get("modifiers", [])).has("any_punch") \
+		and Array(Dictionary(modified_row.get("prototype", {})).get("modifiers", [])) == ["any_punch", "cross_body", "crossed_guard", "no_squats", "no_weaves"] \
+		and String(_first_punch(Array(modified_row.get("beats", []))).get("modifier", "")) == "any_punch" \
+		and String(_first_punch(Array(cross_body_row.get("beats", []))).get("modifier", "")) == "cross_body" \
+		and not _types(Array(no_squat_row.get("beats", []))).has("squat") \
+		and _trace_has_reason(Array(no_squat_result.get("traces", [])), "disabled_by_modifier") \
 		and String(Dictionary(modified_row.get("presentationSuggestion", {})).get("themeId", "")) == "golden-theme" \
 		and _punch_count(Array(fast_row.get("beats", []))) == 1 \
 		and _punch_count(Array(slow_row.get("beats", []))) == 2 \
@@ -110,6 +139,10 @@ static func run() -> Dictionary:
 		and int(Dictionary(relocated_guard.get("guardTarget", {})).get("leftCell", -1)) == 10 \
 		and int(Dictionary(relocated_guard.get("guardTarget", {})).get("rightCell", -1)) == 9 \
 		and bool(Dictionary(relocated_guard.get("guardTarget", {})).get("crossed", false)) \
+		and _punch_count(Array(guard_window_chart.get("beats", []))) == 0 \
+		and _trace_has_reason(Array(guard_window_result.get("traces", [])), "guard_window_reserved_before_optimizer") \
+		and converter._reachable(27, 27, 0.0, 4.0, {}) \
+		and not converter._reachable(27, 28, 0.0, 4.0, {}) \
 		and runtime.get_boxing_prototype_contract_id() == Converter.CONTRACT_ID \
 		and runtime.list_boxing_prototype_recipes().size() == 2 \
 		and runtime.list_boxing_prototype_rulesets().size() == 2 \
@@ -135,6 +168,9 @@ static func run() -> Dictionary:
 			"blockedFirstPunch": _first_punch(Array(blocked_row.get("beats", []))),
 			"blockedTraceMatched": _trace_has_reason(Array(blocked_result.get("traces", [])), "spatial_target_blocked_before_optimizer"),
 			"relocatedGuard": relocated_guard,
+			"guardWindowBeats": guard_window_chart.get("beats", []),
+			"guardWindowReserved": _trace_has_reason(Array(guard_window_result.get("traces", [])), "guard_window_reserved_before_optimizer"),
+			"zeroBeatAdjacentReachable": converter._reachable(27, 28, 0.0, 4.0, {}),
 			"traces": first.get("traces", []),
 		},
 	}

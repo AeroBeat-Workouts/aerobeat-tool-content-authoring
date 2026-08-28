@@ -8,6 +8,11 @@ static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
 	runtime.initialize()
 	var stage_dir := ProjectSettings.globalize_path("res://assets/fixtures/beatsaver_stage_minimal")
+	var archive := ZIPReader.new()
+	var archive_open_error := archive.open(stage_dir.path_join("demo-beatsaver-stage.zip"))
+	var expected_audio_hash := _sha256_bytes(archive.read_file("demo-song.ogg")) if archive_open_error == OK else ""
+	var expected_difficulty_hash := _sha256_bytes(archive.read_file("HardStandard.dat")) if archive_open_error == OK else ""
+	archive.close()
 	var convert_result: Dictionary = runtime.convert_beatsaver_stage_to_current_package(stage_dir)
 	var state: Dictionary = Dictionary(convert_result.get("state", {}))
 	var summary: Dictionary = Dictionary(convert_result.get("summary", {}))
@@ -33,6 +38,22 @@ static func run() -> Dictionary:
 	var saved_cover_path := output_dir.path_join("media/cover/synthetic-beatsaver-demo-cover.png")
 	var saved_main_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo.ogg")
 	var saved_preview_audio := output_dir.path_join("media/audio/synthetic-beatsaver-demo-preview.ogg")
+	var verified_runtime := AeroContentAuthoring.new()
+	verified_runtime.initialize()
+	var verified_hash_result := verified_runtime.convert_beatsaver_stage_to_current_package(stage_dir, {
+		"expectedAudioContentHash": expected_audio_hash,
+		"expectedDifficultyContentHashes": {"HardStandard.dat": expected_difficulty_hash},
+	})
+	var mismatch_runtime := AeroContentAuthoring.new()
+	mismatch_runtime.initialize()
+	var mismatch_result := mismatch_runtime.convert_beatsaver_stage_to_current_package(stage_dir, {
+		"expectedAudioContentHash": "sha256:" + "0".repeat(64),
+	})
+	var difficulty_mismatch_runtime := AeroContentAuthoring.new()
+	difficulty_mismatch_runtime.initialize()
+	var difficulty_mismatch_result := difficulty_mismatch_runtime.convert_beatsaver_stage_to_current_package(stage_dir, {
+		"expectedDifficultyContentHashes": {"HardStandard.dat": "sha256:" + "0".repeat(64)},
+	})
 	var boxing_chart := _find_chart(charts, "boxing")
 	var flow_chart := _find_chart(charts, "flow")
 	var boxing_types: Array = []
@@ -50,6 +71,11 @@ static func run() -> Dictionary:
 	var arc_beat := _find_flow_beat(flow_beats, "arc", 8.0)
 	var burst_beat := _find_flow_beat(flow_beats, "burst", 9.0)
 	var passed := bool(convert_result.get("ok", false)) \
+		and bool(verified_hash_result.get("ok", false)) \
+		and not bool(mismatch_result.get("ok", true)) \
+		and String(mismatch_result.get("errorCode", "")) == "audio_hash_mismatch" \
+		and not bool(difficulty_mismatch_result.get("ok", true)) \
+		and String(difficulty_mismatch_result.get("errorCode", "")) == "difficulty_hash_mismatch" \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
 		and bool(package_validation.get("valid", false)) \
@@ -65,6 +91,7 @@ static func run() -> Dictionary:
 		and FileAccess.file_exists(saved_main_audio) \
 		and not FileAccess.file_exists(saved_preview_audio) \
 		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-beatsaver-demo.ogg" \
+		and String(song_audio.get("contentHash", "")) == "sha256:%s" % FileAccess.get_sha256(saved_main_audio) \
 		and String(song_audio.get("previewUrl", "")) == "https://cdn.example.invalid/beatsaver/synthetic-preview.mp3" \
 		and is_equal_approx(float(song_audio.get("previewStartTime", -1.0)), 12.5) \
 		and is_equal_approx(float(song_audio.get("previewDuration", -1.0)), 3.25) \
@@ -111,8 +138,17 @@ static func run() -> Dictionary:
 			"flowBeats": flow_beats,
 			"reportPath": report_path,
 			"songAudio": song_audio,
+			"verifiedHashResult": verified_hash_result,
+			"mismatchResult": mismatch_result,
+			"difficultyMismatchResult": difficulty_mismatch_result,
 		}
 	}
+
+static func _sha256_bytes(bytes: PackedByteArray) -> String:
+	var hashing_context := HashingContext.new()
+	hashing_context.start(HashingContext.HASH_SHA256)
+	hashing_context.update(bytes)
+	return "sha256:%s" % hashing_context.finish().hex_encode()
 
 static func _find_chart(charts: Array, mode: String) -> Dictionary:
 	for chart_variant in charts:
