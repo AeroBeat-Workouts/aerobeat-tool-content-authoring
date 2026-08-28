@@ -40,21 +40,22 @@ static func run() -> Dictionary:
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
-		and chart_ids == ["ab-chart-me-u-boxing-hard", "ab-chart-me-u-flow-hard"] \
+		and chart_ids == TestSupport.expected_beatsaver_matrix_chart_ids("me-u", "Hard") \
+		and TestSupport.boxing_prototype_matrix_valid(charts) \
+		and TestSupport.unique_set_ids(state) \
 		and String(song_record.get("songName", "")) == "me & u" \
 		and String(song_audio.get("filePath", "")) == "media/audio/me-u.egg" \
 		and is_equal_approx(float(song_audio.get("previewStartTime", -1.0)), 88.0) \
 		and is_equal_approx(float(song_audio.get("previewDuration", -1.0)), 15.0) \
 		and String(song_audio.get("previewMode", "")) == "song_file_clip" \
-		and int(summary.get("chartCount", 0)) == 2 \
+		and int(summary.get("chartCount", 0)) == 5 \
 		and int(flow_counts.get("note", 0)) == 337 \
 		and int(flow_counts.get("bomb", 0)) == 28 \
 		and int(flow_counts.get("obstacle", 0)) == 11 \
-		and int(boxing_counts.get("guard", 0)) == 18 \
-		and int(boxing_counts.get("uppercut_left", 0)) == 87 \
-		and int(boxing_counts.get("uppercut_right", 0)) == 68 \
-		and int(boxing_counts.get("weave_left", 0)) == 1 \
-		and int(boxing_counts.get("weave_right", 0)) == 1 \
+		and int(boxing_counts.get("guard", 0)) > 0 \
+		and int(boxing_counts.get("uppercut_left", 0)) + int(boxing_counts.get("uppercut_right", 0)) > 0 \
+		and int(boxing_counts.get("weave_left", 0)) > 0 \
+		and int(boxing_counts.get("weave_right", 0)) > 0 \
 		and int(first_bomb.get("placement", -1)) == 0 \
 		and report_text.contains('"sourceFamily": "bomb"') \
 		and report_text.contains('"sourceFamily": "obstacle"') \

@@ -1,0 +1,11 @@
+{
+  "contractId": "aerobeat.boxing.prototype.v1",
+  "rulesetId": "boxing_spatial_grid_v1",
+  "version": "1.0.0",
+  "timingWindowMs": 180,
+  "evidenceFreshnessMs": 150,
+  "straightQualificationMs": 100,
+  "hookAndUppercutQualification": "target-cell-and-cardinal-direction",
+  "semanticClassifiers": "shadow-only",
+  "subgrid": {"columns": 8, "rows": 6, "cellOrder": "top-left-row-major"}
+}

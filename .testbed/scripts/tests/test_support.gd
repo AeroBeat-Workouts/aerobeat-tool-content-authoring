@@ -72,3 +72,54 @@ static func issue_codes(issues: Array) -> Array:
 	for issue in issues:
 		codes.append(String(issue.get("code", "")))
 	return codes
+
+static func expected_beatsaver_matrix_chart_ids(song_token: String, difficulty: String) -> Array:
+	var prefix := "ab-chart-%s-boxing-%s" % [song_token, difficulty.to_lower()]
+	return [
+		"%s-semantic-track-cut-family" % prefix,
+		"%s-semantic-track-row-family" % prefix,
+		"%s-spatial-grid-cut-family" % prefix,
+		"%s-spatial-grid-row-family" % prefix,
+		"ab-chart-%s-flow-%s" % [song_token, difficulty.to_lower()],
+	]
+
+static func boxing_prototype_matrix_valid(charts: Array) -> bool:
+	var identities := {}
+	var boxing_count := 0
+	for chart_variant in charts:
+		var chart: Dictionary = Dictionary(chart_variant)
+		if String(chart.get("mode", "")) != "boxing":
+			continue
+		boxing_count += 1
+		var prototype: Dictionary = Dictionary(chart.get("prototype", {}))
+		if String(prototype.get("contractId", "")) != "aerobeat.boxing.prototype.v1":
+			return false
+		for field in ["sourceHash", "recipeHash", "rulesetHash", "contentHash"]:
+			if not String(prototype.get(field, "")).begins_with("sha256:"):
+				return false
+		var identity := "%s|%s" % [prototype.get("recipeId", ""), prototype.get("rulesetId", "")]
+		identities[identity] = true
+		for beat_variant in Array(chart.get("beats", [])):
+			var beat: Dictionary = Dictionary(beat_variant)
+			if String(beat.get("eventId", "")).is_empty() or Array(beat.get("sourceEventIds", [])).is_empty():
+				return false
+			var beat_type := String(beat.get("type", ""))
+			if beat_type == "guard":
+				if not beat.has("guardTarget") or String(Dictionary(beat.get("checkpoint", {})).get("kind", "")) != "instantaneous":
+					return false
+			elif beat_type in ["squat", "weave_left", "weave_right"]:
+				if String(Dictionary(beat.get("checkpoint", {})).get("kind", "")) != "instantaneous":
+					return false
+			elif not beat.has("spatialTarget"):
+				return false
+	return boxing_count == 4 and identities.size() == 4 \
+		and identities.has("row_family_balanced_height_v1|boxing_semantic_track_v1") \
+		and identities.has("row_family_balanced_height_v1|boxing_spatial_grid_v1") \
+		and identities.has("cut_family_source_height_v1|boxing_semantic_track_v1") \
+		and identities.has("cut_family_source_height_v1|boxing_spatial_grid_v1")
+
+static func unique_set_ids(state: Dictionary) -> bool:
+	var ids := {}
+	for set_variant in Array(state.get("sets", [])):
+		ids[String(Dictionary(set_variant).get("setId", ""))] = true
+	return ids.size() == Array(state.get("sets", [])).size()

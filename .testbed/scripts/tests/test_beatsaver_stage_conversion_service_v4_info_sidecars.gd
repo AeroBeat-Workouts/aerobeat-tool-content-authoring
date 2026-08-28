@@ -50,8 +50,10 @@ static func run() -> Dictionary:
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
-		and chart_ids == ["ab-chart-synthetic-beatsaver-v4-info-demo-boxing-hard", "ab-chart-synthetic-beatsaver-v4-info-demo-flow-hard"] \
-		and int(summary.get("chartCount", 0)) == 2 \
+		and chart_ids == TestSupport.expected_beatsaver_matrix_chart_ids("synthetic-beatsaver-v4-info-demo", "Hard") \
+		and TestSupport.boxing_prototype_matrix_valid(charts) \
+		and TestSupport.unique_set_ids(state) \
+		and int(summary.get("chartCount", 0)) == 5 \
 		and String(song_record.get("songName", "")) == "Synthetic BeatSaver V4 Info Demo" \
 		and int(song_record.get("durationSec", 0)) == 8 \
 		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-beatsaver-v4-info-demo.egg" \

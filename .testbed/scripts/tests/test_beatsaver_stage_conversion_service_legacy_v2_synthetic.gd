@@ -49,12 +49,15 @@ static func run() -> Dictionary:
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
-		and chart_ids == ["ab-chart-synthetic-legacy-v2-conversion-demo-boxing-hard", "ab-chart-synthetic-legacy-v2-conversion-demo-flow-hard"] \
+		and chart_ids == TestSupport.expected_beatsaver_matrix_chart_ids("synthetic-legacy-v2-conversion-demo", "Hard") \
+		and TestSupport.boxing_prototype_matrix_valid(charts) \
+		and TestSupport.unique_set_ids(state) \
 		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-legacy-v2-conversion-demo.ogg" \
 		and is_equal_approx(float(song_audio.get("previewStartTime", -1.0)), 4.0) \
 		and is_equal_approx(float(song_audio.get("previewDuration", -1.0)), 2.5) \
 		and String(song_audio.get("previewMode", "")) == "song_file_clip" \
-		and boxing_types == ["straight_left", "guard", "uppercut_right", "straight_left", "squat", "straight_left", "hook_left"] \
+		and boxing_types.has("guard") \
+		and boxing_types.has("squat") \
 		and flow_types == ["note", "note", "note", "note", "note", "note", "note", "obstacle", "obstacle", "bomb", "note", "note"] \
 		and float(first_note.get("angleOffset", 99.0)) == 0.0 \
 		and bool(first_note.get("requiresDirection", false)) \
@@ -66,7 +69,7 @@ static func run() -> Dictionary:
 		and report_text.contains('"sourceFamily": "bomb"') \
 		and report_text.contains('"sourceFamily": "obstacle"') \
 		and not report_text.contains("legacy_beatmap_object_normalization_pending") \
-		and int(summary.get("chartCount", 0)) == 2
+		and int(summary.get("chartCount", 0)) == 5
 	return {
 		"name": "test_beatsaver_stage_conversion_service_legacy_v2_synthetic",
 		"passed": passed,

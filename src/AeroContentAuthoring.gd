@@ -8,6 +8,7 @@ const BuildContentPackageService = preload("services/packaging/build_content_pac
 const RefreshContentIndexService = preload("services/registry/refresh_content_index_service.gd")
 const SongPackageWorkflowService = preload("services/workflow/song_package_workflow_service.gd")
 const BeatSaverStageConversionService = preload("services/importers/beatsaver_stage_conversion_service.gd")
+const BoxingPrototypeConversionService = preload("services/importers/boxing_prototype_conversion_service.gd")
 
 signal initialized
 signal authoring_state_reset(state)
@@ -16,7 +17,7 @@ signal package_loaded(package_dir, state)
 signal package_saved(output_dir, zip_path)
 signal package_validated(report)
 
-const VERSION: String = "0.4.0"
+const VERSION: String = "0.5.0"
 const DEFAULT_SET_ID := "ab-set-001"
 const DEFAULT_SET_NAME := "Set 1"
 const ENVIRONMENT_TYPE_BY_EXTENSION := {
@@ -189,6 +190,15 @@ func get_beatsaver_stage_conversion_service() -> BeatSaverStageConversionService
 	if not _is_initialized:
 		_service_registry = build_service_registry()
 	return _service_registry.get("beatsaver_stage_conversion") as BeatSaverStageConversionService
+
+func list_boxing_prototype_recipes() -> Array[Dictionary]:
+	return BoxingPrototypeConversionService.new().recipe_definitions()
+
+func list_boxing_prototype_rulesets() -> Array[Dictionary]:
+	return BoxingPrototypeConversionService.new().ruleset_definitions()
+
+func get_boxing_prototype_contract_id() -> String:
+	return BoxingPrototypeConversionService.CONTRACT_ID
 
 func inspect_beatsaver_stage_source(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	if not _is_initialized:

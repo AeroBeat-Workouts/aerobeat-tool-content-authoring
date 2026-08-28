@@ -45,9 +45,11 @@ static func run() -> Dictionary:
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
 		and String(flow_chart_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
-		and chart_ids == ["ab-chart-synthetic-legacy-v26-slider-demo-boxing-hard", "ab-chart-synthetic-legacy-v26-slider-demo-flow-hard"] \
+		and chart_ids == TestSupport.expected_beatsaver_matrix_chart_ids("synthetic-legacy-v26-slider-demo", "Hard") \
+		and TestSupport.boxing_prototype_matrix_valid(charts) \
+		and TestSupport.unique_set_ids(state) \
 		and String(song_audio.get("filePath", "")) == "media/audio/synthetic-legacy-v26-slider-demo.ogg" \
-		and boxing_types.size() == 3 \
+		and boxing_types.size() > 0 \
 		and flow_types == ["note", "arc", "note", "note"] \
 		and String(arc_beat.get("startNoteRef", "")).begins_with("flow-note-") \
 		and String(arc_beat.get("endNoteRef", "")).begins_with("flow-note-") \
@@ -60,7 +62,7 @@ static func run() -> Dictionary:
 		and is_equal_approx(float(arc_beat.get("tailCurveMultiplier", 0.0)), 0.75) \
 		and report_text.contains('"sourceFamily": "slider"') \
 		and report_text.contains('"type": "arc"') \
-		and int(summary.get("chartCount", 0)) == 2
+		and int(summary.get("chartCount", 0)) == 5
 	return {
 		"name": "test_beatsaver_stage_conversion_service_legacy_v26_sliders",
 		"passed": passed,

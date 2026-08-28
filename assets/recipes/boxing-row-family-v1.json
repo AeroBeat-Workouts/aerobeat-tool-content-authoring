@@ -1,0 +1,28 @@
+{
+  "contractId": "aerobeat.boxing.prototype.v1",
+  "recipeId": "row_family_balanced_height_v1",
+  "version": "1.0.0",
+  "label": "Row Family / Balanced Height",
+  "familyRule": {
+    "top": "uppercut",
+    "middle": "straight",
+    "bottom": "hook"
+  },
+  "heightRule": "balance_generated_rows",
+  "punchMinSpacingMs": 360,
+  "guardTimingWindowMs": 180,
+  "obstacleTimingWindowMs": 180,
+  "freshnessMs": 150,
+  "straightQualificationMs": 100,
+  "reachSubcellsPerBeat": {
+    "Easy": 3.0,
+    "Normal": 3.5,
+    "Hard": 4.0,
+    "Expert": 5.0,
+    "ExpertPlus": 6.0
+  },
+  "initialWristCells": {
+    "left": 5,
+    "right": 6
+  }
+}

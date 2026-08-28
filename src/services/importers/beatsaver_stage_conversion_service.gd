@@ -1,21 +1,8 @@
 class_name BeatSaverStageConversionService
 extends RefCounted
 
+const BoxingPrototypeConversionService = preload("boxing_prototype_conversion_service.gd")
 const STAGE_MANIFEST_NAME := "source_material_manifest.json"
-const BOXING_INTERVAL_MS_BY_DIFFICULTY := {
-	"Easy": 1500,
-	"Normal": 1250,
-	"Hard": 1000,
-	"Expert": 750,
-	"ExpertPlus": 500,
-}
-const CENTER_GUARD_CELL_SETS := {
-	"1,2": true,
-	"5,6": true,
-	"9,10": true,
-}
-const LEFT_SIDE_CELLS := {0: true, 1: true, 4: true, 5: true, 8: true, 9: true}
-const RIGHT_SIDE_CELLS := {2: true, 3: true, 6: true, 7: true, 10: true, 11: true}
 const SUPPORTED_COVER_IMAGE_EXTENSIONS := {
 	".png": true,
 	".jpg": true,
@@ -217,6 +204,10 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 	var set_ids: Array = []
 	var boxing_trace: Array = []
 	var flow_trace: Array = []
+	var recipe_definitions: Array = []
+	var ruleset_definitions: Array = []
+	var bpm := _resolve_bpm(info_dat, manifest)
+	var prototype_converter := BoxingPrototypeConversionService.new()
 
 	for difficulty_entry_variant in standard_difficulties:
 		var difficulty_entry: Dictionary = Dictionary(difficulty_entry_variant)
@@ -236,16 +227,28 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 
 		var difficulty_label := _normalize_difficulty_label(String(difficulty_entry.get("difficulty", "Normal")))
 		var source_summary := _normalize_source_summary(beatmap)
-		var boxing_chart := _convert_boxing_chart(source_summary, difficulty_label, song_token)
+		var boxing_matrix := prototype_converter.convert_matrix(source_summary, difficulty_label, song_token, bpm, options)
 		var flow_chart := _convert_flow_chart(source_summary, difficulty_label, song_token)
-		charts.append(boxing_chart.get("chart"))
+		for boxing_chart_variant in Array(boxing_matrix.get("charts", [])):
+			charts.append(Dictionary(boxing_chart_variant))
 		charts.append(flow_chart.get("chart"))
-		boxing_trace.append(boxing_chart.get("trace"))
+		for trace_variant in Array(boxing_matrix.get("traces", [])):
+			var boxing_trace_entry: Dictionary = Dictionary(trace_variant).duplicate(true)
+			boxing_trace_entry["sourceDifficultyPath"] = difficulty_path
+			boxing_trace_entry["sourceBeatmapVersion"] = version_text
+			boxing_trace_entry["sourceDifficultyHash"] = "sha256:%s" % JSON.stringify(beatmap).sha256_text()
+			boxing_trace.append(boxing_trace_entry)
 		flow_trace.append(flow_chart.get("trace"))
+		if recipe_definitions.is_empty():
+			recipe_definitions = Array(boxing_matrix.get("recipes", [])).duplicate(true)
+			ruleset_definitions = Array(boxing_matrix.get("rulesets", [])).duplicate(true)
 
-		for chart_record_variant in [boxing_chart.get("chart"), flow_chart.get("chart")]:
+		var generated_chart_records: Array = Array(boxing_matrix.get("charts", [])).duplicate(true)
+		generated_chart_records.append(flow_chart.get("chart"))
+		for chart_record_variant in generated_chart_records:
 			var chart_record: Dictionary = Dictionary(chart_record_variant)
-			var set_id := "ab-set-%s-%s-%s" % [song_token, String(chart_record.get("mode", "chart")), String(chart_record.get("difficulty", "normal")).to_lower()]
+			var chart_id := String(chart_record.get("chartId", ""))
+			var set_id := "ab-set-%s" % chart_id.trim_prefix("ab-chart-")
 			set_ids.append(set_id)
 			sets.append({
 				"schemaId": "aerobeat.set.v1",
@@ -280,6 +283,9 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 				"imported": imported_preview_audio,
 			},
 			"warnings": conversion_warnings,
+			"boxingPrototypeContract": "aerobeat.boxing.prototype.v1",
+			"recipeDefinitions": recipe_definitions,
+			"rulesetDefinitions": ruleset_definitions,
 			"boxing": boxing_trace,
 			"flow": flow_trace,
 		}, "  ") + "\n",
@@ -293,7 +299,6 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 		draft_text_sources[".artifacts/beatsaver/source/%s" % difficulty_path] = raw_text + ("\n" if not raw_text.ends_with("\n") else "")
 	archive.close()
 
-	var bpm := _resolve_bpm(info_dat, manifest)
 	var duration_sec := _estimate_song_duration_sec_from_charts(charts, bpm)
 	if song_name.is_empty():
 		song_name = "Imported BeatSaver Song"
@@ -345,70 +350,6 @@ func convert_stage(stage_dir: String, options: Dictionary = {}) -> Dictionary:
 			"setCount": sets.size(),
 			"difficultyCount": standard_difficulties.size(),
 			"warnings": conversion_warnings,
-		},
-	}
-
-func _convert_boxing_chart(source_summary: Dictionary, difficulty_label: String, song_token: String) -> Dictionary:
-	var trace_events: Array = []
-	var authored_candidates := {}
-	var note_groups := _group_notes_by_start(Array(source_summary.get("colorNotes", [])))
-	var next_dual_keep_hand := "right"
-	for start_key in note_groups.keys():
-		var notes: Array = note_groups[start_key]
-		var normalized_group := _collapse_same_hand_clusters(notes)
-		var note_trace := {"start": float(start_key), "sourceFamily": "notes", "notes": normalized_group.duplicate(true)}
-		if _is_guard_pair(normalized_group):
-			_authored_candidate_add(authored_candidates, float(start_key), {"start": float(start_key), "type": "guard", "_priority": 2})
-			note_trace["result"] = {"action": "emit", "type": "guard"}
-		else:
-			var retained := _pick_dual_or_single_retained_note(normalized_group, next_dual_keep_hand)
-			if normalized_group.size() > 1:
-				note_trace["trackerBefore"] = next_dual_keep_hand
-				next_dual_keep_hand = "left" if next_dual_keep_hand == "right" else "right"
-				note_trace["trackerAfter"] = next_dual_keep_hand
-			if not retained.is_empty():
-				var beat_type := _boxing_type_for_row_and_hand(int(retained.get("cell", 0)), String(retained.get("hand", "left")))
-				_authored_candidate_add(authored_candidates, float(start_key), {"start": float(start_key), "type": beat_type, "_priority": 1})
-				note_trace["result"] = {"action": "emit", "type": beat_type, "retained": retained.duplicate(true)}
-		trace_events.append(note_trace)
-	for obstacle_trace in _normalize_obstacle_windows(Array(source_summary.get("obstacles", []))):
-		var obstacle_start := float(obstacle_trace.get("start", 0.0))
-		var left_count := int(obstacle_trace.get("leftCount", 0))
-		var right_count := int(obstacle_trace.get("rightCount", 0))
-		var obstacle_type := "squat"
-		if left_count > right_count:
-			obstacle_type = "weave_right"
-		elif right_count > left_count:
-			obstacle_type = "weave_left"
-		_authored_candidate_add(authored_candidates, obstacle_start, {"start": obstacle_start, "type": obstacle_type, "_priority": 1})
-		obstacle_trace["result"] = {"action": "emit", "type": obstacle_type}
-		trace_events.append(obstacle_trace)
-	for bomb in Array(source_summary.get("bombNotes", [])):
-		trace_events.append({"start": float(bomb.get("start", 0.0)), "sourceFamily": "bomb", "result": {"action": "artifact_only"}, "bomb": bomb.duplicate(true)})
-	for slider in Array(source_summary.get("sliders", [])):
-		trace_events.append({"start": float(slider.get("start", 0.0)), "sourceFamily": "slider", "result": {"action": "artifact_only_guidance"}, "slider": slider.duplicate(true)})
-	for burst in Array(source_summary.get("burstSliders", [])):
-		var emitted := _emit_boxing_burst(burst, difficulty_label)
-		for beat in Array(emitted.get("beats", [])):
-			var priority_beat: Dictionary = Dictionary(beat).duplicate(true)
-			priority_beat["_priority"] = 3
-			_authored_candidate_add(authored_candidates, float(priority_beat.get("start", 0.0)), priority_beat)
-		trace_events.append({"start": float(burst.get("start", 0.0)), "sourceFamily": "burstSlider", "source": burst.duplicate(true), "result": {"action": "emit", "beats": emitted.get("beats", [])}})
-	var beats := _flatten_authored_candidates(authored_candidates)
-	return {
-		"chart": {
-			"schemaId": "aerobeat.chart.boxing.v1",
-			"schemaVersion": 1,
-			"recordVersion": 1,
-			"chartId": "ab-chart-%s-boxing-%s" % [song_token, difficulty_label.to_lower()],
-			"chartName": "%s %s Boxing" % [_titleize(song_token), difficulty_label],
-			"mode": "boxing",
-			"difficulty": difficulty_label,
-			"beats": beats,
-		},
-		"trace": {
-			"difficulty": difficulty_label,
-			"events": trace_events,
 		},
 	}
 
@@ -772,73 +713,6 @@ func _normalize_burst_sliders(beatmap: Dictionary) -> Array:
 		bursts.append(normalized)
 	return bursts
 
-func _normalize_obstacle_windows(obstacles: Array) -> Array:
-	var windows: Array = []
-	for obstacle_variant in obstacles:
-		var obstacle: Dictionary = Dictionary(obstacle_variant)
-		var occupied_cells := _cells_for_obstacle(obstacle)
-		var merged := false
-		for index in range(windows.size()):
-			var window: Dictionary = Dictionary(windows[index])
-			var window_start := _variant_to_float(window.get("start", 0.0))
-			var window_end := _variant_to_float(window.get("end", 0.0))
-			var obstacle_start := _variant_to_float(obstacle.get("start", 0.0))
-			var obstacle_end := obstacle_start + _variant_to_float(obstacle.get("duration", 0.0))
-			if obstacle_start > window_end or obstacle_end < window_start:
-				continue
-			window["start"] = min(window_start, obstacle_start)
-			window["end"] = max(window_end, obstacle_end)
-			var merged_cells: Dictionary = Dictionary(window.get("occupiedCells", {})).duplicate(true)
-			for cell_key in occupied_cells.keys():
-				merged_cells[int(cell_key)] = true
-			window["occupiedCells"] = merged_cells
-			windows[index] = window
-			merged = true
-			break
-		if not merged:
-			windows.append({
-				"sourceFamily": "obstacle",
-				"start": _variant_to_float(obstacle.get("start", 0.0)),
-				"end": _variant_to_float(obstacle.get("start", 0.0)) + _variant_to_float(obstacle.get("duration", 0.0)),
-				"occupiedCells": occupied_cells,
-			})
-	for index in range(windows.size()):
-		var window: Dictionary = Dictionary(windows[index])
-		var left_count := 0
-		var right_count := 0
-		for cell_key in Dictionary(window.get("occupiedCells", {})).keys():
-			var cell := int(cell_key)
-			if LEFT_SIDE_CELLS.has(cell):
-				left_count += 1
-			if RIGHT_SIDE_CELLS.has(cell):
-				right_count += 1
-		window["leftCount"] = left_count
-		window["rightCount"] = right_count
-		windows[index] = window
-	return windows
-
-func _emit_boxing_burst(burst: Dictionary, difficulty_label: String) -> Dictionary:
-	var beats: Array = []
-	var start := _variant_to_float(burst.get("start", 0.0))
-	var finish: float = maxf(_variant_to_float(burst.get("end", start)), start)
-	var interval_ms := int(BOXING_INTERVAL_MS_BY_DIFFICULTY.get(difficulty_label, 1000))
-	var interval_beats := (float(interval_ms) / 1000.0) * (120.0 / 60.0)
-	if interval_beats <= 0.0:
-		interval_beats = 1.0
-	var emitted_hand := String(burst.get("hand", "left"))
-	var time := start
-	while time <= finish + 0.0001:
-		var alpha := 0.0 if finish <= start else clampf((time - start) / (finish - start), 0.0, 1.0)
-		var sample_y := lerpf(_cell_y(int(burst.get("cell", 0))), _cell_y(int(burst.get("tailCell", 0))), alpha)
-		var row := _row_from_y(sample_y)
-		beats.append({
-			"start": snappedf(time, 0.001),
-			"type": _boxing_type_for_row_and_hand(_cell_from_xy(0, row), emitted_hand),
-		})
-		emitted_hand = "right" if emitted_hand == "left" else "left"
-		time += interval_beats
-	return {"beats": beats}
-
 func _emit_flow_note(note: Dictionary) -> Dictionary:
 	var direction := int(note.get("direction", 8))
 	var beat := {
@@ -911,129 +785,8 @@ func _sort_flow_beats(beats: Array) -> void:
 		return JSON.stringify(a, "") < JSON.stringify(b, "")
 	)
 
-func _group_notes_by_start(notes: Array) -> Dictionary:
-	var grouped := {}
-	for note_variant in notes:
-		var note: Dictionary = Dictionary(note_variant)
-		var key := str(snappedf(_variant_to_float(note.get("start", 0.0)), 0.001))
-		if not grouped.has(key):
-			grouped[key] = []
-		var grouped_notes: Array = Array(grouped[key])
-		grouped_notes.append(note.duplicate(true))
-		grouped[key] = grouped_notes
-	return grouped
-
-func _collapse_same_hand_clusters(notes: Array) -> Array:
-	var by_hand := {}
-	for note_variant in notes:
-		var note: Dictionary = Dictionary(note_variant)
-		var hand := String(note.get("hand", "left"))
-		if not by_hand.has(hand):
-			by_hand[hand] = []
-		var hand_entries: Array = Array(by_hand[hand])
-		hand_entries.append(note)
-		by_hand[hand] = hand_entries
-	var normalized: Array = []
-	for hand_variant in by_hand.keys():
-		var hand_notes: Array = Array(by_hand[hand_variant])
-		var dominant_row := _dominant_same_hand_cluster_row(hand_notes)
-		hand_notes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-			var a_row := _row_from_cell(int(a.get("cell", 0)))
-			var b_row := _row_from_cell(int(b.get("cell", 0)))
-			if a_row == dominant_row and b_row != dominant_row:
-				return true
-			if b_row == dominant_row and a_row != dominant_row:
-				return false
-			if a_row == b_row:
-				return int(a.get("cell", 0)) < int(b.get("cell", 0))
-			return a_row < b_row
-		)
-		normalized.append(Dictionary(hand_notes[0]).duplicate(true))
-	normalized.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return String(a.get("hand", "left")) < String(b.get("hand", "left"))
-	)
-	return normalized
-
-func _dominant_same_hand_cluster_row(notes: Array) -> int:
-	var row_counts := {0: 0, 1: 0, 2: 0}
-	for note_variant in notes:
-		var note: Dictionary = Dictionary(note_variant)
-		var row := _row_from_cell(int(note.get("cell", 0)))
-		row_counts[row] = int(row_counts.get(row, 0)) + 1
-	var best_row := 2
-	var best_count := -1
-	for row in [0, 1, 2]:
-		var count := int(row_counts.get(row, 0))
-		if count > best_count:
-			best_count = count
-			best_row = row
-	return best_row
-
-func _is_guard_pair(notes: Array) -> bool:
-	if notes.size() != 2:
-		return false
-	var cells := [int(Dictionary(notes[0]).get("cell", 0)), int(Dictionary(notes[1]).get("cell", 0))]
-	cells.sort()
-	return CENTER_GUARD_CELL_SETS.has("%d,%d" % [cells[0], cells[1]])
-
-func _pick_dual_or_single_retained_note(notes: Array, next_dual_keep_hand: String) -> Dictionary:
-	if notes.is_empty():
-		return {}
-	if notes.size() == 1:
-		return Dictionary(notes[0]).duplicate(true)
-	for note_variant in notes:
-		var note: Dictionary = Dictionary(note_variant)
-		if String(note.get("hand", "left")) == next_dual_keep_hand:
-			return note.duplicate(true)
-	return Dictionary(notes[0]).duplicate(true)
-
-func _authored_candidate_add(candidates: Dictionary, start: float, beat: Dictionary) -> void:
-	var key := str(snappedf(start, 0.001))
-	if not candidates.has(key):
-		candidates[key] = []
-	var bucket: Array = Array(candidates[key])
-	bucket.append(beat)
-	candidates[key] = bucket
-
-func _flatten_authored_candidates(candidates: Dictionary) -> Array:
-	var keys: Array = candidates.keys()
-	keys.sort_custom(func(a: String, b: String) -> bool:
-		return float(a) < float(b)
-	)
-	var beats: Array = []
-	for key_variant in keys:
-		var options: Array = Array(candidates[key_variant])
-		options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-			return int(a.get("_priority", 0)) > int(b.get("_priority", 0))
-		)
-		var chosen: Dictionary = Dictionary(options[0]).duplicate(true)
-		chosen.erase("_priority")
-		beats.append(chosen)
-	return beats
-
-func _boxing_type_for_row_and_hand(cell: int, hand: String) -> String:
-	var row := _row_from_cell(cell)
-	if row <= 0:
-		return "uppercut_%s" % hand
-	if row == 1:
-		return "straight_%s" % hand
-	return "hook_%s" % hand
-
-func _row_from_cell(cell: int) -> int:
-	return int(cell / 4)
-
-func _row_from_y(y: float) -> int:
-	if y >= 1.5:
-		return 2
-	if y >= 0.5:
-		return 1
-	return 0
-
 func _cell_from_xy(x: int, y: int) -> int:
 	return clampi(y, 0, 2) * 4 + clampi(x, 0, 3)
-
-func _cell_y(cell: int) -> int:
-	return int(cell / 4)
 
 func _v4_metadata_entry(entries: Array, index: int) -> Dictionary:
 	if index < 0 or index >= entries.size():

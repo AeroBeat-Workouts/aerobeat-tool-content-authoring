@@ -1,6 +1,7 @@
 extends RefCounted
 
 const AeroContentAuthoring = preload("res://addons/aerobeat-tool-content-authoring/src/AeroContentAuthoring.gd")
+const TestSupport = preload("test_support.gd")
 
 static func run() -> Dictionary:
 	var runtime := AeroContentAuthoring.new()
@@ -9,6 +10,19 @@ static func run() -> Dictionary:
 	var v2_stage_dir := ProjectSettings.globalize_path("res://assets/fixtures/beatsaver_stage_real_world_legacy_v2")
 	var v1_inspect: Dictionary = runtime.inspect_beatsaver_stage_source(v1_stage_dir)
 	var v2_inspect: Dictionary = runtime.inspect_beatsaver_stage_source(v2_stage_dir)
+	var v1_conversion: Dictionary = runtime.convert_beatsaver_stage_to_current_package(v1_stage_dir)
+	var v1_state: Dictionary = Dictionary(v1_conversion.get("state", {}))
+	var v1_charts: Array = Array(v1_state.get("charts", []))
+	var hard_charts: Array = []
+	var expert_plus_charts: Array = []
+	var chart_ids := {}
+	for chart_variant in v1_charts:
+		var chart: Dictionary = Dictionary(chart_variant)
+		chart_ids[String(chart.get("chartId", ""))] = true
+		if String(chart.get("difficulty", "")) == "Hard":
+			hard_charts.append(chart)
+		elif String(chart.get("difficulty", "")) == "ExpertPlus":
+			expert_plus_charts.append(chart)
 	var v1_metadata: Dictionary = Dictionary(v1_inspect.get("metadata", {}))
 	var v2_metadata: Dictionary = Dictionary(v2_inspect.get("metadata", {}))
 	var v1_difficulties: Array = Array(v1_inspect.get("difficulties", []))
@@ -30,7 +44,16 @@ static func run() -> Dictionary:
 		and String(v1_second.get("difficulty", "")) == "ExpertPlus" \
 		and int(v1_second.get("difficultyRank", -1)) == 9 \
 		and String(v1_second.get("path", "")) == "ExpertPlus.dat" \
-		and String(v1_second.get("beatmapVersionFamily", "")) == "legacy_v1"
+		and String(v1_second.get("beatmapVersionFamily", "")) == "legacy_v1" \
+		and bool(v1_conversion.get("ok", false)) \
+		and v1_charts.size() == 10 \
+		and chart_ids.size() == 10 \
+		and Array(v1_state.get("sets", [])).size() == 10 \
+		and TestSupport.unique_set_ids(v1_state) \
+		and hard_charts.size() == 5 \
+		and expert_plus_charts.size() == 5 \
+		and TestSupport.boxing_prototype_matrix_valid(hard_charts) \
+		and TestSupport.boxing_prototype_matrix_valid(expert_plus_charts)
 	var v2_passed := bool(v2_inspect.get("ok", false)) \
 		and String(v2_metadata.get("songName", "")) == "me & u" \
 		and is_equal_approx(float(v2_metadata.get("bpm", 0.0)), 80.0) \
@@ -47,6 +70,8 @@ static func run() -> Dictionary:
 		"passed": v1_passed and v2_passed,
 		"details": {
 			"v1Inspect": v1_inspect,
+			"v1Conversion": v1_conversion,
+			"v1ChartIdCount": chart_ids.size(),
 			"v2Inspect": v2_inspect,
 		}
 	}

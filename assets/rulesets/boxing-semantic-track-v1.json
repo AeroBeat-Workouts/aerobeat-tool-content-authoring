@@ -1,0 +1,10 @@
+{
+  "contractId": "aerobeat.boxing.prototype.v1",
+  "rulesetId": "boxing_semantic_track_v1",
+  "version": "1.0.0",
+  "timingWindowMs": 180,
+  "evidenceFreshnessMs": 150,
+  "straightQualificationMs": 100,
+  "hookAndUppercutQualification": "target-cell-and-cardinal-direction",
+  "semanticClassifiers": "authoritative"
+}
