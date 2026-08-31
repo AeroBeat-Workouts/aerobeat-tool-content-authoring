@@ -14,6 +14,7 @@ func _initialize() -> void:
 		load(script_dir.path_join("test_blank_new_package_seed_save_reload.gd")),
 		load(script_dir.path_join("test_task6_set_authoring_runtime.gd")),
 		load(script_dir.path_join("test_boxing_prototype_golden.gd")),
+		load(script_dir.path_join("test_flow_orientation.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_conversion_service.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_cover_image_import_service.gd")),
 		load(script_dir.path_join("test_beatsaver_stage_conversion_service_v4.gd")),

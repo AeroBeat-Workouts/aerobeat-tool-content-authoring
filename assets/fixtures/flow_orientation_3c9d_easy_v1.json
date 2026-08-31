@@ -1,0 +1,32 @@
+{
+  "schema": "aerobeat/flow_orientation_evidence",
+  "version": 1,
+  "fixtureId": "flow-orientation-3c9d-easy-v1",
+  "license": "Sanitized scalar orientation evidence only; no third-party archive, audio, cover, or provider payload.",
+  "source": {
+    "provider": "beatsaver",
+    "mapId": "3C9D",
+    "versionHash": "5662f64a12c76a3dd11a5f6ee22611608cd06760",
+    "characteristic": "Standard",
+    "difficulty": "Easy",
+    "difficultyPath": "Easy.dat",
+    "coordinateConvention": "beat_saber_bottom_left_row_major"
+  },
+  "expected": {
+    "flowChartHash": "sha256:47b4bafc967ac85574180695d66410496a7376726707896355002d1173775c29"
+  },
+  "notes": [
+    {"sourceIndex": 0, "beat": 21.0, "x": 3, "y": 0, "cell": 3, "hand": "right", "direction": 1, "canonicalCell": 11},
+    {"sourceIndex": 1, "beat": 25.0, "x": 0, "y": 0, "cell": 0, "hand": "left", "direction": 1, "canonicalCell": 8},
+    {"sourceIndex": 2, "beat": 27.0, "x": 2, "y": 0, "cell": 2, "hand": "right", "direction": 1, "canonicalCell": 10},
+    {"sourceIndex": 3, "beat": 28.5, "x": 1, "y": 0, "cell": 1, "hand": "left", "direction": 1, "canonicalCell": 9},
+    {"sourceIndex": 4, "beat": 33.0, "x": 3, "y": 0, "cell": 3, "hand": "right", "direction": 3, "canonicalCell": 11},
+    {"sourceIndex": 5, "beat": 37.0, "x": 0, "y": 0, "cell": 0, "hand": "left", "direction": 2, "canonicalCell": 8},
+    {"sourceIndex": 6, "beat": 39.0, "x": 3, "y": 0, "cell": 3, "hand": "right", "direction": 1, "canonicalCell": 11},
+    {"sourceIndex": 7, "beat": 41.0, "x": 0, "y": 0, "cell": 0, "hand": "left", "direction": 1, "canonicalCell": 8},
+    {"sourceIndex": 8, "beat": 45.0, "x": 2, "y": 0, "cell": 2, "hand": "right", "direction": 1, "canonicalCell": 10},
+    {"sourceIndex": 9, "beat": 49.0, "x": 1, "y": 0, "cell": 1, "hand": "left", "direction": 1, "canonicalCell": 9},
+    {"sourceIndex": 10, "beat": 53.0, "x": 3, "y": 0, "cell": 3, "hand": "right", "direction": 3, "canonicalCell": 11},
+    {"sourceIndex": 11, "beat": 55.0, "x": 0, "y": 0, "cell": 0, "hand": "left", "direction": 2, "canonicalCell": 8}
+  ]
+}

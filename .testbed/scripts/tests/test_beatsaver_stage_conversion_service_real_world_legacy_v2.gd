@@ -23,6 +23,7 @@ static func run() -> Dictionary:
 	TestSupport.ensure_clean_dir(save_parent)
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir := String(save_result.get("outputDir", ""))
+	var flow_package_hash := "sha256:%s" % FileAccess.get_sha256(output_dir.path_join("charts/ab-chart-me-u-flow-hard.yaml"))
 	var report_path := output_dir.path_join(".artifacts/conversion-report.json")
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
@@ -36,6 +37,7 @@ static func run() -> Dictionary:
 	var passed := bool(convert_result.get("ok", false)) \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
+		and flow_package_hash == "sha256:d2563a9f926cd485d305da835e3f4363097febd932c266b0714b8dbcb7c23f94" \
 		and bool(package_validation.get("valid", false)) \
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
@@ -56,7 +58,7 @@ static func run() -> Dictionary:
 		and int(boxing_counts.get("uppercut_left", 0)) + int(boxing_counts.get("uppercut_right", 0)) > 0 \
 		and int(boxing_counts.get("weave_left", 0)) > 0 \
 		and int(boxing_counts.get("weave_right", 0)) > 0 \
-		and int(first_bomb.get("placement", -1)) == 0 \
+		and int(first_bomb.get("placement", -1)) == 10 \
 		and report_text.contains('"sourceFamily": "bomb"') \
 		and report_text.contains('"sourceFamily": "obstacle"') \
 		and not report_text.contains("legacy_beatmap_object_normalization_pending")

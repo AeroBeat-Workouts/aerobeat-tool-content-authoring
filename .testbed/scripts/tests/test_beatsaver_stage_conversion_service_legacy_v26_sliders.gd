@@ -23,6 +23,7 @@ static func run() -> Dictionary:
 	TestSupport.ensure_clean_dir(save_parent)
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir := String(save_result.get("outputDir", ""))
+	var flow_package_hash := "sha256:%s" % FileAccess.get_sha256(output_dir.path_join("charts/ab-chart-synthetic-legacy-v26-slider-demo-flow-hard.yaml"))
 	var report_path := output_dir.path_join(".artifacts/conversion-report.json")
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
@@ -41,6 +42,7 @@ static func run() -> Dictionary:
 	var passed := bool(convert_result.get("ok", false)) \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
+		and flow_package_hash == "sha256:d8dcc228b7648b733f456078cad1e1685fc15508b5e16d2fe6d25ef5280b3944" \
 		and bool(package_validation.get("valid", false)) \
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
@@ -54,7 +56,7 @@ static func run() -> Dictionary:
 		and String(arc_beat.get("startNoteRef", "")).begins_with("flow-note-") \
 		and String(arc_beat.get("endNoteRef", "")).begins_with("flow-note-") \
 		and int(arc_beat.get("startPlacement", -1)) == 4 \
-		and int(arc_beat.get("endPlacement", -1)) == 11 \
+		and int(arc_beat.get("endPlacement", -1)) == 3 \
 		and int(arc_beat.get("startDirection", -1)) == 1 \
 		and int(arc_beat.get("endDirection", -1)) == 5 \
 		and int(arc_beat.get("midAnchorMode", -1)) == 2 \

@@ -390,7 +390,7 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 		var bomb_beat := {
 			"start": float(bomb.get("start", 0.0)),
 			"type": "bomb",
-			"placement": int(bomb.get("cell", 0)),
+			"placement": _top_left_cell_from_source_cell(int(bomb.get("cell", 0))),
 		}
 		beats.append(bomb_beat)
 		trace_events.append({"start": float(bomb.get("start", 0.0)), "sourceFamily": "bomb", "result": {"action": "emit", "beat": bomb_beat.duplicate(true)}, "bomb": bomb.duplicate(true)})
@@ -414,9 +414,9 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 			"end": float(burst.get("end", burst.get("start", 0.0))),
 			"type": "burst",
 			"hand": String(burst.get("hand", "left")),
-			"placement": int(burst.get("cell", 0)),
+			"placement": _top_left_cell_from_source_cell(int(burst.get("cell", 0))),
 			"direction": int(burst.get("direction", 8)),
-			"tailPlacement": int(burst.get("tailCell", burst.get("cell", 0))),
+			"tailPlacement": _top_left_cell_from_source_cell(int(burst.get("tailCell", burst.get("cell", 0)))),
 			"checkpointCount": max(int(burst.get("sliceCount", 1)), 1),
 		}
 		if burst.has("spacingBias"):
@@ -441,6 +441,8 @@ func _convert_flow_chart(source_summary: Dictionary, difficulty_label: String, s
 		},
 	}
 
+# Normalized x/y/cell values deliberately retain Beat Saber's bottom-left source
+# convention. Canonical AeroBeat top-left cells are derived only by emitters.
 func _normalize_source_summary(beatmap: Dictionary) -> Dictionary:
 	var version_text := _beatmap_version(beatmap)
 	var version_family := _beatmap_version_family(version_text)
@@ -744,7 +746,7 @@ func _emit_flow_note(note: Dictionary) -> Dictionary:
 		"start": float(note.get("start", 0.0)),
 		"type": "note",
 		"hand": String(note.get("hand", "left")),
-		"placement": int(note.get("cell", 0)),
+		"placement": _top_left_cell_from_source_cell(int(note.get("cell", 0))),
 		"requiresDirection": direction != 8,
 		"angleOffset": float(note.get("angleOffset", 0.0)),
 	}
@@ -753,23 +755,25 @@ func _emit_flow_note(note: Dictionary) -> Dictionary:
 	return beat
 
 func _emit_flow_arc(slider: Dictionary, note_ref_lookup: Dictionary) -> Dictionary:
+	var source_start_placement := int(slider.get("cell", 0))
+	var source_end_placement := int(slider.get("tailCell", slider.get("cell", 0)))
 	var arc := {
 		"start": float(slider.get("start", 0.0)),
 		"end": float(slider.get("end", slider.get("start", 0.0))),
 		"type": "arc",
 		"hand": String(slider.get("hand", "left")),
-		"startPlacement": int(slider.get("cell", 0)),
-		"endPlacement": int(slider.get("tailCell", slider.get("cell", 0))),
+		"startPlacement": _top_left_cell_from_source_cell(source_start_placement),
+		"endPlacement": _top_left_cell_from_source_cell(source_end_placement),
 		"startDirection": int(slider.get("direction", 8)),
 		"endDirection": int(slider.get("tailDirection", slider.get("direction", 8))),
 		"headCurveMultiplier": float(slider.get("headCurveMultiplier", 1.0)),
 		"tailCurveMultiplier": float(slider.get("tailCurveMultiplier", 1.0)),
 		"midAnchorMode": int(slider.get("midAnchorMode", 0)),
 	}
-	var start_key := _flow_note_lookup_key(float(slider.get("start", 0.0)), String(slider.get("hand", "left")), int(slider.get("cell", 0)))
+	var start_key := _flow_note_lookup_key(float(slider.get("start", 0.0)), String(slider.get("hand", "left")), source_start_placement)
 	if note_ref_lookup.has(start_key):
 		arc["startNoteRef"] = String(note_ref_lookup[start_key])
-	var end_key := _flow_note_lookup_key(float(slider.get("end", slider.get("start", 0.0))), String(slider.get("hand", "left")), int(slider.get("tailCell", slider.get("cell", 0))))
+	var end_key := _flow_note_lookup_key(float(slider.get("end", slider.get("start", 0.0))), String(slider.get("hand", "left")), source_end_placement)
 	if note_ref_lookup.has(end_key):
 		arc["endNoteRef"] = String(note_ref_lookup[end_key])
 	return arc
@@ -813,6 +817,10 @@ func _sort_flow_beats(beats: Array) -> void:
 func _cell_from_xy(x: int, y: int) -> int:
 	return clampi(y, 0, 2) * 4 + clampi(x, 0, 3)
 
+func _top_left_cell_from_source_cell(cell: int) -> int:
+	var source_cell := clampi(cell, 0, 11)
+	return (2 - source_cell / 4) * 4 + source_cell % 4
+
 func _v4_metadata_entry(entries: Array, index: int) -> Dictionary:
 	if index < 0 or index >= entries.size():
 		return {}
@@ -848,7 +856,7 @@ func _cells_for_obstacle(obstacle: Dictionary) -> Dictionary:
 		y_end = min(y_start + 1, 3)
 	for x in range(x_start, x_end):
 		for y in range(y_start, y_end):
-			cells[_cell_from_xy(x, y)] = true
+			cells[_top_left_cell_from_source_cell(_cell_from_xy(x, y))] = true
 	return cells
 
 func _resolve_archive_path(stage_dir: String, manifest: Dictionary) -> String:

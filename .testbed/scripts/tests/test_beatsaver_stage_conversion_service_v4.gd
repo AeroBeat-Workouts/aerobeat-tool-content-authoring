@@ -23,6 +23,7 @@ static func run() -> Dictionary:
 	TestSupport.ensure_clean_dir(save_parent)
 	var save_result: Dictionary = runtime.save_current_package(save_parent)
 	var output_dir := String(save_result.get("outputDir", ""))
+	var flow_package_hash := "sha256:%s" % FileAccess.get_sha256(output_dir.path_join("charts/ab-chart-synthetic-beatsaver-v4-demo-flow-hard.yaml"))
 	var report_path := output_dir.path_join(".artifacts/conversion-report.json")
 	var report_text := TestSupport.read_text(report_path) if FileAccess.file_exists(report_path) else ""
 	var package_validation := runtime.get_validate_package_service().validate_path(output_dir, "package") if not output_dir.is_empty() else {"valid": false}
@@ -38,6 +39,7 @@ static func run() -> Dictionary:
 		flow_types.append(String(Dictionary(beat_variant).get("type", "")))
 	var flow_chart_validation: Dictionary = ValidateChartService.new().validate_chart_record(flow_chart, "state://charts/flow")
 	var first_note := _find_flow_beat(flow_beats, "note", 1.0)
+	var top_note := _find_flow_beat(flow_beats, "note", 3.0, "left")
 	var dot_note := _find_flow_beat(flow_beats, "note", 3.0, "right")
 	var bomb_beat := _find_flow_beat(flow_beats, "bomb", 7.0)
 	var first_obstacle := _find_flow_beat(flow_beats, "obstacle", 5.0)
@@ -46,6 +48,7 @@ static func run() -> Dictionary:
 	var passed := bool(convert_result.get("ok", false)) \
 		and bool(validation.get("valid", false)) \
 		and bool(save_result.get("ok", false)) \
+		and flow_package_hash == "sha256:4792824dd7234d55f2a7d4633c161178dd924807114c97b22d34e76b480fa664" \
 		and bool(package_validation.get("valid", false)) \
 		and String(package_validation.get("delegatedValidator", "")) == "aerobeat-content-core" \
 		and bool(flow_chart_validation.get("valid", false)) \
@@ -67,17 +70,21 @@ static func run() -> Dictionary:
 		and bool(first_note.get("requiresDirection", false)) \
 		and not bool(dot_note.get("requiresDirection", true)) \
 		and not dot_note.has("direction") \
+		and int(top_note.get("placement", -1)) == 0 \
+		and int(dot_note.get("placement", -1)) == 11 \
 		and int(bomb_beat.get("placement", -1)) == 5 \
 		and Array(first_obstacle.get("cells", [])) == [0, 1, 4, 5, 8, 9] \
 		and String(arc_beat.get("startNoteRef", "")).begins_with("flow-note-") \
 		and String(arc_beat.get("endNoteRef", "")).begins_with("flow-note-") \
 		and int(arc_beat.get("startPlacement", -1)) == 4 \
-		and int(arc_beat.get("endPlacement", -1)) == 11 \
+		and int(arc_beat.get("endPlacement", -1)) == 3 \
 		and int(arc_beat.get("startDirection", -1)) == 1 \
 		and int(arc_beat.get("endDirection", -1)) == 5 \
 		and int(arc_beat.get("midAnchorMode", -1)) == 2 \
 		and is_equal_approx(float(arc_beat.get("headCurveMultiplier", 0.0)), 1.25) \
 		and is_equal_approx(float(arc_beat.get("tailCurveMultiplier", 0.0)), 0.8) \
+		and int(burst_beat.get("placement", -1)) == 0 \
+		and int(burst_beat.get("tailPlacement", -1)) == 11 \
 		and int(burst_beat.get("checkpointCount", 0)) == 4 \
 		and is_equal_approx(float(burst_beat.get("spacingBias", 0.0)), 1.25) \
 		and report_text.contains('"previewMode": "preview_url"') \
